@@ -11,15 +11,15 @@ namespace SpriteWave
 	public class DragPoint : ISelection
 	{
 		private Brush _hl;
-		private object _obj;
+		private IPiece _obj;
 		private TileWindow _wnd;
 		private Position _loc;
 
 		public ISelection Selection { get { return null; } set { return; } }
-		public Tile Tile { get { return _obj as Tile; } }
+		public IPiece Piece { get { return _obj; } }
 		public Position Location { get { return _loc; } set { _loc = value; } }
 
-		public DragPoint(Brush hl, object selObj, TileWindow wnd, Position loc)
+		public DragPoint(Brush hl, IPiece selObj, TileWindow wnd, Position loc)
 		{
 			_hl = hl;
 			_obj = selObj;
@@ -34,18 +34,8 @@ namespace SpriteWave
 
 		public void DrawSelection(TileWindow wnd, Graphics g)
 		{
-			if (wnd != _wnd)
-				return;
-
-			Position vis = wnd.VisibleSelection;
-			if (_loc.col < 0 || _loc.col >= vis.col ||
-				_loc.row < 0 || _loc.row >= vis.row)
-			{
-				return;
-			}
-
-			Rectangle selRect = _loc.TileRect(wnd.TilePx);
-			g.FillRectangle(_hl, selRect);
+			if (wnd == _wnd)
+				g.FillRectangle(_hl, wnd.PieceHitbox(_loc));
 		}
 	}
 
@@ -66,7 +56,7 @@ namespace SpriteWave
 		public TileWindow Window { get { return _lastWnd; } }
 
 		private Brush _hl;
-		private object _selObj;
+		private IPiece _selObj;
 
 		public ISelection Selection
 		{
@@ -74,9 +64,14 @@ namespace SpriteWave
 				if (_lastWnd == null)
 					return null;
 
-				//Debug.WriteLine("_lastX = {0}, _lastY = {1}", _lastX, _lastY);
-
-				Position p = _lastWnd.GetPosition(_lastX, _lastY);
+				Position p;
+				try {
+					p = _lastWnd.GetPosition(_lastX, _lastY);
+				}
+				catch {
+					return null;
+				}
+				
 				return new DragPoint(_hl, _selObj, _lastWnd, p);
 			}
 		}
@@ -88,9 +83,10 @@ namespace SpriteWave
 
 			_lastWnd = wnd;
 			_orgWnd = wnd;
+
 			_orgPos = _orgWnd.GetPosition(x, y);
 
-			_selObj = _orgWnd.SelectTileAt(_orgPos);
+			_selObj = _orgWnd.PieceAt(_orgPos);
 			if (_selObj != null)
 			{
 				Bitmap img = _orgWnd.TileBitmap(_selObj as Tile);
@@ -126,9 +122,12 @@ namespace SpriteWave
 					Escape();
 				else
 				{
-					Position loc = wnd.GetPosition(_lastX, _lastY);
-					if (loc.col != _orgPos.col || loc.row != _orgPos.row)
-						Escape();
+					try {
+						Position loc = wnd.GetPosition(_lastX, _lastY);
+						if (loc.col != _orgPos.col || loc.row != _orgPos.row)
+							Escape();
+					}
+					catch (ArgumentOutOfRangeException ex) {}
 				}
 			}
 

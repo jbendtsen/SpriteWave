@@ -10,7 +10,7 @@ namespace SpriteWave
 
 		ISelection Selection { get; set; }
 		Position Location { get; set; }
-		Tile Tile { get; }
+		IPiece Piece { get; }
 
 		//void Move(int dCol, int dRow);
 		//void SetPos(int )

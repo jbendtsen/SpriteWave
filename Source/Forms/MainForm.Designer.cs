@@ -220,7 +220,7 @@ namespace SpriteWave
 			// 
 			this.spriteScrollY.Location = new System.Drawing.Point(683, 24);
 			this.spriteScrollY.Name = "spriteScrollY";
-			this.spriteScrollY.Size = new System.Drawing.Size(17, 286);
+			this.spriteScrollY.Size = new System.Drawing.Size(17, 269);
 			this.spriteScrollY.TabIndex = 4;
 			this.spriteScrollY.Visible = false;
 			// 
@@ -284,7 +284,7 @@ namespace SpriteWave
 			// 
 			// palette4
 			// 
-			this.palette4.Location = new System.Drawing.Point(272, 24);
+			this.palette4.Location = new System.Drawing.Point(262, 24);
 			this.palette4.Name = "palette4";
 			this.palette4.Size = new System.Drawing.Size(68, 20);
 			this.palette4.TabIndex = 4;
@@ -292,7 +292,7 @@ namespace SpriteWave
 			// 
 			// palette3
 			// 
-			this.palette3.Location = new System.Drawing.Point(191, 24);
+			this.palette3.Location = new System.Drawing.Point(178, 24);
 			this.palette3.Name = "palette3";
 			this.palette3.Size = new System.Drawing.Size(68, 20);
 			this.palette3.TabIndex = 3;
@@ -300,7 +300,7 @@ namespace SpriteWave
 			// 
 			// palette2
 			// 
-			this.palette2.Location = new System.Drawing.Point(102, 24);
+			this.palette2.Location = new System.Drawing.Point(94, 24);
 			this.palette2.Name = "palette2";
 			this.palette2.Size = new System.Drawing.Size(68, 20);
 			this.palette2.TabIndex = 2;
@@ -308,7 +308,7 @@ namespace SpriteWave
 			// 
 			// palette1
 			// 
-			this.palette1.Location = new System.Drawing.Point(18, 24);
+			this.palette1.Location = new System.Drawing.Point(10, 24);
 			this.palette1.Name = "palette1";
 			this.palette1.Size = new System.Drawing.Size(68, 20);
 			this.palette1.TabIndex = 1;

@@ -13,15 +13,8 @@ namespace SpriteWave
 		private ColourTable _table;
 		private string _name;
 		private string[] _exts;
-
-		public string TypeString
-		{
-			get {
-				string str = _type.ToString();
-				int pos = str.LastIndexOf('.') + 1;
-				return str.Substring(pos);
-			}
-		}
+		
+		public string Name { get { return _name; } }
 
 		public FileFormat(string n, Type t, string[] e, ColourTable c)
 		{

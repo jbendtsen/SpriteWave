@@ -10,7 +10,7 @@ namespace SpriteWave
 		Left, Right, Horizontal, Vertical
 	}
 
-	public abstract class Tile
+	public abstract class Tile : IPiece
 	{
 		protected byte[] _data = {};
 		public byte[] Data { get { return _data; } }

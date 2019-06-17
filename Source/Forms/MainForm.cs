@@ -1,12 +1,4 @@
-﻿/*
- * Created by SharpDevelop.
- * User: 101111482
- * Date: 28/04/2019
- * Time: 9:48 AM
- * 
- * To change this template use Tools | Options | Coding | Edit Standard Headers.
- */
-using System;
+﻿using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Drawing;
@@ -17,9 +9,6 @@ using System.Diagnostics;
 
 namespace SpriteWave
 {
-	/// <summary>
-	/// Description of MainForm.
-	/// </summary>
 	public partial class MainForm : Form
 	{
 		private InputWindow _inputWnd;
@@ -60,8 +49,7 @@ namespace SpriteWave
 			this.KeyPreview = true;
 			this.KeyDown += new KeyEventHandler(this.keysHandler);
 
-			object args = null;
-			Utils.ApplyRecursiveControlAction(this, ref args, this.SetMouseEventHandler);
+			Utils.ApplyRecursiveControlAction(this, this.SetMouseEventHandler);
 
 			this.inputSend.Click += new EventHandler((s, e) => Transfer());
 
@@ -93,7 +81,7 @@ namespace SpriteWave
 			int availX = this.ClientSize.Width - (this.inputScroll.Size.Width + this.spriteScrollY.Size.Width);
 
 			int availInputY = totalH - (menuH + this.inputPanel.Size.Height);
-			int availSpriteY = totalH - (menuH + this.spritePanel.Size.Height);
+			int availSpriteY = totalH - (menuH + this.spritePanel.Size.Height + this.spriteScrollX.Size.Height);
 
 			int inputBoxW = availX / 2;
 			int spriteBoxW = availX / 2;
@@ -111,11 +99,11 @@ namespace SpriteWave
 
 			this.spriteBox.Location = new Point(inputBoxW + this.inputScroll.Size.Width, menuH);
 
-			this.spriteScrollY.Location = new Point(this.spriteBox.Location.Y + spriteBoxW);
-			this.spriteScrollY.Size = new Size(this.spriteScrollY.Size.Width, availSpriteY + this.spriteScrollX.Size.Height);
+			this.spriteScrollY.Location = new Point(this.spriteBox.Location.X + spriteBoxW, menuH);
+			this.spriteScrollY.Size = new Size(this.spriteScrollY.Size.Width, availSpriteY);
 
 			this.spriteScrollX.Location = new Point(this.spriteBox.Location.X, menuH + availSpriteY);
-			this.spriteScrollX.Size = new Size(spriteBoxW + this.spriteScrollY.Size.Width, this.spriteScrollX.Size.Height);
+			this.spriteScrollX.Size = new Size(spriteBoxW, this.spriteScrollX.Size.Height);
 			
 			this.spritePanel.Location = new Point(this.spriteBox.Location.X, this.spriteScrollX.Location.Y + this.spriteScrollX.Size.Height);
 			this.spritePanel.Size = new Size(spriteBoxW + this.spriteScrollY.Size.Width, this.spritePanel.Size.Height);
@@ -128,7 +116,10 @@ namespace SpriteWave
 			this.inputSample.Location = new Point(this.inputPanel.Size.Width - 60, Centre(this.inputPanel.Size.Height, this.inputSample.Size.Height));
 			
 			this.ResumeLayout();
-            Draw();
+
+			_inputWnd.UpdateBars();
+			_spriteWnd.UpdateBars();
+			Draw();
 		}
 
 		private void Draw()
@@ -145,7 +136,7 @@ namespace SpriteWave
 
 			_selDst.Receive(_selSrc);
 		}
-		
+
 		private void EndSelection()
 		{
 			_inputWnd.Selection = null;
@@ -154,11 +145,12 @@ namespace SpriteWave
 			_selDst = null;
 		}
 
-		private void SetMouseEventHandler(Control ctrl, ref object args)
+		private object SetMouseEventHandler(Control ctrl, object args)
 		{
 			ctrl.MouseDown += new MouseEventHandler(this.mouseDownHandler);
 			ctrl.MouseMove += new MouseEventHandler(this.mouseMoveHandler);
 			ctrl.MouseUp   += new MouseEventHandler(this.mouseUpHandler);
+			return null;
 		}
 		
 		private void StartDrag(TileWindow wnd, int x, int y)
@@ -167,9 +159,15 @@ namespace SpriteWave
 				_selDst.Selection = null;
 			_selDst = null;
 
-			_drag = new DragObject(wnd, x, y);
-			_selSrc = _drag.Selection;
-			wnd.Selection = _selSrc;
+			try {
+				_drag = new DragObject(wnd, x, y);
+				_selSrc = _drag.Selection;
+				wnd.Selection = _selSrc;
+			}
+			catch (ArgumentOutOfRangeException ex) {
+				_drag = null;
+				EndSelection();
+			}
 		}
 
 		private void mouseDownHandler(object sender, MouseEventArgs e)
@@ -209,21 +207,20 @@ namespace SpriteWave
 			Draw();
 		}
 
-		private void RefreshControl(Control c, ref object args)
+		private object RefreshControl(Control c, object args)
 		{
 			if (c.HasMouse())
 				args = c;
 			if (c is ScrollBar || c is TextBox || c is Button)
 				c.Refresh();
+
+			return args;
 		}
 		
 		private void mouseMoveHandler(object sender, MouseEventArgs e)
 		{
-			object args = null;
-			Utils.ApplyRecursiveControlAction(this, ref args, RefreshControl);
-
-			var curCtrl = args as Control;
 			var startCtrl = sender as Control;
+			var curCtrl = Utils.ApplyRecursiveControlAction(this, RefreshControl) as Control;
 
 			if (_drag != null)
 			{

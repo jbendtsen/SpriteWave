@@ -25,14 +25,6 @@ namespace SpriteWave
 	{
 		public const int cLen = 4;
 		
-		/*
-		// I discovered the hard way that Bitmap.Clone() does not copy any pixels, it merely references them.
-		// That makes this extension method rather pointless.
-		public static Bitmap Copy(this Bitmap bmp)
-		{
-			return bmp.Clone(new Rectangle(0, 0, bmp.Width, bmp.Height), bmp.PixelFormat);
-		}
-		*/
 		public static string FilterBuilder(Dictionary<FormatKind, FileFormat> fmtList)
 		{
 			string filter = "";
@@ -78,17 +70,17 @@ namespace SpriteWave
 			return c;
 		}
 		
-		public delegate void ControlAction(Control ctrl, ref object args);
+		public delegate object ControlAction(Control ctrl, object obj);
 
 		// Sounds (at least) 10x scarier than it really is
-		public static void ApplyRecursiveControlAction(Control ctrl, ref object args, ControlAction ctrlAction)
+		public static object ApplyRecursiveControlAction(Control ctrl, ControlAction ctrlAction, object obj = null)
 		{
-			ctrlAction(ctrl, ref args);
+			obj = ctrlAction(ctrl, obj);
 
 			foreach (Control c in ctrl.Controls)
-			{
-				ApplyRecursiveControlAction(c, ref args, ctrlAction);
-			}
+				obj = ApplyRecursiveControlAction(c, ctrlAction, obj);
+
+			return obj;
 		}
 
 		/*
@@ -114,9 +106,10 @@ namespace SpriteWave
 			return c == null && val != null;
 		}
 		
-		public static void Inform(this ScrollBar bar, int value, int large, int max)
+		public static void Inform(this ScrollBar bar, int value, int large, int min, int max)
 		{
 			bar.LargeChange = large;
+			bar.Minimum = min;
 			bar.Maximum = max;
 			if (bar.Visible)
 				bar.Value = value;
@@ -156,9 +149,9 @@ namespace SpriteWave
 
 		/*
 			Combination of:
-				https://www.c-sharpcorner.com/article/drawing-transparent-images-and-shapes-using-alpha-blending/,
-				https://stackoverflow.com/a/38852476,
-				and the function above
+				- https://www.c-sharpcorner.com/article/drawing-transparent-images-and-shapes-using-alpha-blending/
+				- https://stackoverflow.com/a/38852476
+				- the function above
 		*/
 		public static Bitmap SetAlpha(this Bitmap bmp, float alpha)
 		{
@@ -186,16 +179,6 @@ namespace SpriteWave
 			}
 
 			return faded;
-		}
-
-		public static Rectangle TileRect(this Position p, SizeF tileSc)
-		{
-			return new Rectangle(
-				(int)((float)p.col * tileSc.Width),
-				(int)((float)p.row * tileSc.Height),
-				(int)tileSc.Width + 1,
-				(int)tileSc.Height + 1
-			);
 		}
 
 		public static int Between(this int n, int min, int max)
@@ -310,7 +293,6 @@ namespace SpriteWave
 
 		public static Bitmap BitmapFrom(byte[] pixbuf, int width, int height)
 		{
-			Debug.WriteLine("pixbuf.Length = {0}, width = {1}, height = {2}", pixbuf.Length, width, height);
 			// Create a BMP header, so that the API knows how to arrange our pixels
 			byte[] hdr = new byte[54];
 
