@@ -27,6 +27,9 @@ namespace SpriteWave
 		protected PictureBox _window;
 		public abstract PictureBox Window { set; }
 
+		protected ContextMenuStrip _menu;
+		public abstract ContextMenuStrip Menu { set; }
+
 		protected Panel _infoPanel;
 		public abstract Panel Panel { set; }
 
@@ -57,16 +60,18 @@ namespace SpriteWave
 		}
 		
 		// Implements ISelection.Location
-		public Position Location
+		public virtual Position Location
 		{
 			get {
 				return _selPos;
 			}
 			set {
-				SetPosition(value);
+				_selPos = value;
+				_sel = this;
+				ResetSample();
 			}
 		}
-		
+
 		public IPiece PieceAt(Position loc)
 		{
 			if (_cl == null)
@@ -90,7 +95,10 @@ namespace SpriteWave
 		}
 
 		// Implements ISelection.Receive()
-		public abstract void Receive(ISelection isel);
+		public abstract void Receive(IPiece isel);
+
+		// Implements ISelection.Delete()
+		public abstract void Delete();
 
 		public abstract void Scroll(float dx, float dy);
 		public abstract void ScrollTo(float x, float y);
@@ -102,6 +110,8 @@ namespace SpriteWave
 		
 		public abstract Position GetPosition(int x, int y);
 		public abstract RectangleF PieceHitbox(Position p);
+
+		public abstract void ResetSample();
 
 		public abstract void AdjustWindow(int width = 0, int height = 0);
 
@@ -124,6 +134,11 @@ namespace SpriteWave
 			_cl = null;
 			DeleteFrame();
 		}
+
+		public virtual void Render()
+		{
+			_cl.Render();
+		}
 		
 		public void DeleteFrame()
 		{
@@ -132,6 +147,12 @@ namespace SpriteWave
 				_window.Image.Dispose();
 				_window.Image = null;
 			}
+		}
+
+		public virtual void ShowMenu(int x, int y)
+		{
+			if ( _window != null && _cl != null)
+				_menu.Show(_window, new Point(x, y));
 		}
 
 		public virtual void ResetScroll()
@@ -152,13 +173,7 @@ namespace SpriteWave
 			if (idx < 0 || idx >= _cl.nTiles)
 				return;
 
-			SetPosition(new Position(idx % nCols, idx / nCols));
-		}
-
-		public virtual void SetPosition(Position p)
-		{
-			_selPos = p;
-			_sel = this;
+			this.Location = new Position(idx % nCols, idx / nCols);
 		}
 
 		public Bitmap TileBitmap(Tile t)
@@ -172,7 +187,7 @@ namespace SpriteWave
 		public void ResetGridPen()
 		{
 			uint marginClr = Utils.InvertRGB(_cl.MeanColour);
-			_gridPen = new Pen(Utils.FromRGBA(marginClr), 1.0f);
+			_gridPen = new Pen(Utils.FromRGB(marginClr), 1.0f);
 		}
 
 		public virtual void DrawCanvas(Graphics g)
@@ -195,6 +210,8 @@ namespace SpriteWave
 			g.FillRectangle(_selHl, PieceHitbox(this.Location));
 		}
 
+		public virtual void DrawBorders(Graphics g) {}
+
 		public virtual void Draw()
 		{
 			if (_cl == null || _window == null)
@@ -207,7 +224,7 @@ namespace SpriteWave
 
 			// Make sure the window's collage has something for us to draw
 			if (_cl.Bitmap == null)
-				_cl.Render();
+				Render();
 
 			DeleteFrame();
 			_window.Image = new Bitmap(wndW, wndH);
@@ -221,11 +238,17 @@ namespace SpriteWave
 				*/
 				g.ToggleSmoothing(false);
 
+				// Draw the tiles
 				DrawCanvas(g);
 
+				// Highlight the current tile, if one is currently selected
 				if (_sel != null)
 					_sel.DrawSelection(this, g);
-	
+
+				// Draw some borders to indicate that the window's collage can be resized
+				// Only implemented in SpriteWindow
+				DrawBorders(g);
+
 				// In order to more easily discern between tiles on the screen, we draw margins around each tile.
 				if (_gridPen == null)
 					ResetGridPen();

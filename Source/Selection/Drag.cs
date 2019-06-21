@@ -15,7 +15,7 @@ namespace SpriteWave
 		private TileWindow _wnd;
 		private Position _loc;
 
-		public ISelection Selection { get { return null; } set { return; } }
+		public ISelection Selection { get { return null; } set { _wnd.Selection = value; } }
 		public IPiece Piece { get { return _obj; } }
 		public Position Location { get { return _loc; } set { _loc = value; } }
 
@@ -27,7 +27,7 @@ namespace SpriteWave
 			_loc = loc;
 		}
 
-		public void Receive(ISelection isel)
+		public void Receive(IPiece isel)
 		{
 			_wnd.Receive(isel);
 		}
@@ -37,6 +37,8 @@ namespace SpriteWave
 			if (wnd == _wnd)
 				g.FillRectangle(_hl, wnd.PieceHitbox(_loc));
 		}
+		
+		public void Delete() {}
 	}
 
 	public class DragObject
@@ -58,7 +60,7 @@ namespace SpriteWave
 		private Brush _hl;
 		private IPiece _selObj;
 
-		public ISelection Selection
+		public ISelection Current
 		{
 			get {
 				if (_lastWnd == null)
@@ -109,6 +111,7 @@ namespace SpriteWave
 		{
 			_escaped = true;
 			Cursor.Current = _cur;
+			Transfer.Start();
 		}
 
 		public ISelection Update(TileWindow wnd, int x, int y)
@@ -127,7 +130,7 @@ namespace SpriteWave
 						if (loc.col != _orgPos.col || loc.row != _orgPos.row)
 							Escape();
 					}
-					catch (ArgumentOutOfRangeException ex) {}
+					catch (ArgumentOutOfRangeException) {}
 				}
 			}
 
@@ -136,7 +139,7 @@ namespace SpriteWave
 
 			_lastWnd = wnd;
 
-			ISelection isel = Selection;
+			ISelection isel = this.Current;
 			if (_lastWnd != null)
 				_lastWnd.Selection = isel;
 

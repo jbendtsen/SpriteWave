@@ -15,7 +15,7 @@ namespace SpriteWave
 		private SpriteWindow _spriteWnd;
 		private Dictionary<FormatKind, FileFormat> _formatList;
 
-		private ISelection _selSrc, _selDst;
+		private ToolStripMenuItem _pasteTile;
 		private DragObject _drag;
 
 		private FormWindowState _prevWndState = FormWindowState.Minimized;
@@ -51,21 +51,33 @@ namespace SpriteWave
 
 			Utils.ApplyRecursiveControlAction(this, this.SetMouseEventHandler);
 
-			this.inputSend.Click += new EventHandler((s, e) => Transfer());
+			this.inputSend.Click += new EventHandler((s, e) => {CopyTile(_inputWnd); PasteTile(_spriteWnd);});
+
+			inputMenu.Items.Add("Copy Tile", null, (s, e) => CopyTile(_inputWnd));
+			spriteMenu.Items.Add("Copy Tile", null, (s, e) => CopyTile(_spriteWnd));
+			
+			_pasteTile = new ToolStripMenuItem("Paste Tile", null, (s, e) => PasteTile(_spriteWnd));
+			_pasteTile.Enabled = false;
+			spriteMenu.Items.Add(_pasteTile);
+
+			var _initialSpriteMenu = new ContextMenuStrip();
+			_initialSpriteMenu.Items.Add(new ToolStripMenuItem("Paste Tile", null, (s, e) => PasteTile(_spriteWnd)));
 
 			_inputWnd = new InputWindow();
 			_inputWnd.Window = this.inputBox;
 			_inputWnd.ScrollY = this.inputScroll;
+			_inputWnd.Menu = this.inputMenu;
 			_inputWnd.Panel = this.inputPanel;
 
 			_spriteWnd = new SpriteWindow();
 			_spriteWnd.Window = this.spriteBox;
 			_spriteWnd.ScrollX = this.spriteScrollX;
 			_spriteWnd.ScrollY = this.spriteScrollY;
+			_spriteWnd.InitialMenu = _initialSpriteMenu;
+			_spriteWnd.Menu = this.spriteMenu;
 			_spriteWnd.Panel = this.spritePanel;
 
-			_selSrc = null;
-			_selDst = null;
+			Transfer.Clear();
 		}
 
 		private int Centre(int cont, int obj)
@@ -129,20 +141,19 @@ namespace SpriteWave
 			_spriteWnd.Draw();
 		}
 
-		private void Transfer()
+		private void CopyTile(TileWindow wnd)
 		{
-			if (_selSrc == null || _selDst == null)
-				return;
-
-			_selDst.Receive(_selSrc);
+			Transfer.Source = wnd;
+			Transfer.Start();
+			_pasteTile.Enabled = true;
 		}
 
-		private void EndSelection()
+		private void PasteTile(TileWindow wnd)
 		{
-			_inputWnd.Selection = null;
-			_spriteWnd.Selection = null;
-			_selSrc = null;
-			_selDst = null;
+			Transfer.Dest = wnd;
+			Transfer.Paste();
+			Draw();
+			//_pasteTile.Enabled = false;
 		}
 
 		private object SetMouseEventHandler(Control ctrl, object args)
@@ -155,34 +166,56 @@ namespace SpriteWave
 		
 		private void StartDrag(TileWindow wnd, int x, int y)
 		{
-			if (_selDst != null)
-				_selDst.Selection = null;
-			_selDst = null;
+			Transfer.Dest = null;
 
 			try {
 				_drag = new DragObject(wnd, x, y);
-				_selSrc = _drag.Selection;
-				wnd.Selection = _selSrc;
+				wnd.Selection = _drag.Current;
+				Transfer.Source = wnd.Selection;
 			}
-			catch (ArgumentOutOfRangeException ex) {
+			catch (ArgumentOutOfRangeException) {
 				_drag = null;
-				EndSelection();
+				Transfer.Clear();
+			}
+		}
+		
+		private void ShowMenuAt(TileWindow wnd, int x, int y)
+		{
+			try {
+				wnd.Location = wnd.GetPosition(x, y);
+				Transfer.Source = wnd;
+				wnd.ShowMenu(x, y);
+			}
+			catch (ArgumentOutOfRangeException) {
+				Transfer.Clear();
 			}
 		}
 
 		private void mouseDownHandler(object sender, MouseEventArgs e)
 		{
+			if (_drag != null)
+				return;
+
 			var ctrl = sender as Control;
 			if (ctrl is PictureBox)
 				this.ActiveControl = ctrl;
 
+			TileWindow wnd = null;
 			if (ctrl == this.inputBox)
-			{
-				StartDrag(_inputWnd, e.X, e.Y);
-			}
+				wnd = _inputWnd;
 			else if (ctrl == this.spriteBox)
+				wnd = _spriteWnd;
+
+			if (wnd != null)
 			{
-				StartDrag(_spriteWnd, e.X, e.Y);
+				if (e.Button == MouseButtons.Left)
+				{
+					StartDrag(wnd, e.X, e.Y);
+				}
+				else if (e.Button == MouseButtons.Right)
+				{
+					ShowMenuAt(wnd, e.X, e.Y);
+				}
 			}
 
 			Draw();
@@ -194,12 +227,12 @@ namespace SpriteWave
 			{
 				if (_drag.Started)
 				{
-					Transfer();
-					EndSelection();
+					Transfer.Paste();
+					Transfer.Clear();
 				}
 				else
 				{
-					_selSrc = _drag.Cancel();
+					Transfer.Source = _drag.Cancel();
 				}
 			}
 
@@ -247,13 +280,16 @@ namespace SpriteWave
 					y = e.Y - toCur.Y;
 				}
 
-				_selDst = _drag.Update(wnd, x, y);
+				Transfer.Dest = _drag.Update(wnd, x, y);
 				Draw();
 			}
 		}
 
 		private void keysHandler(object sender, KeyEventArgs e)
 		{
+			if (_drag != null)
+				return;
+
 			Control active = Utils.FindActiveControl(this);
 			
 			if (active is TextBox)
@@ -267,16 +303,22 @@ namespace SpriteWave
 
 			if (e.KeyCode == Keys.Escape)
 			{
-				EndSelection();
+				Transfer.Clear();
 				_drag = null;
 
 				Draw();
 				return;
 			}
 
+			if (e.KeyCode == Keys.Delete)
+			{
+				_spriteWnd.Delete();
+			}
+
 			if (e.KeyCode == Keys.Enter)
 			{
-				Transfer();
+				Transfer.Start();
+				Transfer.Paste();
 				_spriteWnd.MoveSelection(1, 0);
 
 				Draw();
@@ -308,10 +350,8 @@ namespace SpriteWave
 			
 			if (move)
 			{
-				_selSrc = _inputWnd;
-				_selSrc.Selection = _inputWnd;
-				_selDst = _spriteWnd;
-				_selDst.Selection = _spriteWnd;
+				Transfer.Source = _inputWnd;
+				Transfer.Dest = _spriteWnd;
 			}
 
 			Draw();
@@ -348,6 +388,7 @@ namespace SpriteWave
 
 		private void closeWorkspace(object sender, EventArgs e)
 		{
+			Transfer.Clear();
 			_inputWnd.Close();
 			_spriteWnd.Close();
 		}

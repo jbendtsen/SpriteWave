@@ -23,19 +23,13 @@ namespace SpriteWave
 		public abstract int Import(byte[] input, int offset);
 
 		public abstract void ExtractRow(byte[] line, int offset, int y, byte[] palRGBA);
-/*
-		public void CopyRow(byte[] line, int offset, int y)
-		{
-			Buffer.BlockCopy(line, offset, _data, (y % H) * W, W);
-		}
-*/
-		public void Copy(Tile org)
-		{
-			int len = Width * Height * BytesPP;
-			_data = new byte[len];
 
-			len = Math.Min(len, org.Data.Length);
-			Buffer.BlockCopy(org.Data, 0, _data, 0, len);
+		// Implements IPiece.Clone()
+		public IPiece Clone()
+		{
+			Tile t = Activator.CreateInstance(this.GetType()) as Tile;
+			Buffer.BlockCopy(_data, 0, t.Data, 0, Width * Height * BytesPP);
+			return t;
 		}
 
 		public void ApplyTo(byte[] canvas, int offset, int width, Palette p)

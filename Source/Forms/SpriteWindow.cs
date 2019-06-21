@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
 using System.Diagnostics;
@@ -8,24 +9,28 @@ namespace SpriteWave
 {
 	public class SpriteWindow : TileWindow
 	{
-		protected FileFormat _fmt;
+		private FileFormat _fmt;
 		public FileFormat FormatToLoad { set { _fmt = value; } }
 
-		protected const float scrollFactor = 10f;
-		protected const float zoomFactor = 5f;
+		private PointF[][] _border;
+		private readonly Color outlineColour = Utils.FromRGB(0x303030);
+		private const float outlineFactor = 4f;
+
+		private const float scrollFactor = 5f;
+		private const float zoomFactor = 5f;
 
 		// 'zoom' = number of screen pixels that fit into the width of a scaled collage pixel
-		protected float _zoom;
+		private float _zoom;
 
 		// 'xOff' and 'yOff' are measures in units of collage pixels
-		protected float _xOff, _yOff;
+		private float _xOff, _yOff;
 		
 		public override SizeF TileDimensions
 		{
 			get {
 				return new SizeF(
 					_zoom * (float)_cl.TileW,
-					_zoom * (float)_cl.TileW
+					_zoom * (float)_cl.TileH
 				);
 			}
 		}
@@ -54,7 +59,7 @@ namespace SpriteWave
 			}
 		}
 
-		protected HScrollBar _scrollX;
+		private HScrollBar _scrollX;
 		public override HScrollBar ScrollX
 		{
 			set {
@@ -70,7 +75,66 @@ namespace SpriteWave
 				_scrollY.Scroll += new ScrollEventHandler(this.yScrollAction);
 			}
 		}
-		
+
+		private ContextMenuStrip _initialMenu;
+		public ContextMenuStrip InitialMenu
+		{
+			set {
+				_initialMenu = value;
+				_initialMenu.Items[0].Enabled = true;
+			}
+		}
+
+		public override ContextMenuStrip Menu
+		{
+			set {
+				_menu = value;
+				_menu.Items.Add("Erase Tile", null, (s, e) => Delete());
+				_menu.Items.Add(new ToolStripSeparator());
+
+				_menu.Items.Add(
+					new ToolStripMenuItem(
+						"Rotate Tile", null, new ToolStripMenuItem[] {
+							new ToolStripMenuItem("Left", null, (s, e) => FlipTile(Translation.Left)),
+							new ToolStripMenuItem("Right", null, (s, e) => FlipTile(Translation.Right))
+						}
+					)
+				);
+				_menu.Items.Add(
+					new ToolStripMenuItem(
+						"Mirror Tile", null, new ToolStripMenuItem[] {
+							new ToolStripMenuItem("Horizontally", null, (s, e) => FlipTile(Translation.Horizontal)),
+							new ToolStripMenuItem("Vertically", null, (s, e) => FlipTile(Translation.Vertical))
+						}
+					)
+				);
+				_menu.Items.Add(new ToolStripSeparator());
+
+				_menu.Items.Add(
+					new ToolStripMenuItem(
+						"Insert", null, new ToolStripMenuItem[] {
+							new ToolStripMenuItem("Column Left", null, (s, e) => InsertColumn(_selPos.col)),
+							new ToolStripMenuItem("Column Right", null, (s, e) => InsertColumn(_selPos.col+1)),
+							new ToolStripMenuItem("Row Above", null, (s, e) => InsertRow(_selPos.row)),
+							new ToolStripMenuItem("Row Below", null, (s, e) => InsertRow(_selPos.row+1))
+						}
+					)
+				);
+
+				_menu.Items.Add(
+					new ToolStripMenuItem(
+						"Delete", null, new ToolStripMenuItem[] {
+							new ToolStripMenuItem("Column", null, (s, e) => DeleteColumn(_selPos.col)),
+							new ToolStripMenuItem("Row", null, (s, e) => DeleteRow(_selPos.row))
+						}
+					)
+				);
+
+				_menu.Items.Add(new ToolStripSeparator());
+				_menu.Items.Add("Edit Palette", null, (s, e) => MessageBox.Show("nope"));
+			}
+		}
+
 		public override PictureBox Window
 		{
 			set {
@@ -106,20 +170,20 @@ namespace SpriteWave
 				_palette3 = Utils.FindControl(_infoPanel, "palette3") as TextBox;
 				_palette4 = Utils.FindControl(_infoPanel, "palette4") as TextBox;
 				
-				_palette1.TextChanged += new EventHandler(this.palette1Handler);
-				_palette2.TextChanged += new EventHandler(this.palette2Handler);
-				_palette3.TextChanged += new EventHandler(this.palette3Handler);
-				_palette4.TextChanged += new EventHandler(this.palette4Handler);
+				_palette1.TextChanged += (s, e) => SetPaletteIndex(0, _palette1.Text);
+				_palette2.TextChanged += (s, e) => SetPaletteIndex(1, _palette2.Text);
+				_palette3.TextChanged += (s, e) => SetPaletteIndex(2, _palette3.Text);
+				_palette4.TextChanged += (s, e) => SetPaletteIndex(3, _palette4.Text);
 
 				_rotateLeft = Utils.FindControl(_infoPanel, "rotateLeft") as Button;
 				_rotateRight = Utils.FindControl(_infoPanel, "rotateRight") as Button;
 				_mirrorHori = Utils.FindControl(_infoPanel, "mirrorHori") as Button;
 				_mirrorVert = Utils.FindControl(_infoPanel, "mirrorVert") as Button;
 
-				_rotateLeft.Click += new EventHandler(this.rotateLeftHandler);
-				_rotateRight.Click += new EventHandler(this.rotateRightHandler);
-				_mirrorHori.Click += new EventHandler(this.mirrorHoriHandler);
-				_mirrorVert.Click += new EventHandler(this.mirrorVertHandler);
+				_rotateLeft.Click += (s, e) => FlipTile(Translation.Left);
+				_rotateRight.Click += (s, e) => FlipTile(Translation.Right);
+				_mirrorHori.Click += (s, e) => FlipTile(Translation.Horizontal);
+				_mirrorVert.Click += (s, e) => FlipTile(Translation.Vertical);
 
 				_nameBox = Utils.FindControl(_infoPanel, "spriteName") as TextBox;
 				_nameBox.KeyDown += new KeyEventHandler(this.checkNameSubmit);
@@ -138,8 +202,9 @@ namespace SpriteWave
 
 		public override void Activate()
 		{
-			//_vis.col = 5;
-			//_vis.row = 4;
+			_yOff = -_cl.TileH * 2f;
+			_zoom = _window.Size.Height / (float)(5f * _cl.TileH);
+			_xOff = (-(_window.Size.Width / _zoom) + _cl.TileW) / 2f;
 
 			base.Activate();
 			_scrollX.Visible = true;
@@ -185,25 +250,108 @@ namespace SpriteWave
 			_saveButton.Visible = false;
 		}
 
-		// Implements ISelection.Receive()
-		public override void Receive(ISelection isel)
+		public override void Render()
 		{
-			Tile selTile = isel.Piece as Tile;
-			if (selTile == null)
+			base.Render();
+
+			float clWidth = _cl.Width;
+			float clHeight = _cl.Height;
+
+			float taperW = (float)_cl.TileW / 2f;
+			float taperH = (float)_cl.TileH / 2f;
+			float gapW = (float)_cl.TileW / 4f;
+			float gapH = (float)_cl.TileH / 4f;
+			float fitW = (float)_cl.TileW / 8f;
+			float fitH = (float)_cl.TileH / 8f;
+
+			_border = new PointF[][]
+			{
+				// top
+				new PointF[] {
+					new PointF(taperW, -gapH),
+					new PointF(clWidth - taperW, -gapH),
+					new PointF(clWidth / 2f, -taperH - gapH)
+				},
+				// bottom
+				new PointF[] {
+					new PointF(taperW, clHeight + gapH),
+					new PointF(clWidth - taperW, clHeight + gapH),
+					new PointF(clWidth / 2f, clHeight + taperH + gapH)
+				},
+				// left
+				new PointF[] {
+					new PointF(-gapW, taperH),
+					new PointF(-gapW, clHeight - taperH),
+					new PointF(-gapW - taperW, clHeight / 2f)
+				},
+				// right
+				new PointF[] {
+					new PointF(clWidth + gapW, taperH),
+					new PointF(clWidth + gapW, clHeight - taperH),
+					new PointF(clWidth + gapW + taperW, clHeight / 2f)
+				},
+				// top-left
+				new PointF[] {
+					new PointF(-taperW, fitH),
+					new PointF(fitW, -taperH),
+					new PointF(-taperW, -taperH)
+				},
+				// top-right
+				new PointF[] {
+					new PointF(clWidth + taperW, fitH),
+					new PointF(clWidth - fitW, -taperH),
+					new PointF(clWidth + taperW, -taperH)
+				},
+				// bottom-left
+				new PointF[] {
+					new PointF(-taperW, clHeight - fitH),
+					new PointF(fitW, clHeight + taperH),
+					new PointF(-taperW, clHeight + taperH)
+				},
+				// bottom-right
+				new PointF[] {
+					new PointF(clWidth + taperW, clHeight - fitH),
+					new PointF(clWidth - fitW, clHeight + taperH),
+					new PointF(clWidth + taperW, clHeight + taperH)
+				}
+			};
+		}
+
+		// Implements ISelection.Receive()
+		public override void Receive(IPiece obj)
+		{
+			Tile t = obj as Tile;
+			if (t == null)
 				return;
 
 			if (_cl == null)
 			{
-				_cl = new Collage(_fmt, 5, false);
-				_cl.AddBlankTiles(20);
+				_cl = new Collage(_fmt, 1, false);
+				_cl.AddBlankTiles(1);
 				Activate();
 			}
-			
-			Tile t = _fmt.NewTile();
-			t.Copy(selTile);
 
 			_cl.SetTile(_sel.Location, t);
-			_cl.Render();
+			Render();
+		}
+
+		// Implements ISelection.Delete()
+		public override void Delete()
+		{
+			if (_cl == null)
+				return;
+
+			_cl.SetTile(_sel.Location, _fmt.NewTile());
+			Render();
+			Draw();
+		}
+
+		public override void ShowMenu(int x, int y)
+		{
+			if (_cl == null && Transfer.HasPiece)
+				_initialMenu.Show(_window, new Point(x, y));
+			else
+				base.ShowMenu(x, y);
 		}
 
 		private float AdjustScroll(ScrollBar scroll, float pos)
@@ -315,10 +463,12 @@ namespace SpriteWave
 			return new RectangleF(
 				xCl * _zoom,
 				yCl * _zoom,
-				tileSc.Width + 1f,
-				tileSc.Height + 1f
+				tileSc.Width,
+				tileSc.Height
 			);
 		}
+
+		public override void ResetSample() {}
 
 		public override void AdjustWindow(int width = 0, int height = 0) {}
 
@@ -341,11 +491,29 @@ namespace SpriteWave
 			}
 		}
 
+		public override void DrawBorders(Graphics g)
+		{
+			g.SmoothingMode = SmoothingMode.AntiAlias;
+			Pen black = new Pen(outlineColour, _zoom / outlineFactor);
+
+			PointF[] tri = new PointF[_border[0].Length];
+			foreach (PointF[] edge in _border)
+			{
+				for (int i = 0; i < edge.Length; i++)
+				{
+					tri[i].X = (edge[i].X - _xOff) * _zoom;
+					tri[i].Y = (edge[i].Y - _yOff) * _zoom;
+				}
+				g.DrawPolygon(black, tri);
+			}
+
+			g.SmoothingMode = SmoothingMode.None;
+		}
+
 		private static float PadOffset(float value, float unit)
 		{
 			return -(value % unit);
 		}
-
 		public override void DrawGrid(Graphics g)
 		{
 			float wndW = _window.Size.Width;
@@ -367,7 +535,7 @@ namespace SpriteWave
 			}
 		}
 		
-		protected void windowScrollAction(object sender, MouseEventArgs e)
+		private void windowScrollAction(object sender, MouseEventArgs e)
 		{
 			Keys mod = Control.ModifierKeys;
 			bool ctrlKey = (mod & Keys.Control) != 0;
@@ -390,14 +558,39 @@ namespace SpriteWave
 			Draw();
 		}
 
-		protected void xScrollAction(object sender, ScrollEventArgs e)
+		private void xScrollAction(object sender, ScrollEventArgs e)
 		{
 			ScrollTo((float)e.NewValue / _zoom, _yOff);
 			Draw();
 		}
-		protected void yScrollAction(object sender, ScrollEventArgs e)
+		private void yScrollAction(object sender, ScrollEventArgs e)
 		{
 			ScrollTo(_xOff, (float)e.NewValue / _zoom);
+			Draw();
+		}
+
+		private void InsertColumn(int pos)
+		{
+			_cl.InsertColumn(pos);
+			Render();
+			Draw();
+		}
+		private void InsertRow(int pos)
+		{
+			_cl.InsertRow(pos);
+			Render();
+			Draw();
+		}
+		private void DeleteColumn(int pos)
+		{
+			_cl.DeleteColumn(pos);
+			Render();
+			Draw();
+		}
+		private void DeleteRow(int pos)
+		{
+			_cl.DeleteRow(pos);
+			Render();
 			Draw();
 		}
 
@@ -411,25 +604,9 @@ namespace SpriteWave
 			{
 				t.Translate(tr);
 				//_cl.SetTile(_selPos, t);
-				_cl.Render();
+				Render();
+				Draw();
 			}
-		}
-
-		public void rotateLeftHandler(object sender, EventArgs e)
-		{
-			FlipTile(Translation.Left);
-		}
-		public void rotateRightHandler(object sender, EventArgs e)
-		{
-			FlipTile(Translation.Right);
-		}
-		public void mirrorHoriHandler(object sender, EventArgs e)
-		{
-			FlipTile(Translation.Horizontal);
-		}
-		public void mirrorVertHandler(object sender, EventArgs e)
-		{
-			FlipTile(Translation.Vertical);
 		}
 
 		private void SetPaletteIndex(int idx, string text)
@@ -446,28 +623,11 @@ namespace SpriteWave
 			}
 
 			_cl.SetColour(idx, n);
-			_cl.Render();
+			Render();
 
 			_sel = null;
 			ResetGridPen();
 			Draw();
-		}
-
-		public void palette1Handler(object sender, EventArgs e)
-		{
-			SetPaletteIndex(0, _palette1.Text);
-		}
-		public void palette2Handler(object sender, EventArgs e)
-		{
-			SetPaletteIndex(1, _palette2.Text);
-		}
-		public void palette3Handler(object sender, EventArgs e)
-		{
-			SetPaletteIndex(2, _palette3.Text);
-		}
-		public void palette4Handler(object sender, EventArgs e)
-		{
-			SetPaletteIndex(3, _palette4.Text);
 		}
 
 		public void Save()

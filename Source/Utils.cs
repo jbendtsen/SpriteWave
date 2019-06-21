@@ -111,7 +111,7 @@ namespace SpriteWave
 			bar.LargeChange = large;
 			bar.Minimum = min;
 			bar.Maximum = max;
-			if (bar.Visible)
+			if (bar.Visible && value >= bar.Minimum && value <= bar.Maximum)
 				bar.Value = value;
 		}
 
@@ -201,7 +201,8 @@ namespace SpriteWave
 			return (double)((clr >> rshift) & 0xff) / 255.0;
 		}
 
-		public static Color FromRGBA(uint clr)
+		// Ignores alpha
+		public static Color FromRGB(uint clr)
 		{
 			int rgb = (int)(clr >> 8);
 			return Color.FromArgb(255, Color.FromArgb(rgb));

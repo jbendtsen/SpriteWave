@@ -2,8 +2,6 @@
 using System.Drawing;
 using System.Windows.Forms;
 
-using System.Diagnostics;
-
 namespace SpriteWave
 {
 	public class InputWindow : TileWindow
@@ -50,6 +48,15 @@ namespace SpriteWave
 			set {
 				_scrollY = value;
 				_scrollY.Scroll += new ScrollEventHandler(this.barScrollAction);
+			}
+		}
+
+		public override ContextMenuStrip Menu
+		{
+			set {
+				_menu = value;
+				_menu.Items.Add(new ToolStripSeparator());
+				_menu.Items.Add("Edit Palette", null, (s, e) => MessageBox.Show("test"));
 			}
 		}
 
@@ -103,7 +110,9 @@ namespace SpriteWave
 
 		public override void Activate()
 		{
-			base.Activate();
+			_vis.col = _cl.Columns;
+			AdjustWindow();
+
 			_infoPanel.Visible = true;
 
 			_offsetLabel.Visible = true;
@@ -114,7 +123,7 @@ namespace SpriteWave
 
 			_sizeLabel.Visible = true;
 
-			_vis.col = _cl.Columns;
+			base.Activate();
 		}
 		
 		public override void Close()
@@ -128,6 +137,7 @@ namespace SpriteWave
 			_contents = file;
 			_cl = new Collage(fmt);
 			_cl.LoadTiles(_contents, offset);
+			Render();
 
 			_sizeLabel.Text = "/ 0x" + file.Length.ToString("X");
 
@@ -138,12 +148,19 @@ namespace SpriteWave
 		public void Load(int offset)
 		{
 			if (_cl != null && _contents != null)
+			{
 				_cl.LoadTiles(_contents, offset);
+				Render();
+			}
 
 			ResetScroll();
 		}
 		
-		public override void Receive(ISelection isel) {}
+		// Implements ISelection.Receive()
+		public override void Receive(IPiece isel) {}
+
+		// Implements ISelection.Delete()
+		public override void Delete() {}
 
 		public override void Scroll(float dx, float dy)
 		{
@@ -180,7 +197,7 @@ namespace SpriteWave
 			if (_cl == null)
 				return;
 
-			_tileSampleBmp = TileBitmap(Piece as Tile);
+			ResetSample();
 			_tileSample.Visible = true;
 			_sendTile.Visible = true;
 		}
@@ -208,12 +225,11 @@ namespace SpriteWave
 			return pos;
 		}
 
-		public override void SetPosition(Position p)
+		public override void ResetSample()
 		{
-			base.SetPosition(p);
-			_tileSampleBmp = TileBitmap(Piece as Tile);
+			_tileSampleBmp = TileBitmap(this.Piece as Tile);
 		}
-		
+
 		public override RectangleF PieceHitbox(Position p)
 		{
 			int col = p.col;
@@ -246,10 +262,10 @@ namespace SpriteWave
 			_vis.row = (int)visRowsF;
 
 			int rows = _cl.Rows;
-			_scrollY.Visible = _vis.row < rows;
-
-			if (!_scrollY.Visible)
+			bool scroll = true;
+			if (_vis.row > rows)
 			{
+				scroll = false;
 				_vis.row = rows;
 				wndH = (int)((float)_vis.row * thF * scaleX);
 			}
@@ -257,6 +273,8 @@ namespace SpriteWave
 			_window.Width = wndW;
 			if (wndH <= _window.Height)
 				_window.Height = wndH;
+
+			_scrollY.Visible = scroll;
 		}
 
 		public override void DrawGrid(Graphics g)

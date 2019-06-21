@@ -23,6 +23,7 @@ namespace SpriteWave
 
 		private PictureBox inputBox;
 		private VScrollBar inputScroll;
+		private ContextMenuStrip inputMenu;
 		private Panel inputPanel;
 		private Label inputOffsetLabel;
 		private TextBox inputOffset;
@@ -33,13 +34,13 @@ namespace SpriteWave
 		private PictureBox spriteBox;
 		private HScrollBar spriteScrollX;
 		private VScrollBar spriteScrollY;
+		private ContextMenuStrip spriteMenu;
 		private Panel spritePanel;
 		private Label spritePrompt;
 
 		private MenuStrip menuStrip1;
 		private ToolStripMenuItem fileToolStripMenuItem;
 		private ToolStripMenuItem openBinaryToolStripMenuItem;
-		private ToolStripMenuItem exportSpriteToolStripMenuItem;
 		private ToolStripMenuItem closeToolStripMenuItem;
 		private ToolStripMenuItem quitToolStripMenuItem;
 		private OpenFileDialog openFileDialog1;
@@ -53,6 +54,10 @@ namespace SpriteWave
 		private System.Windows.Forms.TextBox palette2;
 		private System.Windows.Forms.Button spriteSave;
 		private System.Windows.Forms.TextBox spriteName;
+		private System.Windows.Forms.ToolStripMenuItem copyTileToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem editToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem inputPaletteToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem spritePaletteToolStripMenuItem;
 
 		/// <summary>
 		/// Disposes resources used by the form.
@@ -74,6 +79,7 @@ namespace SpriteWave
 		/// not be able to load this method if it was changed manually.
 		private void InitializeComponent()
 		{
+			this.components = new System.ComponentModel.Container();
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
 			this.inputBox = new System.Windows.Forms.PictureBox();
 			this.inputScroll = new System.Windows.Forms.VScrollBar();
@@ -87,6 +93,8 @@ namespace SpriteWave
 			this.spriteScrollX = new System.Windows.Forms.HScrollBar();
 			this.spriteScrollY = new System.Windows.Forms.VScrollBar();
 			this.spritePanel = new System.Windows.Forms.Panel();
+			this.spriteSave = new System.Windows.Forms.Button();
+			this.spriteName = new System.Windows.Forms.TextBox();
 			this.mirrorVert = new System.Windows.Forms.Button();
 			this.mirrorHori = new System.Windows.Forms.Button();
 			this.rotateRight = new System.Windows.Forms.Button();
@@ -99,12 +107,15 @@ namespace SpriteWave
 			this.menuStrip1 = new System.Windows.Forms.MenuStrip();
 			this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.openBinaryToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.exportSpriteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.closeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.quitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-			this.spriteName = new System.Windows.Forms.TextBox();
-			this.spriteSave = new System.Windows.Forms.Button();
+			this.inputMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+			this.copyTileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.spriteMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+			this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.inputPaletteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.spritePaletteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			((System.ComponentModel.ISupportInitialize)(this.inputBox)).BeginInit();
 			this.inputPanel.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.inputSample)).BeginInit();
@@ -242,6 +253,24 @@ namespace SpriteWave
 			this.spritePanel.Size = new System.Drawing.Size(348, 290);
 			this.spritePanel.TabIndex = 5;
 			// 
+			// spriteSave
+			// 
+			this.spriteSave.Location = new System.Drawing.Point(228, 103);
+			this.spriteSave.Name = "spriteSave";
+			this.spriteSave.Size = new System.Drawing.Size(75, 23);
+			this.spriteSave.TabIndex = 11;
+			this.spriteSave.Text = "Save";
+			this.spriteSave.UseVisualStyleBackColor = true;
+			this.spriteSave.Visible = false;
+			// 
+			// spriteName
+			// 
+			this.spriteName.Location = new System.Drawing.Point(216, 77);
+			this.spriteName.Name = "spriteName";
+			this.spriteName.Size = new System.Drawing.Size(100, 20);
+			this.spriteName.TabIndex = 10;
+			this.spriteName.Visible = false;
+			// 
 			// mirrorVert
 			// 
 			this.mirrorVert.Location = new System.Drawing.Point(102, 114);
@@ -325,28 +354,11 @@ namespace SpriteWave
 			this.spritePrompt.Text = "Drag or send a tile to begin!";
 			this.spritePrompt.Visible = false;
 			// 
-			// spriteName
-			// 
-			this.spriteName.Location = new System.Drawing.Point(216, 77);
-			this.spriteName.Name = "spriteName";
-			this.spriteName.Size = new System.Drawing.Size(100, 20);
-			this.spriteName.TabIndex = 10;
-			this.spriteName.Visible = false;
-			// 
-			// spriteSave
-			// 
-			this.spriteSave.Location = new System.Drawing.Point(228, 103);
-			this.spriteSave.Name = "spriteSave";
-			this.spriteSave.Size = new System.Drawing.Size(75, 23);
-			this.spriteSave.TabIndex = 11;
-			this.spriteSave.Text = "Save";
-			this.spriteSave.UseVisualStyleBackColor = true;
-			this.spriteSave.Visible = false;
-			// 
 			// menuStrip1
 			// 
 			this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-			this.fileToolStripMenuItem});
+			this.fileToolStripMenuItem,
+			this.editToolStripMenuItem});
 			this.menuStrip1.Location = new System.Drawing.Point(0, 0);
 			this.menuStrip1.Name = "menuStrip1";
 			this.menuStrip1.Size = new System.Drawing.Size(704, 24);
@@ -357,7 +369,6 @@ namespace SpriteWave
 			// 
 			this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
 			this.openBinaryToolStripMenuItem,
-			this.exportSpriteToolStripMenuItem,
 			this.closeToolStripMenuItem,
 			this.quitToolStripMenuItem});
 			this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
@@ -369,30 +380,23 @@ namespace SpriteWave
 			this.openBinaryToolStripMenuItem.Name = "openBinaryToolStripMenuItem";
 			this.openBinaryToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+O";
 			this.openBinaryToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.O)));
-			this.openBinaryToolStripMenuItem.Size = new System.Drawing.Size(182, 22);
+			this.openBinaryToolStripMenuItem.Size = new System.Drawing.Size(209, 22);
 			this.openBinaryToolStripMenuItem.Text = "Open Binary";
 			this.openBinaryToolStripMenuItem.Click += new System.EventHandler(this.openBinary);
-			// 
-			// exportSpriteToolStripMenuItem
-			// 
-			this.exportSpriteToolStripMenuItem.Name = "exportSpriteToolStripMenuItem";
-			this.exportSpriteToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+S";
-			this.exportSpriteToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
-			this.exportSpriteToolStripMenuItem.Size = new System.Drawing.Size(182, 22);
-			this.exportSpriteToolStripMenuItem.Text = "Export Sprite";
-			this.exportSpriteToolStripMenuItem.Click += new System.EventHandler(this.exportSprite);
 			// 
 			// closeToolStripMenuItem
 			// 
 			this.closeToolStripMenuItem.Name = "closeToolStripMenuItem";
-			this.closeToolStripMenuItem.Size = new System.Drawing.Size(182, 22);
+			this.closeToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+W";
+			this.closeToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.W)));
+			this.closeToolStripMenuItem.Size = new System.Drawing.Size(209, 22);
 			this.closeToolStripMenuItem.Text = "Close Workspace";
 			this.closeToolStripMenuItem.Click += new System.EventHandler(this.closeWorkspace);
 			// 
 			// quitToolStripMenuItem
 			// 
 			this.quitToolStripMenuItem.Name = "quitToolStripMenuItem";
-			this.quitToolStripMenuItem.Size = new System.Drawing.Size(182, 22);
+			this.quitToolStripMenuItem.Size = new System.Drawing.Size(209, 22);
 			this.quitToolStripMenuItem.Text = "Quit";
 			this.quitToolStripMenuItem.Click += new System.EventHandler(this.quit);
 			// 
@@ -400,6 +404,42 @@ namespace SpriteWave
 			// 
 			this.openFileDialog1.Title = "Open tiles file";
 			this.openFileDialog1.FileOk += new System.ComponentModel.CancelEventHandler(this.openFileDialog1FileOk);
+			// 
+			// inputMenu
+			// 
+			this.inputMenu.Name = "inputMenu";
+			this.inputMenu.Size = new System.Drawing.Size(61, 4);
+			// 
+			// copyTileToolStripMenuItem
+			// 
+			this.copyTileToolStripMenuItem.Name = "copyTileToolStripMenuItem";
+			this.copyTileToolStripMenuItem.Size = new System.Drawing.Size(32, 19);
+			// 
+			// spriteMenu
+			// 
+			this.spriteMenu.Name = "spriteMenu";
+			this.spriteMenu.Size = new System.Drawing.Size(61, 4);
+			// 
+			// editToolStripMenuItem
+			// 
+			this.editToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+			this.inputPaletteToolStripMenuItem,
+			this.spritePaletteToolStripMenuItem});
+			this.editToolStripMenuItem.Name = "editToolStripMenuItem";
+			this.editToolStripMenuItem.Size = new System.Drawing.Size(39, 20);
+			this.editToolStripMenuItem.Text = "Edit";
+			// 
+			// inputPaletteToolStripMenuItem
+			// 
+			this.inputPaletteToolStripMenuItem.Name = "inputPaletteToolStripMenuItem";
+			this.inputPaletteToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+			this.inputPaletteToolStripMenuItem.Text = "Input Palette";
+			// 
+			// spritePaletteToolStripMenuItem
+			// 
+			this.spritePaletteToolStripMenuItem.Name = "spritePaletteToolStripMenuItem";
+			this.spritePaletteToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+			this.spritePaletteToolStripMenuItem.Text = "Sprite Palette";
 			// 
 			// MainForm
 			// 

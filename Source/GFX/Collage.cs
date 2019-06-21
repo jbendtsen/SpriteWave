@@ -120,7 +120,6 @@ namespace SpriteWave
 			if (_tiles.Count > idx)
 				_tiles.RemoveRange(idx, _tiles.Count - idx);
 
-			Render();
 			return true;
 		}
 
@@ -152,6 +151,47 @@ namespace SpriteWave
 			}
 
 			_canvas = Utils.BitmapFrom(collage, width, height);
+		}
+
+		public void InsertColumn(int idx)
+		{
+			if (idx < 0 || idx > _nCols)
+				return;
+
+			_nCols++;
+			for (int i = 0; i < Rows; i++)
+				_tiles.Insert(i * _nCols + idx, _fmt.NewTile());
+		}
+
+		public void InsertRow(int idx)
+		{
+			int rows = Rows;
+			if (idx < 0 || idx > rows)
+				return;
+
+			for (int i = 0; i < _nCols; i++)
+				_tiles.Insert(idx * _nCols + i, _fmt.NewTile());
+		}
+
+		public void DeleteColumn(int idx)
+		{
+			if (idx < 0 || idx >= _nCols)
+				return;
+
+			for (int i = Rows - 1; i >= 0; i--)
+				_tiles.RemoveAt(i * _nCols + idx);
+
+			_nCols--;
+		}
+
+		public void DeleteRow(int idx)
+		{
+			int rows = Rows;
+			if (idx < 0 || idx >= rows)
+				return;
+
+			for (int i = _nCols - 1; i >= 0; i--)
+				_tiles.RemoveAt(idx * _nCols + i);
 		}
 	}
 }
