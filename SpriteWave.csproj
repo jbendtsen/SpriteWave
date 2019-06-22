@@ -55,6 +55,8 @@
     <Compile Include="Source\Format.cs" />
     <Compile Include="Source\Forms\ColourPicker.cs" />
     <Compile Include="Source\Selection\Drag.cs" />
+    <Compile Include="Source\Selection\Edge.cs" />
+    <Compile Include="Source\Selection\Selection.cs" />
     <Compile Include="Source\Selection\Transfer.cs" />
     <Compile Include="Source\Tiles\MDTile.cs" />
     <Compile Include="Source\Tiles\NESTile.cs" />

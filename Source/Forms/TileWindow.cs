@@ -25,7 +25,7 @@ namespace SpriteWave
 		public abstract VScrollBar ScrollY { set; }
 
 		protected PictureBox _window;
-		public abstract PictureBox Window { set; }
+		public abstract PictureBox Canvas { set; }
 
 		protected ContextMenuStrip _menu;
 		public abstract ContextMenuStrip Menu { set; }
@@ -36,61 +36,53 @@ namespace SpriteWave
 		protected Rectangle _bounds;
 		protected Pen _gridPen;
 
-		// Implements ISelection.Selection
-		protected ISelection _sel;
-		public ISelection Selection
-		{
-			get {
-				return _sel;
-			}
-			set {
-				// If the new value is not this window or a mouseselection, don't accept it
-				ISelection isel = value;
-				if (isel != null && isel != this && !(isel is DragPoint))
-					isel = null;
+		protected ISelection _currentSel;
 
-				bool enable = isel != null;
-				_sel = isel;
-
-				if (enable)
-					EnableSelection();
-				else
-					DisableSelection();
-			}
-		}
-		
 		// Implements ISelection.Location
-		public virtual Position Location
+		public Position Location
 		{
 			get {
 				return _selPos;
 			}
 			set {
 				_selPos = value;
-				_sel = this;
+				_currentSel = this;
 				ResetSample();
 			}
-		}
-
-		public IPiece PieceAt(Position loc)
-		{
-			if (_cl == null)
-				return null;
-
-			return _cl.TileAt(loc);
 		}
 
 		// Implements ISelection.Piece
 		public IPiece Piece
 		{
 			get {
-				if (_sel == null)
+				if (_currentSel == null)
 					return null;
 
-				if (_sel != this)
-					return _sel.Piece;
+				if (_currentSel != this)
+					return _currentSel.Piece;
 
 				return PieceAt(_selPos);
+			}
+		}
+
+		public ISelection Selection
+		{
+			get {
+				return _currentSel;
+			}
+			set {
+				// If the new value is not this window or a mouseselection, don't accept it
+				ISelection isel = value;
+				if (isel != null && isel != this && !(isel is DragPoint))
+					isel = null;
+		
+				bool enable = isel != null && isel.Piece is Tile;
+				_currentSel = isel;
+		
+				if (enable)
+					EnableSelection();
+				else
+					DisableSelection();
 			}
 		}
 
@@ -108,10 +100,8 @@ namespace SpriteWave
 		public abstract void EnableSelection();
 		public abstract void DisableSelection();
 		
-		public abstract Position GetPosition(int x, int y);
+		public abstract Position GetPosition(int x, int y, bool allowOob = false);
 		public abstract RectangleF PieceHitbox(Position p);
-
-		public abstract void ResetSample();
 
 		public abstract void AdjustWindow(int width = 0, int height = 0);
 
@@ -138,6 +128,14 @@ namespace SpriteWave
 		public virtual void Render()
 		{
 			_cl.Render();
+		}
+
+		public virtual IPiece PieceAt(Position loc)
+		{
+			if (_cl == null)
+				return null;
+
+			return _cl.TileAt(loc);
 		}
 		
 		public void DeleteFrame()
@@ -184,6 +182,11 @@ namespace SpriteWave
 			return _cl.RenderTile(t);
 		}
 		
+		public virtual void ResetSample() {}
+
+		public virtual EdgeKind EdgeAt(Position p) { return EdgeKind.None; }
+		public virtual PointF[] ShapeEdge(Edge edge) { return null; }
+
 		public void ResetGridPen()
 		{
 			uint marginClr = Utils.InvertRGB(_cl.MeanColour);
@@ -205,12 +208,13 @@ namespace SpriteWave
 		}
 
 		// Implements ISelection.DrawSelection
-		public virtual void DrawSelection(TileWindow wnd, Graphics g)
+		public void DrawSelection(Graphics g)
 		{
-			g.FillRectangle(_selHl, PieceHitbox(this.Location));
+			Position loc = this.Location;
+			Utils.DrawSelection(g, this, _selHl, loc);
 		}
 
-		public virtual void DrawBorders(Graphics g) {}
+		public virtual void DrawEdges(Graphics g) {}
 
 		public virtual void Draw()
 		{
@@ -242,12 +246,12 @@ namespace SpriteWave
 				DrawCanvas(g);
 
 				// Highlight the current tile, if one is currently selected
-				if (_sel != null)
-					_sel.DrawSelection(this, g);
+				if (_currentSel != null)
+					_currentSel.DrawSelection(g);
 
 				// Draw some borders to indicate that the window's collage can be resized
 				// Only implemented in SpriteWindow
-				DrawBorders(g);
+				DrawEdges(g);
 
 				// In order to more easily discern between tiles on the screen, we draw margins around each tile.
 				if (_gridPen == null)

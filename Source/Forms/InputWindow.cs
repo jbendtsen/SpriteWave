@@ -60,7 +60,7 @@ namespace SpriteWave
 			}
 		}
 
-		public override PictureBox Window
+		public override PictureBox Canvas
 		{
 			set {
 				_window = value;
@@ -212,7 +212,7 @@ namespace SpriteWave
 			_tileSampleBmp = null;
 		}
 
-		public override Position GetPosition(int x, int y)
+		public override Position GetPosition(int x, int y, bool allowOob = false)
 		{
 			SizeF tileSc = TileDimensions;
 
@@ -309,7 +309,7 @@ namespace SpriteWave
 
 				if (offset >= 0 && offset < _contents.Length)
 				{
-					Selection = null;
+					this.Selection = null;
 					Load(offset);
 					Draw();
 				}
@@ -328,6 +328,9 @@ namespace SpriteWave
 
 		private void paintSample(object sender, PaintEventArgs e)
 		{
+			if (_tileSampleBmp == null)
+				return;
+
 			e.Graphics.ToggleSmoothing(false);
 			e.Graphics.DrawImage(_tileSampleBmp, 0, 0, _tileSample.Width - 1, _tileSample.Height - 1);
 		}

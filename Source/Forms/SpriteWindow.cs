@@ -12,7 +12,7 @@ namespace SpriteWave
 		private FileFormat _fmt;
 		public FileFormat FormatToLoad { set { _fmt = value; } }
 
-		private PointF[][] _border;
+		private Edge[] _edges;
 		private readonly Color outlineColour = Utils.FromRGB(0x303030);
 		private const float outlineFactor = 4f;
 
@@ -135,7 +135,7 @@ namespace SpriteWave
 			}
 		}
 
-		public override PictureBox Window
+		public override PictureBox Canvas
 		{
 			set {
 				_window = value;
@@ -195,9 +195,10 @@ namespace SpriteWave
 
 		public SpriteWindow() : base()
 		{
-			_zoom = 10f;
-			_xOff = 0f;
-			_yOff = 0f;
+			// Initialise all edges, including the invalid (centre) one
+			_edges = new Edge[9];
+			for (int i = 0; i < 9; i++)
+				_edges[i] = new Edge((EdgeKind)i);
 		}
 
 		public override void Activate()
@@ -250,79 +251,93 @@ namespace SpriteWave
 			_saveButton.Visible = false;
 		}
 
-		public override void Render()
+		public override EdgeKind EdgeAt(Position loc)
 		{
-			base.Render();
+			int x = 0, y = 0;
+			if (loc.row == -1)
+				y = -1;
+			if (loc.row == _cl.Rows)
+				y = 1;
+			if (loc.col == -1)
+				x = -1;
+			if (loc.col == _cl.Columns)
+				x = 1;
 
-			float clWidth = _cl.Width;
-			float clHeight = _cl.Height;
+			return Edge.Direction(x, y);
+		}
 
-			float taperW = (float)_cl.TileW / 2f;
-			float taperH = (float)_cl.TileH / 2f;
-			float gapW = (float)_cl.TileW / 4f;
-			float gapH = (float)_cl.TileH / 4f;
-			float fitW = (float)_cl.TileW / 8f;
-			float fitH = (float)_cl.TileH / 8f;
-
-			_border = new PointF[][]
+		public override IPiece PieceAt(Position loc)
+		{
+			if (_cl == null ||
+			    loc.col < -1 || loc.row < -1 ||
+			    loc.col > _cl.Columns || loc.row > _cl.Rows)
 			{
-				// top
-				new PointF[] {
-					new PointF(taperW, -gapH),
-					new PointF(clWidth - taperW, -gapH),
-					new PointF(clWidth / 2f, -taperH - gapH)
-				},
-				// bottom
-				new PointF[] {
-					new PointF(taperW, clHeight + gapH),
-					new PointF(clWidth - taperW, clHeight + gapH),
-					new PointF(clWidth / 2f, clHeight + taperH + gapH)
-				},
-				// left
-				new PointF[] {
-					new PointF(-gapW, taperH),
-					new PointF(-gapW, clHeight - taperH),
-					new PointF(-gapW - taperW, clHeight / 2f)
-				},
-				// right
-				new PointF[] {
-					new PointF(clWidth + gapW, taperH),
-					new PointF(clWidth + gapW, clHeight - taperH),
-					new PointF(clWidth + gapW + taperW, clHeight / 2f)
-				},
-				// top-left
-				new PointF[] {
-					new PointF(-taperW, fitH),
-					new PointF(fitW, -taperH),
-					new PointF(-taperW, -taperH)
-				},
-				// top-right
-				new PointF[] {
-					new PointF(clWidth + taperW, fitH),
-					new PointF(clWidth - fitW, -taperH),
-					new PointF(clWidth + taperW, -taperH)
-				},
-				// bottom-left
-				new PointF[] {
-					new PointF(-taperW, clHeight - fitH),
-					new PointF(fitW, clHeight + taperH),
-					new PointF(-taperW, clHeight + taperH)
-				},
-				// bottom-right
-				new PointF[] {
-					new PointF(clWidth + taperW, clHeight - fitH),
-					new PointF(clWidth - fitW, clHeight + taperH),
-					new PointF(clWidth + taperW, clHeight + taperH)
+				return null;
+			}
+
+			EdgeKind kind = EdgeAt(loc);
+			if (kind == EdgeKind.None)
+				return _cl.TileAt(loc);
+
+			return _edges[(int)kind];
+		}
+
+		private void ResizeCollage(Edge msg)
+		{
+			if (msg.EdgeKind == EdgeKind.None)
+				return;
+
+			int x, y;
+			Edge.GetCoords(msg.EdgeKind, out x, out y);
+			var dist = msg.Distance;
+
+			Func<int, int, int, Action<int>, Action<int>, int> resizeAxis = (side, delta, max, insert, delete) =>
+			{
+				int length = Math.Abs(delta);
+				for (int i = 0; i < length; i++)
+				{
+					if (side < 0)
+					{
+						if (delta < 0)
+							insert(0);
+						else
+							delete(0);
+					}
+					if (side > 0)
+					{
+						if (delta < 0)
+							delete(max - 1);
+						else
+							insert(max);
+					}
 				}
+
+				int shift = length;
+				if ((x < 0 && delta >= 0) ||
+				    (x > 0 && delta < 0))
+				{
+					shift *= -1;
+				}
+
+				return shift;
 			};
+
+			int shiftX = resizeAxis(x, dist.col, _cl.Columns, _cl.InsertColumn, _cl.DeleteColumn);
+			int shiftY = resizeAxis(y, dist.row, _cl.Rows, _cl.InsertRow, _cl.DeleteRow);
+
+			ShiftCamera(shiftX, shiftY);
+			msg.Distance = new Position(0, 0);
 		}
 
 		// Implements ISelection.Receive()
 		public override void Receive(IPiece obj)
 		{
-			Tile t = obj as Tile;
-			if (t == null)
+			if (obj is Edge)
+			{
+				ResizeCollage(obj as Edge);
+				Render();
 				return;
+			}
 
 			if (_cl == null)
 			{
@@ -331,17 +346,42 @@ namespace SpriteWave
 				Activate();
 			}
 
-			_cl.SetTile(_sel.Location, t);
+			Position loc = _currentSel.Location;
+			int shiftX = 0;
+			if (loc.col == _cl.Columns || loc.col == -1)
+			{
+				if (loc.col == -1)
+					loc.col = 0;
+
+				InsertColumn(loc.col);
+				shiftX = 1;
+			}
+
+			// definitely some
+			// fishy
+			// business going on here
+			int shiftY = 0;
+			if (loc.row == _cl.Rows || loc.row == -1)
+			{
+				if (loc.row == -1)
+					loc.row = 0;
+
+				InsertRow(loc.row);
+				shiftY = 1;
+			}
+
+			_cl.SetTile(loc, obj as Tile);
 			Render();
+			ShiftCamera(shiftX, shiftY);
 		}
 
 		// Implements ISelection.Delete()
 		public override void Delete()
 		{
-			if (_cl == null)
+			if (_cl == null || _currentSel == null)
 				return;
 
-			_cl.SetTile(_sel.Location, _fmt.NewTile());
+			_cl.SetTile(_currentSel.Location, _fmt.NewTile());
 			Render();
 			Draw();
 		}
@@ -373,6 +413,13 @@ namespace SpriteWave
 		{
 			float x = _xOff + (dx * scrollFactor);
 			float y = _yOff + (dy * scrollFactor);
+			ScrollTo(x, y);
+		}
+
+		private void ShiftCamera(int cols, int rows)
+		{
+			float x = _xOff + (float)(cols * _cl.TileW) / 2f;
+			float y = _yOff + (float)(rows * _cl.TileH) / 2f;
 			ScrollTo(x, y);
 		}
 
@@ -432,7 +479,7 @@ namespace SpriteWave
 		public override void EnableSelection() {}
 		public override void DisableSelection() {}
 
-		public override Position GetPosition(int x, int y)
+		public override Position GetPosition(int x, int y, bool allowOob = false)
 		{
 			if (_cl == null)
 				return new Position(0, 0);
@@ -446,9 +493,12 @@ namespace SpriteWave
 			col -= xPos < 0 ? 1 : 0;
 			row -= yPos < 0 ? 1 : 0;
 
-			if (col < 0 || col >= _cl.Columns ||
-			    row < 0 || row >= _cl.Rows)
+			if (!allowOob &&
+			    (col < -1 || col > _cl.Columns ||
+			     row < -1 || row > _cl.Rows)
+			) {
 				throw new ArgumentOutOfRangeException();
+			}
 
 			return new Position(col, row);
 		}
@@ -468,9 +518,24 @@ namespace SpriteWave
 			);
 		}
 
-		public override void ResetSample() {}
-
 		public override void AdjustWindow(int width = 0, int height = 0) {}
+
+		public override PointF[] ShapeEdge(Edge edge)
+		{
+			if (edge == null || edge.EdgeKind == EdgeKind.None)
+				return null;
+
+			edge.Render(_cl);
+
+			var tri = new PointF[3];
+			for (int i = 0; i < 3; i++)
+			{
+				tri[i].X = (edge.Shape[i].X - _xOff) * _zoom;
+				tri[i].Y = (edge.Shape[i].Y - _yOff) * _zoom;
+			}
+
+			return tri;
+		}
 
 		public override void DrawCanvas(Graphics g)
 		{
@@ -491,20 +556,16 @@ namespace SpriteWave
 			}
 		}
 
-		public override void DrawBorders(Graphics g)
+		public override void DrawEdges(Graphics g)
 		{
 			g.SmoothingMode = SmoothingMode.AntiAlias;
-			Pen black = new Pen(outlineColour, _zoom / outlineFactor);
+			Pen outline = new Pen(outlineColour, _zoom / outlineFactor);
 
-			PointF[] tri = new PointF[_border[0].Length];
-			foreach (PointF[] edge in _border)
+			foreach (Edge e in _edges)
 			{
-				for (int i = 0; i < edge.Length; i++)
-				{
-					tri[i].X = (edge[i].X - _xOff) * _zoom;
-					tri[i].Y = (edge[i].Y - _yOff) * _zoom;
-				}
-				g.DrawPolygon(black, tri);
+				PointF[] tri = this.ShapeEdge(e);
+				if (tri != null)
+					g.DrawPolygon(outline, tri);
 			}
 
 			g.SmoothingMode = SmoothingMode.None;
@@ -573,30 +634,34 @@ namespace SpriteWave
 		{
 			_cl.InsertColumn(pos);
 			Render();
+			ShiftCamera(1, 0);
 			Draw();
 		}
 		private void InsertRow(int pos)
 		{
 			_cl.InsertRow(pos);
 			Render();
+			ShiftCamera(0, 1);
 			Draw();
 		}
 		private void DeleteColumn(int pos)
 		{
 			_cl.DeleteColumn(pos);
 			Render();
+			ShiftCamera(-1, 0);
 			Draw();
 		}
 		private void DeleteRow(int pos)
 		{
 			_cl.DeleteRow(pos);
 			Render();
+			ShiftCamera(0, -1);
 			Draw();
 		}
 
 		private void FlipTile(Translation tr)
 		{
-			if (_cl == null || _sel != this)
+			if (_cl == null || _currentSel != this)
 				return;
 
 			Tile t = _cl.TileAt(_selPos);
@@ -625,7 +690,7 @@ namespace SpriteWave
 			_cl.SetColour(idx, n);
 			Render();
 
-			_sel = null;
+			_currentSel = null;
 			ResetGridPen();
 			Draw();
 		}

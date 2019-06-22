@@ -78,6 +78,9 @@ namespace SpriteWave
 
 		public void SetTile(int idx, Tile t)
 		{
+			if (t == null)
+				throw new ArgumentNullException();
+
 			_tiles[idx] = t;
 		}
 		public void SetTile(Position p, Tile t)
@@ -175,7 +178,7 @@ namespace SpriteWave
 
 		public void DeleteColumn(int idx)
 		{
-			if (idx < 0 || idx >= _nCols)
+			if (idx < 0 || idx >= _nCols || _nCols <= 1)
 				return;
 
 			for (int i = Rows - 1; i >= 0; i--)
@@ -187,7 +190,7 @@ namespace SpriteWave
 		public void DeleteRow(int idx)
 		{
 			int rows = Rows;
-			if (idx < 0 || idx >= rows)
+			if (idx < 0 || idx >= rows || rows <= 1)
 				return;
 
 			for (int i = _nCols - 1; i >= 0; i--)

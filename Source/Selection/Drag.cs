@@ -15,9 +15,8 @@ namespace SpriteWave
 		private TileWindow _wnd;
 		private Position _loc;
 
-		public ISelection Selection { get { return null; } set { _wnd.Selection = value; } }
 		public IPiece Piece { get { return _obj; } }
-		public Position Location { get { return _loc; } set { _loc = value; } }
+		public Position Location { get { return _loc; } set { throw new NotImplementedException(); /*_loc = value;*/ } }
 
 		public DragPoint(Brush hl, IPiece selObj, TileWindow wnd, Position loc)
 		{
@@ -32,12 +31,11 @@ namespace SpriteWave
 			_wnd.Receive(isel);
 		}
 
-		public void DrawSelection(TileWindow wnd, Graphics g)
+		public void DrawSelection(Graphics g)
 		{
-			if (wnd == _wnd)
-				g.FillRectangle(_hl, wnd.PieceHitbox(_loc));
+			Utils.DrawSelection(g, _wnd, _hl, _loc);
 		}
-		
+
 		public void Delete() {}
 	}
 
@@ -46,10 +44,10 @@ namespace SpriteWave
 		private bool _escaped;
 		public bool Started { get { return _escaped; } }
 
+		private const float curScale = 4f;
+		private const float curAlpha = 0.6f;
 		private Cursor _cur;
 
-		// Stay classy, DragObject
-		//private int _orgX, _orgY;
 		private Position _orgPos;
 		private TileWindow _orgWnd;
 
@@ -60,22 +58,33 @@ namespace SpriteWave
 		private Brush _hl;
 		private IPiece _selObj;
 
-		public ISelection Current
+		public ISelection Current()
 		{
-			get {
-				if (_lastWnd == null)
-					return null;
+			if (_lastWnd == null)
+				return null;
 
-				Position p;
-				try {
-					p = _lastWnd.GetPosition(_lastX, _lastY);
-				}
-				catch {
-					return null;
-				}
-				
-				return new DragPoint(_hl, _selObj, _lastWnd, p);
+			Position p;
+			try {
+				bool allowOob = _selObj is Edge;
+				p = _lastWnd.GetPosition(_lastX, _lastY, allowOob);
 			}
+			catch {
+				return null;
+			}
+
+			Edge e = _selObj as Edge;
+			if (e != null)
+			{
+				if (_lastWnd == _orgWnd)
+					e.Distance = new Position(
+						p.col - _orgPos.col,
+						p.row - _orgPos.row
+					);
+				else
+					e.Distance = new Position(0, 0);
+			}
+
+			return new DragPoint(_hl, _selObj, _lastWnd, p);
 		}
 
 		public DragObject(TileWindow wnd, int x, int y)
@@ -89,15 +98,18 @@ namespace SpriteWave
 			_orgPos = _orgWnd.GetPosition(x, y);
 
 			_selObj = _orgWnd.PieceAt(_orgPos);
-			if (_selObj != null)
+			if (_selObj is Tile)
 			{
 				Bitmap img = _orgWnd.TileBitmap(_selObj as Tile);
-				img = img.SetAlpha(0.6f).Scale(4);
+				img = img.SetAlpha(curAlpha).Scale(curScale);
 				_cur = new Cursor(img.GetHicon());
 			}
 
 			_escaped = false;
 			_hl = new SolidBrush(Color.FromArgb(96, 0, 255, 64));
+
+			_orgWnd.Selection = new DragPoint(_hl, _selObj, _orgWnd, _orgPos);
+			Transfer.Source = _orgWnd.Selection;
 		}
 
 		public ISelection Cancel()
@@ -110,8 +122,30 @@ namespace SpriteWave
 		private void Escape()
 		{
 			_escaped = true;
-			Cursor.Current = _cur;
+			if (_cur != null)
+				Cursor.Current = _cur;
+
 			Transfer.Start();
+		}
+
+		private bool HasLeft(TileWindow wnd)
+		{
+			if (wnd == null || wnd != _orgWnd)
+				return true;
+
+			if (_selObj is Edge)
+			{
+				var dist = ((Edge)_selObj).Distance;
+				return (dist.col != 0 || dist.row != 0);
+			}
+
+			try {
+				Position loc = wnd.GetPosition(_lastX, _lastY);
+				return (loc.col != _orgPos.col || loc.row != _orgPos.row);
+			}
+			catch (ArgumentOutOfRangeException) {}
+
+			return false;
 		}
 
 		public ISelection Update(TileWindow wnd, int x, int y)
@@ -119,27 +153,15 @@ namespace SpriteWave
 			_lastX = x;
 			_lastY = y;
 
-			if (!_escaped)
-			{
-				if (wnd == null || wnd != _orgWnd)
-					Escape();
-				else
-				{
-					try {
-						Position loc = wnd.GetPosition(_lastX, _lastY);
-						if (loc.col != _orgPos.col || loc.row != _orgPos.row)
-							Escape();
-					}
-					catch (ArgumentOutOfRangeException) {}
-				}
-			}
+			if (!_escaped && this.HasLeft(wnd))
+				Escape();
 
 			if (wnd != _lastWnd && _lastWnd != null)
 				_lastWnd.Selection = null;
 
 			_lastWnd = wnd;
 
-			ISelection isel = this.Current;
+			ISelection isel = this.Current();
 			if (_lastWnd != null)
 				_lastWnd.Selection = isel;
 

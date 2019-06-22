@@ -12,6 +12,8 @@ namespace SpriteWave
 
 	public abstract class Tile : IPiece
 	{
+		public virtual EdgeKind EdgeKind { get { return EdgeKind.None; } }
+
 		protected byte[] _data = {};
 		public byte[] Data { get { return _data; } }
 		

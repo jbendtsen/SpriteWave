@@ -64,20 +64,18 @@ namespace SpriteWave
 			_initialSpriteMenu.Items.Add(new ToolStripMenuItem("Paste Tile", null, (s, e) => PasteTile(_spriteWnd)));
 
 			_inputWnd = new InputWindow();
-			_inputWnd.Window = this.inputBox;
+			_inputWnd.Canvas = this.inputBox;
 			_inputWnd.ScrollY = this.inputScroll;
 			_inputWnd.Menu = this.inputMenu;
 			_inputWnd.Panel = this.inputPanel;
 
 			_spriteWnd = new SpriteWindow();
-			_spriteWnd.Window = this.spriteBox;
+			_spriteWnd.Canvas = this.spriteBox;
 			_spriteWnd.ScrollX = this.spriteScrollX;
 			_spriteWnd.ScrollY = this.spriteScrollY;
 			_spriteWnd.InitialMenu = _initialSpriteMenu;
 			_spriteWnd.Menu = this.spriteMenu;
 			_spriteWnd.Panel = this.spritePanel;
-
-			Transfer.Clear();
 		}
 
 		private int Centre(int cont, int obj)
@@ -153,7 +151,13 @@ namespace SpriteWave
 			Transfer.Dest = wnd;
 			Transfer.Paste();
 			Draw();
-			//_pasteTile.Enabled = false;
+		}
+
+		private void ClearSelection()
+		{
+			_inputWnd.Selection = null;
+			_spriteWnd.Selection = null;
+			Transfer.Clear();
 		}
 
 		private object SetMouseEventHandler(Control ctrl, object args)
@@ -170,12 +174,10 @@ namespace SpriteWave
 
 			try {
 				_drag = new DragObject(wnd, x, y);
-				wnd.Selection = _drag.Current;
-				Transfer.Source = wnd.Selection;
 			}
 			catch (ArgumentOutOfRangeException) {
 				_drag = null;
-				Transfer.Clear();
+				ClearSelection();
 			}
 		}
 		
@@ -184,10 +186,11 @@ namespace SpriteWave
 			try {
 				wnd.Location = wnd.GetPosition(x, y);
 				Transfer.Source = wnd;
-				wnd.ShowMenu(x, y);
+				if (wnd.EdgeAt(wnd.Location) == EdgeKind.None)
+					wnd.ShowMenu(x, y);
 			}
 			catch (ArgumentOutOfRangeException) {
-				Transfer.Clear();
+				ClearSelection();
 			}
 		}
 
@@ -228,7 +231,7 @@ namespace SpriteWave
 				if (_drag.Started)
 				{
 					Transfer.Paste();
-					Transfer.Clear();
+					ClearSelection();
 				}
 				else
 				{
@@ -303,7 +306,7 @@ namespace SpriteWave
 
 			if (e.KeyCode == Keys.Escape)
 			{
-				Transfer.Clear();
+				ClearSelection();
 				_drag = null;
 
 				Draw();
