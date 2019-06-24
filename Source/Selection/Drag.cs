@@ -2,8 +2,6 @@
 using System.Drawing;
 using System.Windows.Forms;
 
-using System.Diagnostics;
-
 namespace SpriteWave
 {
 	//public enum Edge { Nil, Top, Bottom, Left, Right }
@@ -17,6 +15,7 @@ namespace SpriteWave
 
 		public IPiece Piece { get { return _obj; } }
 		public Position Location { get { return _loc; } set { throw new NotImplementedException(); /*_loc = value;*/ } }
+		public bool IsActive { get { return _wnd.IsActive; } }
 
 		public DragPoint(Brush hl, IPiece selObj, TileWindow wnd, Position loc)
 		{
@@ -33,7 +32,7 @@ namespace SpriteWave
 
 		public void DrawSelection(Graphics g)
 		{
-			Utils.DrawSelection(g, _wnd, _hl, _loc);
+			Utils.DrawSelection(g, _wnd, _hl, _obj, _loc);
 		}
 
 		public void Delete() {}
@@ -57,6 +56,7 @@ namespace SpriteWave
 
 		private Brush _hl;
 		private IPiece _selObj;
+		public bool IsEdge { get { return _selObj is Edge; } }
 
 		public ISelection Current()
 		{
@@ -155,6 +155,9 @@ namespace SpriteWave
 
 			if (!_escaped && this.HasLeft(wnd))
 				Escape();
+
+			if (_selObj is Edge)
+				wnd = _orgWnd;
 
 			if (wnd != _lastWnd && _lastWnd != null)
 				_lastWnd.Selection = null;

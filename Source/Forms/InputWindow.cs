@@ -227,7 +227,9 @@ namespace SpriteWave
 
 		public override void ResetSample()
 		{
-			_tileSampleBmp = TileBitmap(this.Piece as Tile);
+			var t = this.Piece as Tile;
+			_tileSample.Visible = t != null;
+			_tileSampleBmp = TileBitmap(t);
 		}
 
 		public override RectangleF PieceHitbox(Position p)

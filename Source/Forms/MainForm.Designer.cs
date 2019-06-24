@@ -41,6 +41,9 @@ namespace SpriteWave
 		private MenuStrip menuStrip1;
 		private ToolStripMenuItem fileToolStripMenuItem;
 		private ToolStripMenuItem openBinaryToolStripMenuItem;
+		private ToolStripMenuItem openNESFileStripMenuItem;
+		private ToolStripMenuItem openSNESFileStripMenuItem;
+		private ToolStripSeparator toolStripSeparator1;
 		private ToolStripMenuItem closeToolStripMenuItem;
 		private ToolStripMenuItem quitToolStripMenuItem;
 		private OpenFileDialog openFileDialog1;
@@ -107,15 +110,18 @@ namespace SpriteWave
 			this.menuStrip1 = new System.Windows.Forms.MenuStrip();
 			this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.openBinaryToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.openNESFileStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.openSNESFileStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
 			this.closeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.quitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.inputPaletteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.spritePaletteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
 			this.inputMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
 			this.copyTileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.spriteMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
-			this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.inputPaletteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.spritePaletteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			((System.ComponentModel.ISupportInitialize)(this.inputBox)).BeginInit();
 			this.inputPanel.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.inputSample)).BeginInit();
@@ -351,7 +357,6 @@ namespace SpriteWave
 			this.spritePrompt.Name = "spritePrompt";
 			this.spritePrompt.Size = new System.Drawing.Size(167, 26);
 			this.spritePrompt.TabIndex = 0;
-			this.spritePrompt.Text = "Drag or send a tile to begin!";
 			this.spritePrompt.Visible = false;
 			// 
 			// menuStrip1
@@ -369,6 +374,9 @@ namespace SpriteWave
 			// 
 			this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
 			this.openBinaryToolStripMenuItem,
+			this.openNESFileStripMenuItem,
+			this.openSNESFileStripMenuItem,
+			this.toolStripSeparator1,
 			this.closeToolStripMenuItem,
 			this.quitToolStripMenuItem});
 			this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
@@ -383,6 +391,25 @@ namespace SpriteWave
 			this.openBinaryToolStripMenuItem.Size = new System.Drawing.Size(209, 22);
 			this.openBinaryToolStripMenuItem.Text = "Open Binary";
 			this.openBinaryToolStripMenuItem.Click += new System.EventHandler(this.openBinary);
+			// 
+			// toolStripMenuItem1
+			// 
+			this.openNESFileStripMenuItem.Name = "openNESFileStripMenuItem";
+			this.openNESFileStripMenuItem.Size = new System.Drawing.Size(209, 22);
+			this.openNESFileStripMenuItem.Text = "Open NES File";
+			this.openNESFileStripMenuItem.Click += new System.EventHandler(this.openNES);
+			// 
+			// toolStripMenuItem2
+			// 
+			this.openSNESFileStripMenuItem.Name = "openSNESFileStripMenuItem";
+			this.openSNESFileStripMenuItem.Size = new System.Drawing.Size(209, 22);
+			this.openSNESFileStripMenuItem.Text = "Open SNES File";
+			this.openSNESFileStripMenuItem.Click += new System.EventHandler(this.openSNES);
+			// 
+			// toolStripSeparator1
+			// 
+			this.toolStripSeparator1.Name = "toolStripSeparator1";
+			this.toolStripSeparator1.Size = new System.Drawing.Size(206, 6);
 			// 
 			// closeToolStripMenuItem
 			// 
@@ -399,6 +426,27 @@ namespace SpriteWave
 			this.quitToolStripMenuItem.Size = new System.Drawing.Size(209, 22);
 			this.quitToolStripMenuItem.Text = "Quit";
 			this.quitToolStripMenuItem.Click += new System.EventHandler(this.quit);
+			// 
+			// editToolStripMenuItem
+			// 
+			this.editToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+			this.inputPaletteToolStripMenuItem,
+			this.spritePaletteToolStripMenuItem});
+			this.editToolStripMenuItem.Name = "editToolStripMenuItem";
+			this.editToolStripMenuItem.Size = new System.Drawing.Size(39, 20);
+			this.editToolStripMenuItem.Text = "Edit";
+			// 
+			// inputPaletteToolStripMenuItem
+			// 
+			this.inputPaletteToolStripMenuItem.Name = "inputPaletteToolStripMenuItem";
+			this.inputPaletteToolStripMenuItem.Size = new System.Drawing.Size(143, 22);
+			this.inputPaletteToolStripMenuItem.Text = "Input Palette";
+			// 
+			// spritePaletteToolStripMenuItem
+			// 
+			this.spritePaletteToolStripMenuItem.Name = "spritePaletteToolStripMenuItem";
+			this.spritePaletteToolStripMenuItem.Size = new System.Drawing.Size(143, 22);
+			this.spritePaletteToolStripMenuItem.Text = "Sprite Palette";
 			// 
 			// openFileDialog1
 			// 
@@ -419,27 +467,6 @@ namespace SpriteWave
 			// 
 			this.spriteMenu.Name = "spriteMenu";
 			this.spriteMenu.Size = new System.Drawing.Size(61, 4);
-			// 
-			// editToolStripMenuItem
-			// 
-			this.editToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-			this.inputPaletteToolStripMenuItem,
-			this.spritePaletteToolStripMenuItem});
-			this.editToolStripMenuItem.Name = "editToolStripMenuItem";
-			this.editToolStripMenuItem.Size = new System.Drawing.Size(39, 20);
-			this.editToolStripMenuItem.Text = "Edit";
-			// 
-			// inputPaletteToolStripMenuItem
-			// 
-			this.inputPaletteToolStripMenuItem.Name = "inputPaletteToolStripMenuItem";
-			this.inputPaletteToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
-			this.inputPaletteToolStripMenuItem.Text = "Input Palette";
-			// 
-			// spritePaletteToolStripMenuItem
-			// 
-			this.spritePaletteToolStripMenuItem.Name = "spritePaletteToolStripMenuItem";
-			this.spritePaletteToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
-			this.spritePaletteToolStripMenuItem.Text = "Sprite Palette";
 			// 
 			// MainForm
 			// 

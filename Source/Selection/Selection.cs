@@ -18,6 +18,7 @@ namespace SpriteWave
 
 		Position Location { get; set; }
 		IPiece Piece { get; }
+		bool IsActive { get; }
 
 		//void Move(int dCol, int dRow);
 		//void SetPos(int )

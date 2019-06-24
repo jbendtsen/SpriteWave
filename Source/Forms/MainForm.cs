@@ -5,8 +5,6 @@ using System.Drawing;
 using System.Windows.Forms;
 using System.ComponentModel;
 
-using System.Diagnostics;
-
 namespace SpriteWave
 {
 	public partial class MainForm : Form
@@ -96,6 +94,8 @@ namespace SpriteWave
 			int inputBoxW = availX / 2;
 			int spriteBoxW = availX / 2;
 
+			Func<int, int, int> centre = (cont, obj) => (cont - obj) / 2;
+
 			this.SuspendLayout();
 
 			this.inputBox.Size = new Size(inputBoxW, availInputY);
@@ -118,12 +118,12 @@ namespace SpriteWave
 			this.spritePanel.Location = new Point(this.spriteBox.Location.X, this.spriteScrollX.Location.Y + this.spriteScrollX.Size.Height);
 			this.spritePanel.Size = new Size(spriteBoxW + this.spriteScrollY.Size.Width, this.spritePanel.Size.Height);
 
-			this.inputOffsetLabel.Location = new Point(this.inputOffsetLabel.Location.X, Centre(this.inputPanel.Size.Height, this.inputOffsetLabel.Size.Height));
-			this.inputOffset.Location = new Point(this.inputOffset.Location.X, Centre(this.inputPanel.Size.Height, this.inputOffset.Size.Height));
-			this.inputSizeLabel.Location = new Point(this.inputSizeLabel.Location.X, Centre(this.inputPanel.Size.Height, this.inputSizeLabel.Size.Height));
+			this.inputOffsetLabel.Location = new Point(this.inputOffsetLabel.Location.X, centre(this.inputPanel.Size.Height, this.inputOffsetLabel.Size.Height));
+			this.inputOffset.Location = new Point(this.inputOffset.Location.X, centre(this.inputPanel.Size.Height, this.inputOffset.Size.Height));
+			this.inputSizeLabel.Location = new Point(this.inputSizeLabel.Location.X, centre(this.inputPanel.Size.Height, this.inputSizeLabel.Size.Height));
 
-			this.inputSend.Location = new Point(this.inputPanel.Size.Width - 160, Centre(this.inputPanel.Size.Height, this.inputSend.Size.Height));
-			this.inputSample.Location = new Point(this.inputPanel.Size.Width - 60, Centre(this.inputPanel.Size.Height, this.inputSample.Size.Height));
+			this.inputSend.Location = new Point(this.inputPanel.Size.Width - 160, centre(this.inputPanel.Size.Height, this.inputSend.Size.Height));
+			this.inputSample.Location = new Point(this.inputPanel.Size.Width - 60, centre(this.inputPanel.Size.Height, this.inputSample.Size.Height));
 			
 			this.ResumeLayout();
 
@@ -141,6 +141,7 @@ namespace SpriteWave
 
 		private void CopyTile(TileWindow wnd)
 		{
+			wnd.Selection = wnd;
 			Transfer.Source = wnd;
 			Transfer.Start();
 			_pasteTile.Enabled = true;
@@ -148,6 +149,7 @@ namespace SpriteWave
 
 		private void PasteTile(TileWindow wnd)
 		{
+			wnd.Selection = wnd;
 			Transfer.Dest = wnd;
 			Transfer.Paste();
 			Draw();
@@ -186,7 +188,7 @@ namespace SpriteWave
 			try {
 				wnd.Location = wnd.GetPosition(x, y);
 				Transfer.Source = wnd;
-				if (wnd.EdgeAt(wnd.Location) == EdgeKind.None)
+				if (wnd.EdgeOf(wnd.Location) == EdgeKind.None)
 					wnd.ShowMenu(x, y);
 			}
 			catch (ArgumentOutOfRangeException) {
@@ -258,34 +260,39 @@ namespace SpriteWave
 			var startCtrl = sender as Control;
 			var curCtrl = Utils.ApplyRecursiveControlAction(this, RefreshControl) as Control;
 
-			if (_drag != null)
+			if (_drag == null)
+				return;
+
+			TileWindow wnd = null;
+			if (curCtrl == this.inputBox)
 			{
-				TileWindow wnd = null;
-				if (curCtrl == this.inputBox)
-				{
-					wnd = _inputWnd;
-				}
-				else if (curCtrl == this.spriteBox)
-				{
-					wnd = _spriteWnd;
-				}
-				
-				int x = 0, y = 0;
-				if (wnd != null)
-				{
-					// When the mouse is held, e.X and e.Y are relative to startCtrl.Location
-					Point toCur = new Point(
-						curCtrl.Location.X - startCtrl.Location.X,
-						curCtrl.Location.Y - startCtrl.Location.Y
-					);
-
-					x = e.X - toCur.X;
-					y = e.Y - toCur.Y;
-				}
-
-				Transfer.Dest = _drag.Update(wnd, x, y);
-				Draw();
+				wnd = _inputWnd;
 			}
+			else if (curCtrl == this.spriteBox)
+			{
+				wnd = _spriteWnd;
+			}
+			
+			int x = 0, y = 0;
+			if (_drag.IsEdge)
+			{
+				x = e.X;
+				y = e.Y;
+			}
+			else if (wnd != null)
+			{
+				// When the mouse is held, e.X and e.Y are relative to startCtrl.Location
+				Point toCur = new Point(
+					curCtrl.Location.X - startCtrl.Location.X,
+					curCtrl.Location.Y - startCtrl.Location.Y
+				);
+
+				x = e.X - toCur.X;
+				y = e.Y - toCur.Y;
+			}
+
+			Transfer.Dest = _drag.Update(wnd, x, y);
+			Draw();
 		}
 
 		private void keysHandler(object sender, KeyEventArgs e)
@@ -308,9 +315,6 @@ namespace SpriteWave
 			{
 				ClearSelection();
 				_drag = null;
-
-				Draw();
-				return;
 			}
 
 			if (e.KeyCode == Keys.Delete)
@@ -321,11 +325,74 @@ namespace SpriteWave
 			if (e.KeyCode == Keys.Enter)
 			{
 				Transfer.Start();
+				_spriteWnd.Selection = _spriteWnd;
+				Transfer.Dest = _spriteWnd;
 				Transfer.Paste();
 				_spriteWnd.MoveSelection(1, 0);
+			}
+
+			Keys mod = Control.ModifierKeys;
+
+			if ((mod & Keys.Control) != 0)
+			{
+				if (e.KeyCode == Keys.G)
+					this.ActiveControl = this.inputOffset;
+
+				int zoom = 0;
+				if (e.KeyCode == Keys.OemMinus)
+					zoom = -1;
+				else if (e.KeyCode == Keys.Oemplus)
+					zoom = 1;
+
+				if (zoom != 0)
+					_spriteWnd.Zoom(zoom, this.spriteBox.Size.Width / 2, this.spriteBox.Size.Height / 2);
+
+				Action<EdgeKind> moveEdge = _spriteWnd.InsertEdge;
+				if ((mod & Keys.Shift) != 0)
+					moveEdge = _spriteWnd.DeleteEdge;
+
+				if (e.KeyCode == Keys.I)
+					moveEdge(EdgeKind.Top);
+				else if (e.KeyCode == Keys.K)
+					moveEdge(EdgeKind.Bottom);
+				else if (e.KeyCode == Keys.J)
+					moveEdge(EdgeKind.Left);
+				else if (e.KeyCode == Keys.L)
+					moveEdge(EdgeKind.Right);
 
 				Draw();
 				return;
+			}
+
+			if ((mod & Keys.Shift) != 0)
+			{
+				bool swap = true;
+				int x = 0, y = 0;
+
+				if (e.KeyCode == Keys.I)
+					y = -1;
+				else if (e.KeyCode == Keys.K)
+					y = 1;
+				else if (e.KeyCode == Keys.J)
+					x = -1;
+				else if (e.KeyCode == Keys.L)
+					x = 1;
+				else
+					swap = false;
+
+				if (swap)
+				{
+					_spriteWnd.Selection = _spriteWnd;
+					Transfer.Source = _spriteWnd;
+					Transfer.Start();
+
+					_spriteWnd.MoveSelection(x, y);
+					Transfer.Dest = _spriteWnd;
+					Transfer.Paste();
+
+					Draw();
+					return;
+				}
 			}
 
 			bool move = true;
@@ -383,6 +450,16 @@ namespace SpriteWave
 		{
 			openFileDialog1.ShowDialog();
 		}
+		private void openNES(object sender, EventArgs e)
+		{
+			openFileDialog1.FilterIndex = (int)FormatKind.NES + 1;
+			openFileDialog1.ShowDialog();
+		}
+		private void openSNES(object sender, EventArgs e)
+		{
+			openFileDialog1.FilterIndex = (int)FormatKind.SNES + 1;
+			openFileDialog1.ShowDialog();
+		}
 
 		private void exportSprite(object sender, EventArgs e)
 		{
@@ -410,6 +487,7 @@ namespace SpriteWave
 			_spriteWnd.Close();
 			_inputWnd.Load(fmt, data);
 			_spriteWnd.FormatToLoad = fmt;
+			_spriteWnd.Prompt = "Drag or send a tile to begin!";
 
 			Draw();
 		}

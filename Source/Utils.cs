@@ -6,8 +6,6 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Windows.Forms;
 
-using System.Diagnostics;
-
 namespace SpriteWave
 {
 	public struct Position
@@ -129,9 +127,8 @@ namespace SpriteWave
 			}
 		}
 
-		public static void DrawSelection(Graphics g, TileWindow wnd, Brush hl, Position loc)
+		public static void DrawSelection(Graphics g, TileWindow wnd, Brush hl, IPiece piece, Position loc)
 		{
-			IPiece piece = wnd.PieceAt(loc);
 			if (piece != null && piece.EdgeKind != EdgeKind.None)
 				g.FillPolygon(hl, wnd.ShapeEdge(piece as Edge));
 			else

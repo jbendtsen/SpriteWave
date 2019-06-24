@@ -3,8 +3,6 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
-using System.Diagnostics;
-
 namespace SpriteWave
 {
 	public class SpriteWindow : TileWindow
@@ -113,10 +111,10 @@ namespace SpriteWave
 				_menu.Items.Add(
 					new ToolStripMenuItem(
 						"Insert", null, new ToolStripMenuItem[] {
-							new ToolStripMenuItem("Column Left", null, (s, e) => InsertColumn(_selPos.col)),
-							new ToolStripMenuItem("Column Right", null, (s, e) => InsertColumn(_selPos.col+1)),
-							new ToolStripMenuItem("Row Above", null, (s, e) => InsertRow(_selPos.row)),
-							new ToolStripMenuItem("Row Below", null, (s, e) => InsertRow(_selPos.row+1))
+							new ToolStripMenuItem("Column Left", null, (s, e) => InsertCollageColumn(_selPos.col)),
+							new ToolStripMenuItem("Column Right", null, (s, e) => InsertCollageColumn(_selPos.col+1)),
+							new ToolStripMenuItem("Row Above", null, (s, e) => InsertCollageRow(_selPos.row)),
+							new ToolStripMenuItem("Row Below", null, (s, e) => InsertCollageRow(_selPos.row+1))
 						}
 					)
 				);
@@ -124,8 +122,8 @@ namespace SpriteWave
 				_menu.Items.Add(
 					new ToolStripMenuItem(
 						"Delete", null, new ToolStripMenuItem[] {
-							new ToolStripMenuItem("Column", null, (s, e) => DeleteColumn(_selPos.col)),
-							new ToolStripMenuItem("Row", null, (s, e) => DeleteRow(_selPos.row))
+							new ToolStripMenuItem("Column", null, (s, e) => DeleteCollageColumn(_selPos.col)),
+							new ToolStripMenuItem("Row", null, (s, e) => DeleteCollageRow(_selPos.row))
 						}
 					)
 				);
@@ -193,6 +191,17 @@ namespace SpriteWave
 			}
 		}
 
+		public override string Prompt
+		{
+			set {
+				if (_panelPrompt == null)
+					return;
+
+				_panelPrompt.Text = value;
+				_panelPrompt.Visible = true;
+			}
+		}
+
 		public SpriteWindow() : base()
 		{
 			// Initialise all edges, including the invalid (centre) one
@@ -203,9 +212,7 @@ namespace SpriteWave
 
 		public override void Activate()
 		{
-			_yOff = -_cl.TileH * 2f;
-			_zoom = _window.Size.Height / (float)(5f * _cl.TileH);
-			_xOff = (-(_window.Size.Width / _zoom) + _cl.TileW) / 2f;
+			ResetScroll();
 
 			base.Activate();
 			_scrollX.Visible = true;
@@ -231,7 +238,7 @@ namespace SpriteWave
 		{
 			base.Close();
 			_scrollX.Visible = false;
-			_panelPrompt.Visible = true;
+			_panelPrompt.Visible = false;
 
 			_palette1.Visible = false;
 			_palette1.Text = "";
@@ -251,7 +258,7 @@ namespace SpriteWave
 			_saveButton.Visible = false;
 		}
 
-		public override EdgeKind EdgeAt(Position loc)
+		public override EdgeKind EdgeOf(Position loc)
 		{
 			int x = 0, y = 0;
 			if (loc.row == -1)
@@ -275,7 +282,7 @@ namespace SpriteWave
 				return null;
 			}
 
-			EdgeKind kind = EdgeAt(loc);
+			EdgeKind kind = EdgeOf(loc);
 			if (kind == EdgeKind.None)
 				return _cl.TileAt(loc);
 
@@ -306,20 +313,19 @@ namespace SpriteWave
 					if (side > 0)
 					{
 						if (delta < 0)
-							delete(max - 1);
+							delete(--max);
 						else
 							insert(max);
 					}
 				}
 
-				int shift = length;
-				if ((x < 0 && delta >= 0) ||
-				    (x > 0 && delta < 0))
-				{
-					shift *= -1;
-				}
+				int dir = 0;
+				if ((side < 0 && delta < 0) || (side > 0 && delta >= 0))
+					dir = 1;
+				if ((side < 0 && delta >= 0) || (side > 0 && delta < 0))
+					dir = -1;
 
-				return shift;
+				return length * dir;
 			};
 
 			int shiftX = resizeAxis(x, dist.col, _cl.Columns, _cl.InsertColumn, _cl.DeleteColumn);
@@ -347,32 +353,24 @@ namespace SpriteWave
 			}
 
 			Position loc = _currentSel.Location;
-			int shiftX = 0;
-			if (loc.col == _cl.Columns || loc.col == -1)
+			EdgeKind kind = EdgeOf(loc);
+			if (kind != EdgeKind.None)
 			{
-				if (loc.col == -1)
+				int x, y;
+				Edge.GetCoords(kind, out x, out y);
+
+				Edge e = _edges[(int)kind];
+				e.Distance = new Position(x, y);
+				ResizeCollage(e);
+
+				if (x == -1)
 					loc.col = 0;
-
-				InsertColumn(loc.col);
-				shiftX = 1;
-			}
-
-			// definitely some
-			// fishy
-			// business going on here
-			int shiftY = 0;
-			if (loc.row == _cl.Rows || loc.row == -1)
-			{
-				if (loc.row == -1)
+				if (y == -1)
 					loc.row = 0;
-
-				InsertRow(loc.row);
-				shiftY = 1;
 			}
 
 			_cl.SetTile(loc, obj as Tile);
 			Render();
-			ShiftCamera(shiftX, shiftY);
 		}
 
 		// Implements ISelection.Delete()
@@ -421,6 +419,19 @@ namespace SpriteWave
 			float x = _xOff + (float)(cols * _cl.TileW) / 2f;
 			float y = _yOff + (float)(rows * _cl.TileH) / 2f;
 			ScrollTo(x, y);
+
+			/*
+				Whenever ShiftCamera() gets called, it is usually the case that the collage was resized.
+				As such, the current selection position may now be out-of-bounds.
+				We call MoveSelection() here as it will check to see whether it is still valid.
+			*/
+			MoveSelection(0, 0);
+		}
+		private void ShiftCamera(EdgeKind e)
+		{
+			int x, y;
+			Edge.GetCoords(e, out x, out y);
+			ShiftCamera(Math.Abs(x), Math.Abs(y));
 		}
 
 		public void Zoom(int delta, int x, int y)
@@ -428,7 +439,7 @@ namespace SpriteWave
 			float xPos = _xOff + ((float)x / _zoom);
 			float yPos = _yOff + ((float)y / _zoom);
 
-			float n = Math.Abs((float)delta / 120f);
+			float n = Math.Abs(delta);
 			float amount = 1f + (n / zoomFactor);
 
 			float z;
@@ -444,8 +455,16 @@ namespace SpriteWave
 
 		public override void ResetScroll()
 		{
+			if (_cl != null)
+			{
+				const int topGap = 2;
+				_yOff = -_cl.TileH * topGap;
+				_zoom = _window.Size.Height / (float)((topGap * 2 + _cl.Rows) * _cl.TileH);
+				_xOff = (-(_window.Size.Width / _zoom) + _cl.Width) / 2f;
+			}
+
 			_scrollX.Reset();
-			base.ResetScroll();
+			_scrollY.Reset();
 		}
 
 		public override void UpdateBars()
@@ -604,7 +623,7 @@ namespace SpriteWave
 
 			if (ctrlKey)
 			{
-				Zoom(e.Delta, e.X, e.Y);
+				Zoom(e.Delta / 120, e.X, e.Y);
 			}
 			else
 			{
@@ -630,33 +649,70 @@ namespace SpriteWave
 			Draw();
 		}
 
-		private void InsertColumn(int pos)
+		private void InsertCollageColumn(int pos)
 		{
 			_cl.InsertColumn(pos);
 			Render();
 			ShiftCamera(1, 0);
 			Draw();
 		}
-		private void InsertRow(int pos)
+		private void InsertCollageRow(int pos)
 		{
 			_cl.InsertRow(pos);
 			Render();
 			ShiftCamera(0, 1);
 			Draw();
 		}
-		private void DeleteColumn(int pos)
+		private void DeleteCollageColumn(int pos)
 		{
 			_cl.DeleteColumn(pos);
 			Render();
 			ShiftCamera(-1, 0);
 			Draw();
 		}
-		private void DeleteRow(int pos)
+		private void DeleteCollageRow(int pos)
 		{
 			_cl.DeleteRow(pos);
 			Render();
 			ShiftCamera(0, -1);
 			Draw();
+		}
+
+		public void InsertEdge(EdgeKind kind)
+		{
+			if (_cl == null)
+				return;
+
+			int x, y;
+			Edge.GetCoords(kind, out x, out y);
+
+			if (x == -1)
+				InsertCollageColumn(0);
+			else if (x == 1)
+				InsertCollageColumn(_cl.Columns);
+
+			if (y == -1)
+				InsertCollageRow(0);
+			else if (y == 1)
+				InsertCollageRow(_cl.Rows);
+		}
+		public void DeleteEdge(EdgeKind kind)
+		{
+			if (_cl == null)
+				return;
+
+			int x, y;
+			Edge.GetCoords(kind, out x, out y);
+
+			if (x == -1)
+				DeleteCollageColumn(0);
+			else if (x == 1)
+				DeleteCollageColumn(_cl.Columns - 1);
+
+			if (y == -1)
+				DeleteCollageRow(0);
+			else if (y == 1)
+				DeleteCollageRow(_cl.Rows - 1);
 		}
 
 		private void FlipTile(Translation tr)
@@ -702,7 +758,7 @@ namespace SpriteWave
 				name = "sprite";
 
 			string fileName = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\" + name + ".png";
-			_cl.Bitmap.Scale(10).Save(fileName);
+			_cl.Bitmap.Scale(16).Save(fileName);
 		}
 
 		public void checkNameSubmit(object sender, KeyEventArgs e)

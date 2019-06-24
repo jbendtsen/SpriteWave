@@ -2,14 +2,15 @@
 using System.Drawing;
 using System.Windows.Forms;
 
-using System.Diagnostics;
-
 namespace SpriteWave
 {
 	public abstract class TileWindow : ISelection
 	{
 		protected Collage _cl;
-		public bool IsOpen { get { return _cl != null; } }
+
+		bool active = false;
+		// Implements ISelection.IsActive
+		public bool IsActive { get { return _cl != null && active; } }
 
 		//public abstract Position VisibleSelection { get; }
 
@@ -32,6 +33,8 @@ namespace SpriteWave
 
 		protected Panel _infoPanel;
 		public abstract Panel Panel { set; }
+
+		public virtual string Prompt { set { return; } }
 
 		protected Rectangle _bounds;
 		protected Pen _gridPen;
@@ -95,6 +98,7 @@ namespace SpriteWave
 		public abstract void Scroll(float dx, float dy);
 		public abstract void ScrollTo(float x, float y);
 
+		public abstract void ResetScroll();
 		public abstract void UpdateBars();
 
 		public abstract void EnableSelection();
@@ -115,11 +119,13 @@ namespace SpriteWave
 
 		public virtual void Activate()
 		{
+			active = true;
 			_scrollY.Visible = true;
 		}
 
 		public virtual void Close()
 		{
+			active = false;
 			_scrollY.Visible = false;
 			_cl = null;
 			DeleteFrame();
@@ -153,14 +159,6 @@ namespace SpriteWave
 				_menu.Show(_window, new Point(x, y));
 		}
 
-		public virtual void ResetScroll()
-		{
-			_scrollY.Reset();
-
-			//ScrollTo(0, 0);
-			AdjustWindow();
-		}
-
 		public void MoveSelection(int dCol, int dRow)
 		{
 			if (_cl == null)
@@ -168,8 +166,11 @@ namespace SpriteWave
 			
 			int nCols = _cl.Columns;
 			int idx = (_selPos.row + dRow) * nCols + _selPos.col + dCol;
-			if (idx < 0 || idx >= _cl.nTiles)
-				return;
+
+			if (idx < 0)
+				idx = 0;
+			else if (idx >= _cl.nTiles)
+				idx = _cl.nTiles - 1;
 
 			this.Location = new Position(idx % nCols, idx / nCols);
 		}
@@ -184,7 +185,7 @@ namespace SpriteWave
 		
 		public virtual void ResetSample() {}
 
-		public virtual EdgeKind EdgeAt(Position p) { return EdgeKind.None; }
+		public virtual EdgeKind EdgeOf(Position p) { return EdgeKind.None; }
 		public virtual PointF[] ShapeEdge(Edge edge) { return null; }
 
 		public void ResetGridPen()
@@ -211,7 +212,8 @@ namespace SpriteWave
 		public void DrawSelection(Graphics g)
 		{
 			Position loc = this.Location;
-			Utils.DrawSelection(g, this, _selHl, loc);
+			IPiece obj = PieceAt(loc);
+			Utils.DrawSelection(g, this, _selHl, obj, loc);
 		}
 
 		public virtual void DrawEdges(Graphics g) {}
