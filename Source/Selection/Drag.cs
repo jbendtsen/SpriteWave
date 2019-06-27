@@ -4,43 +4,9 @@ using System.Windows.Forms;
 
 namespace SpriteWave
 {
-	//public enum Edge { Nil, Top, Bottom, Left, Right }
-
-	public class DragPoint : ISelection
-	{
-		private Brush _hl;
-		private IPiece _obj;
-		private TileWindow _wnd;
-		private Position _loc;
-
-		public IPiece Piece { get { return _obj; } }
-		public Position Location { get { return _loc; } set { throw new NotImplementedException(); /*_loc = value;*/ } }
-		public bool IsActive { get { return _wnd.IsActive; } }
-
-		public DragPoint(Brush hl, IPiece selObj, TileWindow wnd, Position loc)
-		{
-			_hl = hl;
-			_obj = selObj;
-			_wnd = wnd;
-			_loc = loc;
-		}
-
-		public void Receive(IPiece isel)
-		{
-			_wnd.Receive(isel);
-		}
-
-		public void DrawSelection(Graphics g)
-		{
-			Utils.DrawSelection(g, _wnd, _hl, _obj, _loc);
-		}
-
-		public void Delete() {}
-	}
-
 	public class DragObject
 	{
-		private bool _escaped;
+		private bool _escaped = false;
 		public bool Started { get { return _escaped; } }
 
 		private const float curScale = 4f;
@@ -54,11 +20,10 @@ namespace SpriteWave
 		private TileWindow _lastWnd;
 		public TileWindow Window { get { return _lastWnd; } }
 
-		private Brush _hl;
 		private IPiece _selObj;
 		public bool IsEdge { get { return _selObj is Edge; } }
 
-		public ISelection Current()
+		public Selection Current()
 		{
 			if (_lastWnd == null)
 				return null;
@@ -84,7 +49,7 @@ namespace SpriteWave
 					e.Distance = new Position(0, 0);
 			}
 
-			return new DragPoint(_hl, _selObj, _lastWnd, p);
+			return new Selection(_selObj, _lastWnd, p);
 		}
 
 		public DragObject(TileWindow wnd, int x, int y)
@@ -105,18 +70,25 @@ namespace SpriteWave
 				_cur = new Cursor(img.GetHicon());
 			}
 
-			_escaped = false;
-			_hl = new SolidBrush(Color.FromArgb(96, 0, 255, 64));
-
-			_orgWnd.Selection = new DragPoint(_hl, _selObj, _orgWnd, _orgPos);
-			Transfer.Source = _orgWnd.Selection;
+			_orgWnd.Cursor = new Selection(_selObj, _orgWnd, _orgPos);
+			_orgWnd.AdoptCursor();
+			Transfer.Source = _orgWnd.Cursor;
 		}
 
-		public ISelection Cancel()
+		public void End()
 		{
-			_orgWnd.Selection = _orgWnd;
-			_orgWnd.Location = _orgPos;
-			return _orgWnd;
+			if (_lastWnd == null)
+				return;
+
+			_lastWnd.AdoptCursor();
+			_lastWnd.Cursor = null;
+		}
+
+		public Selection Cancel()
+		{
+			_orgWnd.Cursor = null;
+			_orgWnd.Selected = true;
+			return _orgWnd.CurrentSelection();
 		}
 
 		private void Escape()
@@ -148,7 +120,7 @@ namespace SpriteWave
 			return false;
 		}
 
-		public ISelection Update(TileWindow wnd, int x, int y)
+		public Selection Update(TileWindow wnd, int x, int y)
 		{
 			_lastX = x;
 			_lastY = y;
@@ -160,15 +132,18 @@ namespace SpriteWave
 				wnd = _orgWnd;
 
 			if (wnd != _lastWnd && _lastWnd != null)
-				_lastWnd.Selection = null;
+			{
+				_lastWnd.Cursor = null;
+				_lastWnd.Selected = false;
+			}
 
 			_lastWnd = wnd;
 
-			ISelection isel = this.Current();
+			Selection sel = this.Current();
 			if (_lastWnd != null)
-				_lastWnd.Selection = isel;
+				_lastWnd.Cursor = sel;
 
-			return isel;
+			return sel;
 		}
 	}
 }

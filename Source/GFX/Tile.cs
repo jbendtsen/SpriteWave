@@ -12,6 +12,7 @@ namespace SpriteWave
 
 	public abstract class Tile : IPiece
 	{
+		// Implements IPiece.EdgeKind
 		public virtual EdgeKind EdgeKind { get { return EdgeKind.None; } }
 
 		protected byte[] _data = {};
@@ -26,8 +27,7 @@ namespace SpriteWave
 
 		public abstract void ExtractRow(byte[] line, int offset, int y, byte[] palRGBA);
 
-		// Implements IPiece.Clone()
-		public IPiece Clone()
+		public Tile Clone()
 		{
 			Tile t = Activator.CreateInstance(this.GetType()) as Tile;
 			Buffer.BlockCopy(_data, 0, t.Data, 0, Width * Height * BytesPP);

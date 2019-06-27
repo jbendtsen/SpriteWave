@@ -6,21 +6,24 @@ namespace SpriteWave
 	public interface IPiece
 	{
 		EdgeKind EdgeKind { get; }
-		
-		IPiece Clone();
 	}
 
-	public interface ISelection
+	public class Selection
 	{
-		void Receive(IPiece isel);
-		void DrawSelection(Graphics g);
-		void Delete();
+		protected TileWindow _wnd;
+		public TileWindow Window { get { return _wnd; } }
 
-		Position Location { get; set; }
-		IPiece Piece { get; }
-		bool IsActive { get; }
+		protected Position _loc;
+		public Position Location { get { return _loc; } }
 
-		//void Move(int dCol, int dRow);
-		//void SetPos(int )
+		protected IPiece _obj;
+		public IPiece Piece { get { return _obj; } }
+
+		public Selection(IPiece selObj, TileWindow wnd, Position loc)
+		{
+			_obj = selObj;
+			_wnd = wnd;
+			_loc = loc;
+		}
 	}
 }

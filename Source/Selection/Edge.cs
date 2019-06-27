@@ -136,11 +136,5 @@ namespace SpriteWave
 
 			_shape = ReflectTriangle(_shape, cl, x == 1, y == 1);
 		}
-
-		// Implements IPiece.Clone()
-		public IPiece Clone()
-		{
-			return new Edge(_kind) as IPiece;
-		}
 	}
 }

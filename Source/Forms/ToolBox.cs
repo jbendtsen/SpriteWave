@@ -2,9 +2,9 @@
 
 namespace SpriteWave.Forms
 {
-	public class ColourPicker
+	public class ToolBox
 	{
-		public ColourPicker()
+		public ToolBox()
 		{
 			
 		}

@@ -55,8 +55,8 @@ namespace SpriteWave
 		{
 			set {
 				_menu = value;
-				_menu.Items.Add(new ToolStripSeparator());
-				_menu.Items.Add("Edit Palette", null, (s, e) => MessageBox.Show("test"));
+				//_menu.Items.Add(new ToolStripSeparator());
+				//_menu.Items.Add("Edit Palette", null, null);
 			}
 		}
 
@@ -71,7 +71,7 @@ namespace SpriteWave
 			}
 		}
 
-		//private SplitContainer _splitInput;
+		private Panel _infoPanel;
 		private Label _offsetLabel;
 		private TextBox _offsetBox;
 		private Label _sizeLabel;
@@ -80,7 +80,7 @@ namespace SpriteWave
 
 		private Bitmap _tileSampleBmp;
 
-		public override Panel Panel
+		public Panel Panel
 		{
 			set {
 				_infoPanel = value;
@@ -155,12 +155,6 @@ namespace SpriteWave
 
 			ResetScroll();
 		}
-		
-		// Implements ISelection.Receive()
-		public override void Receive(IPiece isel) {}
-
-		// Implements ISelection.Delete()
-		public override void Delete() {}
 
 		public override void Scroll(float dx, float dy)
 		{
@@ -180,36 +174,15 @@ namespace SpriteWave
 
 		public override void ResetScroll()
 		{
-			_scrollY.Reset();
-
-			ScrollTo(0, 0);
 			AdjustWindow();
+			_scrollY.Reset();
+			ScrollTo(0, 0);
 		}
 
 		public override void UpdateBars()
 		{
 			if (_cl != null)
 				_scrollY.Inform(_row, _vis.row, 0, _cl.Rows);
-		}
-
-		public override void EnableSelection()
-		{
-			if (_cl == null)
-				return;
-
-			ResetSample();
-			_tileSample.Visible = true;
-			_sendTile.Visible = true;
-		}
-
-		public override void DisableSelection()
-		{
-			if (_cl == null)
-				return;
-			
-			_sendTile.Visible = false;
-			_tileSample.Visible = false;
-			_tileSampleBmp = null;
 		}
 
 		public override Position GetPosition(int x, int y, bool allowOob = false)
@@ -225,9 +198,29 @@ namespace SpriteWave
 			return pos;
 		}
 
+		public override void MoveSelection(int dCol, int dRow)
+		{
+			base.MoveSelection(dCol, dRow);
+
+			if (_selPos.row >= _row + _vis.row)
+			{
+				_row = _selPos.row - _vis.row + 1;
+				UpdateBars();
+			}
+			else if (_selPos.row < _row)
+			{
+				_row = _selPos.row;
+				UpdateBars();
+			}
+		}
+
 		public override void ResetSample()
 		{
-			var t = this.Piece as Tile;
+			Tile t = null;
+			if (_isSel)
+				t = PieceAt(_selPos) as Tile;
+
+			_sendTile.Visible = t != null;
 			_tileSample.Visible = t != null;
 			_tileSampleBmp = TileBitmap(t);
 		}
@@ -311,7 +304,9 @@ namespace SpriteWave
 
 				if (offset >= 0 && offset < _contents.Length)
 				{
-					this.Selection = null;
+					Selected = false;
+					_selPos = new Position(0, 0);
+
 					Load(offset);
 					Draw();
 				}

@@ -127,14 +127,6 @@ namespace SpriteWave
 			}
 		}
 
-		public static void DrawSelection(Graphics g, TileWindow wnd, Brush hl, IPiece piece, Position loc)
-		{
-			if (piece != null && piece.EdgeKind != EdgeKind.None)
-				g.FillPolygon(hl, wnd.ShapeEdge(piece as Edge));
-			else
-				g.FillRectangle(hl, wnd.PieceHitbox(loc));
-		}
-
 		public static Bitmap Scale(this Bitmap bmp, float scX, float scY = default(float), bool smooth = false)
 		{
 			if (object.Equals(scY, default(float)))

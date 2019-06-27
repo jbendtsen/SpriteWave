@@ -156,45 +156,52 @@ namespace SpriteWave
 			_canvas = Utils.BitmapFrom(collage, width, height);
 		}
 
-		public void InsertColumn(int idx)
+		public int InsertColumn(int idx)
 		{
 			if (idx < 0 || idx > _nCols)
-				return;
+				return 0;
 
 			_nCols++;
 			for (int i = 0; i < Rows; i++)
 				_tiles.Insert(i * _nCols + idx, _fmt.NewTile());
+
+			return 1;
 		}
 
-		public void InsertRow(int idx)
+		public int InsertRow(int idx)
 		{
 			int rows = Rows;
 			if (idx < 0 || idx > rows)
-				return;
+				return 0;
 
 			for (int i = 0; i < _nCols; i++)
 				_tiles.Insert(idx * _nCols + i, _fmt.NewTile());
+
+			return 1;
 		}
 
-		public void DeleteColumn(int idx)
+		public int DeleteColumn(int idx)
 		{
 			if (idx < 0 || idx >= _nCols || _nCols <= 1)
-				return;
+				return 0;
 
 			for (int i = Rows - 1; i >= 0; i--)
 				_tiles.RemoveAt(i * _nCols + idx);
 
 			_nCols--;
+			return -1;
 		}
 
-		public void DeleteRow(int idx)
+		public int DeleteRow(int idx)
 		{
 			int rows = Rows;
 			if (idx < 0 || idx >= rows || rows <= 1)
-				return;
+				return 0;
 
 			for (int i = _nCols - 1; i >= 0; i--)
 				_tiles.RemoveAt(idx * _nCols + i);
+
+			return -1;
 		}
 	}
 }

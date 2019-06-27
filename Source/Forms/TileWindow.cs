@@ -4,21 +4,23 @@ using System.Windows.Forms;
 
 namespace SpriteWave
 {
-	public abstract class TileWindow : ISelection
+	public abstract class TileWindow
 	{
 		protected Collage _cl;
 
-		bool active = false;
-		// Implements ISelection.IsActive
-		public bool IsActive { get { return _cl != null && active; } }
+		//bool active = false;
+
+		//public bool IsActive { get { return _cl != null && active; } }
 
 		//public abstract Position VisibleSelection { get; }
 
 		public abstract SizeF TileDimensions { get; }
 		public abstract Rectangle VisibleCollageBounds { get; }
 
+		protected Brush _defHl, _cursorHl;
 		protected Brush _selHl;
 		protected Position _selPos;
+		protected bool _isSel = false;
 
 		public abstract HScrollBar ScrollX { set; }
 
@@ -31,78 +33,76 @@ namespace SpriteWave
 		protected ContextMenuStrip _menu;
 		public abstract ContextMenuStrip Menu { set; }
 
-		protected Panel _infoPanel;
-		public abstract Panel Panel { set; }
-
-		public virtual string Prompt { set { return; } }
+		//public virtual string Prompt { set { return; } }
 
 		protected Rectangle _bounds;
 		protected Pen _gridPen;
 
-		protected ISelection _currentSel;
-
-		// Implements ISelection.Location
-		public Position Location
+		public bool Selected
 		{
 			get {
-				return _selPos;
+				return _isSel;
 			}
 			set {
-				_selPos = value;
-				_currentSel = this;
+				_isSel = value;
 				ResetSample();
 			}
 		}
 
-		// Implements ISelection.Piece
-		public IPiece Piece
+		public Position Position
 		{
 			get {
-				if (_currentSel == null)
-					return null;
-
-				if (_currentSel != this)
-					return _currentSel.Piece;
-
-				return PieceAt(_selPos);
-			}
-		}
-
-		public ISelection Selection
-		{
-			get {
-				return _currentSel;
+				Selected = true;
+				return _selPos;
 			}
 			set {
-				// If the new value is not this window or a mouseselection, don't accept it
-				ISelection isel = value;
-				if (isel != null && isel != this && !(isel is DragPoint))
-					isel = null;
-		
-				bool enable = isel != null && isel.Piece is Tile;
-				_currentSel = isel;
-		
-				if (enable)
-					EnableSelection();
-				else
-					DisableSelection();
+				_selPos = value;
+				Selected = true;
 			}
 		}
 
-		// Implements ISelection.Receive()
-		public abstract void Receive(IPiece isel);
+		protected Selection _cursor;
+		public Selection Cursor
+		{
+			set {
+				_cursor = value;
+				if (_cursor == null)
+					_selHl = _defHl;
+				else
+				{
+					_selHl = _cursorHl;
+					Selected = true;
+				}
+			}
+			get {
+				return _cursor;
+			}
+		}
 
-		// Implements ISelection.Delete()
-		public abstract void Delete();
+		public Selection CurrentSelection()
+		{
+			if (!_isSel)
+				return null;
+
+			return _cursor ?? new Selection(this.PieceAt(_selPos), this, _selPos);
+		}
+
+		public void AdoptCursor()
+		{
+			if (_cursor != null)
+				this.Position = _cursor.Location;
+		}
+
+		public virtual void ResizeCollage(Edge msg) {}
+		public virtual void ReceiveTile(Tile t) {}
+		public virtual void ReceiveTile(Tile t, Position loc) {}
+		public virtual void DeleteSelection() {}
 
 		public abstract void Scroll(float dx, float dy);
 		public abstract void ScrollTo(float x, float y);
 
 		public abstract void ResetScroll();
 		public abstract void UpdateBars();
-
-		public abstract void EnableSelection();
-		public abstract void DisableSelection();
 		
 		public abstract Position GetPosition(int x, int y, bool allowOob = false);
 		public abstract RectangleF PieceHitbox(Position p);
@@ -114,18 +114,18 @@ namespace SpriteWave
 		protected TileWindow()
 		{
 			_selPos = new Position(0, 0);
-			_selHl = new SolidBrush(Color.FromArgb(96, 0, 64, 255));
+			_defHl = new SolidBrush(Color.FromArgb(96, 0, 64, 255));
+			_cursorHl = new SolidBrush(Color.FromArgb(96, 0, 255, 64));
+			_selHl = _defHl;
 		}
 
 		public virtual void Activate()
 		{
-			active = true;
 			_scrollY.Visible = true;
 		}
 
 		public virtual void Close()
 		{
-			active = false;
 			_scrollY.Visible = false;
 			_cl = null;
 			DeleteFrame();
@@ -143,7 +143,7 @@ namespace SpriteWave
 
 			return _cl.TileAt(loc);
 		}
-		
+
 		public void DeleteFrame()
 		{
 			if (_window.Image != null)
@@ -159,7 +159,7 @@ namespace SpriteWave
 				_menu.Show(_window, new Point(x, y));
 		}
 
-		public void MoveSelection(int dCol, int dRow)
+		public virtual void MoveSelection(int dCol, int dRow)
 		{
 			if (_cl == null)
 				return;
@@ -172,7 +172,7 @@ namespace SpriteWave
 			else if (idx >= _cl.nTiles)
 				idx = _cl.nTiles - 1;
 
-			this.Location = new Position(idx % nCols, idx / nCols);
+			this.Position = new Position(idx % nCols, idx / nCols);
 		}
 
 		public Bitmap TileBitmap(Tile t)
@@ -208,12 +208,28 @@ namespace SpriteWave
 			}
 		}
 
-		// Implements ISelection.DrawSelection
 		public void DrawSelection(Graphics g)
 		{
-			Position loc = this.Location;
-			IPiece obj = PieceAt(loc);
-			Utils.DrawSelection(g, this, _selHl, obj, loc);
+			if (!_isSel || _selHl == null)
+				return;
+
+			Position loc;
+			IPiece obj;
+			if (_cursor != null)
+			{
+				loc = _cursor.Location;
+				obj = _cursor.Piece;
+			}
+			else
+			{
+				loc = _selPos;
+				obj = PieceAt(_selPos);
+			}
+
+			if (obj != null && obj.EdgeKind != EdgeKind.None)
+				g.FillPolygon(_selHl, ShapeEdge(obj as Edge));
+			else
+				g.FillRectangle(_selHl, PieceHitbox(loc));
 		}
 
 		public virtual void DrawEdges(Graphics g) {}
@@ -248,8 +264,7 @@ namespace SpriteWave
 				DrawCanvas(g);
 
 				// Highlight the current tile, if one is currently selected
-				if (_currentSel != null)
-					_currentSel.DrawSelection(g);
+				DrawSelection(g);
 
 				// Draw some borders to indicate that the window's collage can be resized
 				// Only implemented in SpriteWindow

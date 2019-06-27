@@ -16,8 +16,6 @@ namespace SpriteWave
 		private ToolStripMenuItem _pasteTile;
 		private DragObject _drag;
 
-		private FormWindowState _prevWndState = FormWindowState.Minimized;
-
 		public MainForm()
 		{
 			_formatList = new Dictionary<FormatKind, FileFormat>();
@@ -40,7 +38,6 @@ namespace SpriteWave
 
 			this.openFileDialog1.Filter = Utils.FilterBuilder(_formatList);
 
-			//this.Resize += new EventHandler(this.resizeRefreshHack);
 			this.Layout += new LayoutEventHandler(this.layoutHandler);
 			this.ActiveControl = this.inputBox;
 
@@ -73,12 +70,6 @@ namespace SpriteWave
 			_spriteWnd.ScrollY = this.spriteScrollY;
 			_spriteWnd.InitialMenu = _initialSpriteMenu;
 			_spriteWnd.Menu = this.spriteMenu;
-			_spriteWnd.Panel = this.spritePanel;
-		}
-
-		private int Centre(int cont, int obj)
-		{
-			return (cont - obj) / 2;
 		}
 
 		private void layoutHandler(object sender, LayoutEventArgs e)
@@ -89,7 +80,7 @@ namespace SpriteWave
 			int availX = this.ClientSize.Width - (this.inputScroll.Size.Width + this.spriteScrollY.Size.Width);
 
 			int availInputY = totalH - (menuH + this.inputPanel.Size.Height);
-			int availSpriteY = totalH - (menuH + this.spritePanel.Size.Height + this.spriteScrollX.Size.Height);
+			int availSpriteY = totalH - (menuH + this.spriteScrollX.Size.Height + (totalH / 2));
 
 			int inputBoxW = availX / 2;
 			int spriteBoxW = availX / 2;
@@ -114,16 +105,13 @@ namespace SpriteWave
 
 			this.spriteScrollX.Location = new Point(this.spriteBox.Location.X, menuH + availSpriteY);
 			this.spriteScrollX.Size = new Size(spriteBoxW, this.spriteScrollX.Size.Height);
-			
-			this.spritePanel.Location = new Point(this.spriteBox.Location.X, this.spriteScrollX.Location.Y + this.spriteScrollX.Size.Height);
-			this.spritePanel.Size = new Size(spriteBoxW + this.spriteScrollY.Size.Width, this.spritePanel.Size.Height);
 
 			this.inputOffsetLabel.Location = new Point(this.inputOffsetLabel.Location.X, centre(this.inputPanel.Size.Height, this.inputOffsetLabel.Size.Height));
-			this.inputOffset.Location = new Point(this.inputOffset.Location.X, centre(this.inputPanel.Size.Height, this.inputOffset.Size.Height));
+			this.inputOffset.Location = new Point(this.inputOffset.Location.X, -1 + centre(this.inputPanel.Size.Height, this.inputOffset.Size.Height));
 			this.inputSizeLabel.Location = new Point(this.inputSizeLabel.Location.X, centre(this.inputPanel.Size.Height, this.inputSizeLabel.Size.Height));
 
-			this.inputSend.Location = new Point(this.inputPanel.Size.Width - 160, centre(this.inputPanel.Size.Height, this.inputSend.Size.Height));
-			this.inputSample.Location = new Point(this.inputPanel.Size.Width - 60, centre(this.inputPanel.Size.Height, this.inputSample.Size.Height));
+			this.inputSend.Location = new Point(this.inputPanel.Size.Width - 160, -1 + centre(this.inputPanel.Size.Height, this.inputSend.Size.Height));
+			this.inputSample.Location = new Point(this.inputPanel.Size.Width - 60, -1 + centre(this.inputPanel.Size.Height, this.inputSample.Size.Height));
 			
 			this.ResumeLayout();
 
@@ -141,24 +129,24 @@ namespace SpriteWave
 
 		private void CopyTile(TileWindow wnd)
 		{
-			wnd.Selection = wnd;
-			Transfer.Source = wnd;
+			wnd.Selected = true;
+			Transfer.Source = wnd.CurrentSelection();
 			Transfer.Start();
 			_pasteTile.Enabled = true;
 		}
 
 		private void PasteTile(TileWindow wnd)
 		{
-			wnd.Selection = wnd;
-			Transfer.Dest = wnd;
+			wnd.Selected = true;
+			Transfer.Dest = wnd.CurrentSelection();
 			Transfer.Paste();
 			Draw();
 		}
 
 		private void ClearSelection()
 		{
-			_inputWnd.Selection = null;
-			_spriteWnd.Selection = null;
+			_inputWnd.Selected = false;
+			_spriteWnd.Selected = false;
 			Transfer.Clear();
 		}
 
@@ -186,9 +174,9 @@ namespace SpriteWave
 		private void ShowMenuAt(TileWindow wnd, int x, int y)
 		{
 			try {
-				wnd.Location = wnd.GetPosition(x, y);
-				Transfer.Source = wnd;
-				if (wnd.EdgeOf(wnd.Location) == EdgeKind.None)
+				wnd.Position = wnd.GetPosition(x, y);
+				Transfer.Source = wnd.CurrentSelection();
+				if (wnd.EdgeOf(wnd.Position) == EdgeKind.None)
 					wnd.ShowMenu(x, y);
 			}
 			catch (ArgumentOutOfRangeException) {
@@ -232,7 +220,9 @@ namespace SpriteWave
 			{
 				if (_drag.Started)
 				{
+					_drag.End();
 					Transfer.Paste();
+					
 					ClearSelection();
 				}
 				else
@@ -324,10 +314,8 @@ namespace SpriteWave
 
 			if (e.KeyCode == Keys.Enter)
 			{
-				Transfer.Start();
-				_spriteWnd.Selection = _spriteWnd;
-				Transfer.Dest = _spriteWnd;
-				Transfer.Paste();
+				CopyTile(_inputWnd);
+				PasteTile(_spriteWnd);
 				_spriteWnd.MoveSelection(1, 0);
 			}
 
@@ -382,13 +370,13 @@ namespace SpriteWave
 
 				if (swap)
 				{
-					_spriteWnd.Selection = _spriteWnd;
-					Transfer.Source = _spriteWnd;
+					_spriteWnd.Selected = true;
+					Transfer.Source = _spriteWnd.CurrentSelection();
 					Transfer.Start();
 
 					_spriteWnd.MoveSelection(x, y);
-					Transfer.Dest = _spriteWnd;
-					Transfer.Paste();
+					Transfer.Dest = _spriteWnd.CurrentSelection();
+					Transfer.Swap();
 
 					Draw();
 					return;
@@ -420,30 +408,11 @@ namespace SpriteWave
 			
 			if (move)
 			{
-				Transfer.Source = _inputWnd;
-				Transfer.Dest = _spriteWnd;
+				Transfer.Source = _inputWnd.CurrentSelection();
+				Transfer.Dest = _spriteWnd.CurrentSelection();
 			}
 
 			Draw();
-		}
-
-		/*
-			It seems like if you go too many levels deep into SplitContainer-ception,
-			the resize/paint chain doesn't complete when maximising, minimising, etc.
-			Thanks StackOverflow!
-			- Problem: https://stackoverflow.com/questions/6644213/winform-splitcontainers-redraw-issue
-			- Solution: https://stackoverflow.com/a/16626928
-			And yes, technically checking for form state changes is not required,
-			but if I don't include it then I end up with unnecessary redrawing (decent performance penalty)
-		*/
-		private void resizeRefreshHack(object sender, EventArgs e)
-		{
-			FormWindowState state = this.WindowState;
-			if (state != _prevWndState)
-			{
-				_prevWndState = state;
-				Draw();
-			}
 		}
 
 		private void openBinary(object sender, EventArgs e)
@@ -459,11 +428,6 @@ namespace SpriteWave
 		{
 			openFileDialog1.FilterIndex = (int)FormatKind.SNES + 1;
 			openFileDialog1.ShowDialog();
-		}
-
-		private void exportSprite(object sender, EventArgs e)
-		{
-
 		}
 
 		private void closeWorkspace(object sender, EventArgs e)
@@ -487,7 +451,7 @@ namespace SpriteWave
 			_spriteWnd.Close();
 			_inputWnd.Load(fmt, data);
 			_spriteWnd.FormatToLoad = fmt;
-			_spriteWnd.Prompt = "Drag or send a tile to begin!";
+			//_spriteWnd.Prompt = "Drag or send a tile to begin!";
 
 			Draw();
 		}

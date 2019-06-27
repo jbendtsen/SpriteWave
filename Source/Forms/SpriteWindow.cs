@@ -128,8 +128,8 @@ namespace SpriteWave
 					)
 				);
 
-				_menu.Items.Add(new ToolStripSeparator());
-				_menu.Items.Add("Edit Palette", null, (s, e) => MessageBox.Show("nope"));
+				//_menu.Items.Add(new ToolStripSeparator());
+				//_menu.Items.Add("Edit Palette", null, null);
 			}
 		}
 
@@ -139,66 +139,6 @@ namespace SpriteWave
 				_window = value;
 				_window.Resize += new EventHandler(this.adjustWindowSize);
 				_window.MouseWheel += new MouseEventHandler(this.windowScrollAction);
-			}
-		}
-		
-		Label _panelPrompt;
-
-		TextBox _palette1;
-		TextBox _palette2;
-		TextBox _palette3;
-		TextBox _palette4;
-
-		Button _rotateLeft;
-		Button _rotateRight;
-		Button _mirrorHori;
-		Button _mirrorVert;
-
-		TextBox _nameBox;
-		Button _saveButton;
-
-		public override Panel Panel
-		{
-			set {
-				_infoPanel = value;
-				_panelPrompt = Utils.FindControl(_infoPanel, "spritePrompt") as Label;
-
-				_palette1 = Utils.FindControl(_infoPanel, "palette1") as TextBox;
-				_palette2 = Utils.FindControl(_infoPanel, "palette2") as TextBox;
-				_palette3 = Utils.FindControl(_infoPanel, "palette3") as TextBox;
-				_palette4 = Utils.FindControl(_infoPanel, "palette4") as TextBox;
-				
-				_palette1.TextChanged += (s, e) => SetPaletteIndex(0, _palette1.Text);
-				_palette2.TextChanged += (s, e) => SetPaletteIndex(1, _palette2.Text);
-				_palette3.TextChanged += (s, e) => SetPaletteIndex(2, _palette3.Text);
-				_palette4.TextChanged += (s, e) => SetPaletteIndex(3, _palette4.Text);
-
-				_rotateLeft = Utils.FindControl(_infoPanel, "rotateLeft") as Button;
-				_rotateRight = Utils.FindControl(_infoPanel, "rotateRight") as Button;
-				_mirrorHori = Utils.FindControl(_infoPanel, "mirrorHori") as Button;
-				_mirrorVert = Utils.FindControl(_infoPanel, "mirrorVert") as Button;
-
-				_rotateLeft.Click += (s, e) => FlipTile(Translation.Left);
-				_rotateRight.Click += (s, e) => FlipTile(Translation.Right);
-				_mirrorHori.Click += (s, e) => FlipTile(Translation.Horizontal);
-				_mirrorVert.Click += (s, e) => FlipTile(Translation.Vertical);
-
-				_nameBox = Utils.FindControl(_infoPanel, "spriteName") as TextBox;
-				_nameBox.KeyDown += new KeyEventHandler(this.checkNameSubmit);
-
-				_saveButton = Utils.FindControl(_infoPanel, "spriteSave") as Button;
-				_saveButton.Click += new EventHandler(this.saveButtonHandler);
-			}
-		}
-
-		public override string Prompt
-		{
-			set {
-				if (_panelPrompt == null)
-					return;
-
-				_panelPrompt.Text = value;
-				_panelPrompt.Visible = true;
 			}
 		}
 
@@ -215,22 +155,6 @@ namespace SpriteWave
 			ResetScroll();
 
 			base.Activate();
-			_scrollX.Visible = true;
-			_panelPrompt.Visible = false;
-
-			_palette1.Visible = true;
-			_palette2.Visible = true;
-			_palette3.Visible = true;
-			_palette4.Visible = true;
-	
-			_rotateLeft.Visible = true;
-			_rotateRight.Visible = true;
-			_mirrorHori.Visible = true;
-			_mirrorVert.Visible = true;
-
-			_nameBox.Visible = true;
-			_saveButton.Visible = true;
-
 			UpdateBars();
 		}
 
@@ -238,28 +162,13 @@ namespace SpriteWave
 		{
 			base.Close();
 			_scrollX.Visible = false;
-			_panelPrompt.Visible = false;
-
-			_palette1.Visible = false;
-			_palette1.Text = "";
-			_palette2.Visible = false;
-			_palette2.Text = "";
-			_palette3.Visible = false;
-			_palette3.Text = "";
-			_palette4.Visible = false;
-			_palette4.Text = "";
-	
-			_rotateLeft.Visible = false;
-			_rotateRight.Visible = false;
-			_mirrorHori.Visible = false;
-			_mirrorVert.Visible = false;
-
-			_nameBox.Visible = false;
-			_saveButton.Visible = false;
 		}
 
 		public override EdgeKind EdgeOf(Position loc)
 		{
+			if (_cl == null)
+				return EdgeKind.None;
+
 			int x = 0, y = 0;
 			if (loc.row == -1)
 				y = -1;
@@ -289,7 +198,7 @@ namespace SpriteWave
 			return _edges[(int)kind];
 		}
 
-		private void ResizeCollage(Edge msg)
+		public override void ResizeCollage(Edge msg)
 		{
 			if (msg.EdgeKind == EdgeKind.None)
 				return;
@@ -298,34 +207,29 @@ namespace SpriteWave
 			Edge.GetCoords(msg.EdgeKind, out x, out y);
 			var dist = msg.Distance;
 
-			Func<int, int, int, Action<int>, Action<int>, int> resizeAxis = (side, delta, max, insert, delete) =>
+			Func<int, int, int, Func<int, int>, Func<int, int>, int> resizeAxis = (side, delta, max, insert, delete) =>
 			{
+				int shift = 0;
 				int length = Math.Abs(delta);
 				for (int i = 0; i < length; i++)
 				{
 					if (side < 0)
 					{
 						if (delta < 0)
-							insert(0);
+							shift += insert(0);
 						else
-							delete(0);
+							shift += delete(0);
 					}
 					if (side > 0)
 					{
 						if (delta < 0)
-							delete(--max);
+							shift += delete(--max);
 						else
-							insert(max);
+							shift += insert(max);
 					}
 				}
 
-				int dir = 0;
-				if ((side < 0 && delta < 0) || (side > 0 && delta >= 0))
-					dir = 1;
-				if ((side < 0 && delta >= 0) || (side > 0 && delta < 0))
-					dir = -1;
-
-				return length * dir;
+				return shift;
 			};
 
 			int shiftX = resizeAxis(x, dist.col, _cl.Columns, _cl.InsertColumn, _cl.DeleteColumn);
@@ -333,18 +237,12 @@ namespace SpriteWave
 
 			ShiftCamera(shiftX, shiftY);
 			msg.Distance = new Position(0, 0);
+
+			Render();
 		}
 
-		// Implements ISelection.Receive()
-		public override void Receive(IPiece obj)
+		public override void ReceiveTile(Tile obj, Position loc)
 		{
-			if (obj is Edge)
-			{
-				ResizeCollage(obj as Edge);
-				Render();
-				return;
-			}
-
 			if (_cl == null)
 			{
 				_cl = new Collage(_fmt, 1, false);
@@ -352,7 +250,6 @@ namespace SpriteWave
 				Activate();
 			}
 
-			Position loc = _currentSel.Location;
 			EdgeKind kind = EdgeOf(loc);
 			if (kind != EdgeKind.None)
 			{
@@ -369,17 +266,22 @@ namespace SpriteWave
 					loc.row = 0;
 			}
 
-			_cl.SetTile(loc, obj as Tile);
+			_selPos = loc;
+			_cl.SetTile(_selPos, obj as Tile);
 			Render();
 		}
 
-		// Implements ISelection.Delete()
-		public override void Delete()
+		public override void ReceiveTile(Tile obj)
 		{
-			if (_cl == null || _currentSel == null)
+			ReceiveTile(obj, _selPos);
+		}
+
+		public void Delete()
+		{
+			if (_cl == null || !_isSel)
 				return;
 
-			_cl.SetTile(_currentSel.Location, _fmt.NewTile());
+			_cl.SetTile(_selPos, _fmt.NewTile());
 			Render();
 			Draw();
 		}
@@ -494,9 +396,6 @@ namespace SpriteWave
 				wndH + (int)((float)_cl.Height * _zoom)
 			);
 		}
-
-		public override void EnableSelection() {}
-		public override void DisableSelection() {}
 
 		public override Position GetPosition(int x, int y, bool allowOob = false)
 		{
@@ -651,30 +550,30 @@ namespace SpriteWave
 
 		private void InsertCollageColumn(int pos)
 		{
-			_cl.InsertColumn(pos);
+			int shift = _cl.InsertColumn(pos);
 			Render();
-			ShiftCamera(1, 0);
+			ShiftCamera(shift, 0);
 			Draw();
 		}
 		private void InsertCollageRow(int pos)
 		{
-			_cl.InsertRow(pos);
+			int shift = _cl.InsertRow(pos);
 			Render();
-			ShiftCamera(0, 1);
+			ShiftCamera(0, shift);
 			Draw();
 		}
 		private void DeleteCollageColumn(int pos)
 		{
-			_cl.DeleteColumn(pos);
+			int shift = _cl.DeleteColumn(pos);
 			Render();
-			ShiftCamera(-1, 0);
+			ShiftCamera(shift, 0);
 			Draw();
 		}
 		private void DeleteCollageRow(int pos)
 		{
-			_cl.DeleteRow(pos);
+			int shift = _cl.DeleteRow(pos);
 			Render();
-			ShiftCamera(0, -1);
+			ShiftCamera(0, shift);
 			Draw();
 		}
 
@@ -717,7 +616,7 @@ namespace SpriteWave
 
 		private void FlipTile(Translation tr)
 		{
-			if (_cl == null || _currentSel != this)
+			if (_cl == null || !_isSel)
 				return;
 
 			Tile t = _cl.TileAt(_selPos);
@@ -728,47 +627,6 @@ namespace SpriteWave
 				Render();
 				Draw();
 			}
-		}
-
-		private void SetPaletteIndex(int idx, string text)
-		{
-			if (_fmt.Name != "NES")
-				return;
-
-			uint n;
-			try {
-				n = Convert.ToUInt32(text, 16);
-			}
-			catch {
-				n = 0;
-			}
-
-			_cl.SetColour(idx, n);
-			Render();
-
-			_currentSel = null;
-			ResetGridPen();
-			Draw();
-		}
-
-		public void Save()
-		{
-			string name = _nameBox.Text;
-			if (name == "")
-				name = "sprite";
-
-			string fileName = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\" + name + ".png";
-			_cl.Bitmap.Scale(16).Save(fileName);
-		}
-
-		public void checkNameSubmit(object sender, KeyEventArgs e)
-		{
-			if (e.KeyCode == Keys.Enter)
-				Save();
-		}
-		public void saveButtonHandler(object sender, EventArgs e)
-		{
-			Save();
 		}
 	}
 }
