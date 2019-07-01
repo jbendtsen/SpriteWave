@@ -35,6 +35,83 @@ namespace SpriteWave
 			}
 		}
 
+		private Label _offsetLabel;
+		private TextBox _offsetBox;
+		private Label _sizeLabel;
+		private Button _sendTile;
+		private PictureBox _tileSample;
+
+		private Bitmap _tileSampleBmp;
+
+		public override TabPage ControlsTab { get { return _controlsTab; } }
+
+		public override void InitialiseControlsTab()
+		{
+			base.InitialiseControlsTab();
+
+			_offsetLabel = new Label();
+			//_offsetLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+			//_offsetLabel.FlatStyle = System.Windows.Forms.FlatStyle.System;
+			_offsetLabel.Location = new System.Drawing.Point(5, 18);
+			_offsetLabel.Name = "inputOffsetLabel";
+			_offsetLabel.Size = new System.Drawing.Size(53, 15);
+			//_offsetLabel.TabIndex = 0;
+			_offsetLabel.Text = "Offset: 0x";
+			_offsetLabel.Visible = false;
+
+			_offsetBox = new TextBox();
+			//_offsetBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+			_offsetBox.Enabled = false;
+			_offsetBox.Location = new System.Drawing.Point(60, 15);
+			_offsetBox.Name = "inputOffset";
+			_offsetBox.Size = new System.Drawing.Size(60, 20);
+			//_offsetBox.TabIndex = 5;
+			_offsetBox.Text = "0";
+			_offsetBox.Visible = false;
+			_offsetBox.TextChanged += new EventHandler(this.editOffsetBox);
+
+			_sizeLabel = new Label();
+			//_sizeLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+			//_sizeLabel.FlatStyle = System.Windows.Forms.FlatStyle.System;
+			_sizeLabel.Location = new System.Drawing.Point(122, 18);
+			_sizeLabel.Name = "inputSizeLabel";
+			_sizeLabel.Size = new System.Drawing.Size(58, 15);
+			//_sizeLabel.TabIndex = 6;
+			_sizeLabel.Text = "/";
+			_sizeLabel.Visible = false;
+
+			_sendTile = new Button();
+			//_sendTile.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+			_sendTile.Location = new System.Drawing.Point(200, 12);
+			_sendTile.Name = "inputSend";
+			_sendTile.Size = new System.Drawing.Size(90, 24);
+			//_sendTile.TabIndex = 8;
+			_sendTile.Text = "Send To Sprite";
+			_sendTile.UseVisualStyleBackColor = true;
+			_sendTile.Visible = false;
+
+			_tileSample = new PictureBox();
+			//this.inputSample.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+			_tileSample.BackColor = System.Drawing.SystemColors.ControlLight;
+			_tileSample.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+			_tileSample.Location = new System.Drawing.Point(300, 4);
+			_tileSample.Name = "inputSample";
+			_tileSample.Size = new System.Drawing.Size(40, 40);
+			_tileSample.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+			//_tileSample.TabIndex = 7;
+			//_tileSample.TabStop = false;
+			_tileSample.Visible = false;
+			_tileSample.Paint += new PaintEventHandler(this.paintSample);
+
+			_controlsTab.Controls.Add(_offsetLabel);
+			_controlsTab.Controls.Add(_offsetBox);
+			_controlsTab.Controls.Add(_sizeLabel);
+			_controlsTab.Controls.Add(_sendTile);
+			_controlsTab.Controls.Add(_tileSample);
+		}
+
+		public EventHandler SendTileAction { set { _sendTile.Click += value; } }
+
 		public override HScrollBar ScrollX
 		{
 			set
@@ -55,8 +132,6 @@ namespace SpriteWave
 		{
 			set {
 				_menu = value;
-				//_menu.Items.Add(new ToolStripSeparator());
-				//_menu.Items.Add("Edit Palette", null, null);
 			}
 		}
 
@@ -71,37 +146,6 @@ namespace SpriteWave
 			}
 		}
 
-		private Panel _infoPanel;
-		private Label _offsetLabel;
-		private TextBox _offsetBox;
-		private Label _sizeLabel;
-		private Button _sendTile;
-		private PictureBox _tileSample;
-
-		private Bitmap _tileSampleBmp;
-
-		public Panel Panel
-		{
-			set {
-				_infoPanel = value;
-				//_infoPanel.Layout += new LayoutEventHandler(this.PanelLayout);
-
-				//_splitInput = _infoPanel.Parent as SplitContainer;
-
-				_offsetLabel = Utils.FindControl(_infoPanel, "inputOffsetLabel") as Label;
-
-				_offsetBox = Utils.FindControl(_infoPanel, "inputOffset") as TextBox;
-				_offsetBox.TextChanged += new EventHandler(this.editOffsetBox);
-
-				_sizeLabel = Utils.FindControl(_infoPanel, "inputSizeLabel") as Label;
-
-				_sendTile = Utils.FindControl(_infoPanel, "inputSend") as Button;
-
-				_tileSample = Utils.FindControl(_infoPanel, "inputSample") as PictureBox;
-				_tileSample.Paint += new PaintEventHandler(this.paintSample);
-			}
-		}
-		
 		public InputWindow() : base()
 		{
 			_row = 0;
@@ -113,7 +157,7 @@ namespace SpriteWave
 			_vis.col = _cl.Columns;
 			AdjustWindow();
 
-			_infoPanel.Visible = true;
+			//_infoPanel.Visible = true;
 
 			_offsetLabel.Visible = true;
 
@@ -129,11 +173,14 @@ namespace SpriteWave
 		public override void Close()
 		{
 			base.Close();
-			_infoPanel.Visible = false;
+			//_infoPanel.Visible = false;
 		}
 
 		public void Load(FileFormat fmt, byte[] file, int offset = 0)
 		{
+			_selPos = new Position(0, 0);
+			Selected = false;
+
 			_contents = file;
 			_cl = new Collage(fmt);
 			_cl.LoadTiles(_contents, offset);
@@ -147,6 +194,9 @@ namespace SpriteWave
 
 		public void Load(int offset)
 		{
+			_selPos = new Position(0, 0);
+			Selected = false;
+
 			if (_cl != null && _contents != null)
 			{
 				_cl.LoadTiles(_contents, offset);
@@ -245,8 +295,11 @@ namespace SpriteWave
 				return;
 
 			// Start with our "constants"
-			int wndW = width > 0 ? width : _infoPanel.Size.Width;
-			int wndH = height > 0 ? height : _infoPanel.Location.Y;
+			//int wndW = width > 0 ? width : _infoPanel.Size.Width;
+			//int wndH = height > 0 ? height : _infoPanel.Location.Y;
+
+			int wndW = width > 0 ? width : _window.Size.Width;
+			int wndH = height > 0 ? height : _window.Size.Height;
 			float thF = (float)_cl.TileH;
 
 			float scaleX = (float)wndW / (float)_cl.Width;
@@ -294,6 +347,21 @@ namespace SpriteWave
 			}
 		}
 
+		public override void AdjustControlsTab()
+		{
+			Func<int, int, int, int> centre = (off, cont, obj) => off + (cont - obj) / 2;
+
+			int space = 50;
+			int y = _controlsTab.Size.Height - space;
+
+			_offsetLabel.Location = new Point(_offsetLabel.Location.X, centre(y, space, _offsetLabel.Size.Height));
+			_offsetBox.Location = new Point(_offsetBox.Location.X, -1 + centre(y, space, _offsetBox.Size.Height));
+			_sizeLabel.Location = new Point(_sizeLabel.Location.X, centre(y, space, _sizeLabel.Size.Height));
+
+			_sendTile.Location = new Point(_controlsTab.Size.Width - 150, -1 + centre(y, space, _sendTile.Size.Height));
+			_tileSample.Location = new Point(_controlsTab.Size.Width - 50, -1 + centre(y, space, _tileSample.Size.Height));
+		}
+
 		private void editOffsetBox(object sender, EventArgs e)
 		{
 			try {
@@ -304,9 +372,6 @@ namespace SpriteWave
 
 				if (offset >= 0 && offset < _contents.Length)
 				{
-					Selected = false;
-					_selPos = new Position(0, 0);
-
 					Load(offset);
 					Draw();
 				}

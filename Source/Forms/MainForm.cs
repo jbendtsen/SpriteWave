@@ -11,6 +11,8 @@ namespace SpriteWave
 	{
 		private InputWindow _inputWnd;
 		private SpriteWindow _spriteWnd;
+		private ToolBox _toolBox;
+
 		private Dictionary<FormatKind, FileFormat> _formatList;
 
 		private ToolStripMenuItem _pasteTile;
@@ -46,30 +48,35 @@ namespace SpriteWave
 
 			Utils.ApplyRecursiveControlAction(this, this.SetMouseEventHandler);
 
-			this.inputSend.Click += new EventHandler((s, e) => {CopyTile(_inputWnd); PasteTile(_spriteWnd);});
-
-			inputMenu.Items.Add("Copy Tile", null, (s, e) => CopyTile(_inputWnd));
-			spriteMenu.Items.Add("Copy Tile", null, (s, e) => CopyTile(_spriteWnd));
+			this.inputMenu.Items.Add("Copy Tile", null, (s, e) => CopyTile(_inputWnd));
+			this.spriteMenu.Items.Add("Copy Tile", null, (s, e) => CopyTile(_spriteWnd));
 			
 			_pasteTile = new ToolStripMenuItem("Paste Tile", null, (s, e) => PasteTile(_spriteWnd));
 			_pasteTile.Enabled = false;
-			spriteMenu.Items.Add(_pasteTile);
+			this.spriteMenu.Items.Add(_pasteTile);
 
-			var _initialSpriteMenu = new ContextMenuStrip();
-			_initialSpriteMenu.Items.Add(new ToolStripMenuItem("Paste Tile", null, (s, e) => PasteTile(_spriteWnd)));
+			var initialSpriteMenu = new ContextMenuStrip();
+			initialSpriteMenu.Items.Add(new ToolStripMenuItem("Paste Tile", null, (s, e) => PasteTile(_spriteWnd)));
 
 			_inputWnd = new InputWindow();
+			_inputWnd.InitialiseControlsTab();
 			_inputWnd.Canvas = this.inputBox;
 			_inputWnd.ScrollY = this.inputScroll;
 			_inputWnd.Menu = this.inputMenu;
-			_inputWnd.Panel = this.inputPanel;
+			_inputWnd.SendTileAction = (s, e) => {CopyTile(_inputWnd); PasteTile(_spriteWnd);};
 
 			_spriteWnd = new SpriteWindow();
+			_spriteWnd.InitialiseControlsTab();
 			_spriteWnd.Canvas = this.spriteBox;
 			_spriteWnd.ScrollX = this.spriteScrollX;
 			_spriteWnd.ScrollY = this.spriteScrollY;
-			_spriteWnd.InitialMenu = _initialSpriteMenu;
+			_spriteWnd.InitialMenu = initialSpriteMenu;
 			_spriteWnd.Menu = this.spriteMenu;
+
+			_toolBox = new ToolBox(this.toolBoxTabs, _spriteWnd, this.toolBoxSwitchWindow, this.toolBoxMinimise);
+
+			this.toolBoxMinimise.Click += (s, e) => {_toolBox.Minimise(); this.PerformLayout();};
+			this.toolBoxSwitchWindow.Click += new EventHandler(this.switchToolBoxWindow);
 		}
 
 		private void layoutHandler(object sender, LayoutEventArgs e)
@@ -78,43 +85,46 @@ namespace SpriteWave
 			int menuH = this.menuStrip1.Size.Height;
 
 			int availX = this.ClientSize.Width - (this.inputScroll.Size.Width + this.spriteScrollY.Size.Width);
+			int tileBoxW = availX / 2;
 
-			int availInputY = totalH - (menuH + this.inputPanel.Size.Height);
-			int availSpriteY = totalH - (menuH + this.spriteScrollX.Size.Height + (totalH / 2));
-
-			int inputBoxW = availX / 2;
-			int spriteBoxW = availX / 2;
-
-			Func<int, int, int> centre = (cont, obj) => (cont - obj) / 2;
+			PictureBox tbWndBox = null;
+			TileWindow tbWnd = _toolBox.ActiveWindow;
+			var tbLayout = ToolBoxOrientation.None;
+			if (tbWnd == _inputWnd)
+			{
+				tbWndBox = this.inputBox;
+				tbLayout = ToolBoxOrientation.Left;
+			}
+			else if (tbWnd == _spriteWnd)
+			{
+				tbWndBox = this.spriteBox;
+				tbLayout = ToolBoxOrientation.Right;
+			}
 
 			this.SuspendLayout();
 
-			this.inputBox.Size = new Size(inputBoxW, availInputY);
-			this.spriteBox.Size = new Size(spriteBoxW, availSpriteY);
+			this.inputBox.Location = new Point(0, menuH);
+			this.inputBox.Size = new Size(tileBoxW, totalH - menuH);
 
-			this.inputScroll.Location = new Point(inputBoxW, this.inputScroll.Location.Y);
-			this.inputScroll.Size = new Size(this.inputScroll.Size.Width, availInputY);
+			this.spriteBox.Location = new Point(this.inputBox.Size.Width + this.inputScroll.Size.Width, menuH);
+			this.spriteBox.Size = new Size(tileBoxW, totalH - (menuH + this.spriteScrollX.Size.Height));
 
-			this.inputPanel.Location = new Point(0, menuH + availInputY);
-			this.inputPanel.Size = new Size(inputBoxW + this.inputScroll.Size.Width, this.inputPanel.Size.Height);
+			_toolBox.UpdateLayout(tbLayout, this.ClientSize);
+			if (tbWndBox != null)
+				tbWndBox.Size = new Size(tbWndBox.Size.Width, tbWndBox.Size.Height - this.toolBoxTabs.Size.Height);
 
-			this.spriteBox.Location = new Point(inputBoxW + this.inputScroll.Size.Width, menuH);
+			this.inputScroll.Location = new Point(tileBoxW, this.inputScroll.Location.Y);
+			this.inputScroll.Size = new Size(this.inputScroll.Size.Width, this.inputBox.Size.Height);
 
-			this.spriteScrollY.Location = new Point(this.spriteBox.Location.X + spriteBoxW, menuH);
-			this.spriteScrollY.Size = new Size(this.spriteScrollY.Size.Width, availSpriteY);
+			this.spriteScrollY.Location = new Point(this.spriteBox.Location.X + tileBoxW, menuH);
+			this.spriteScrollY.Size = new Size(this.spriteScrollY.Size.Width, this.spriteBox.Size.Height);
 
-			this.spriteScrollX.Location = new Point(this.spriteBox.Location.X, menuH + availSpriteY);
-			this.spriteScrollX.Size = new Size(spriteBoxW, this.spriteScrollX.Size.Height);
+			this.spriteScrollX.Location = new Point(this.spriteBox.Location.X, menuH + this.spriteBox.Size.Height);
+			this.spriteScrollX.Size = new Size(tileBoxW, this.spriteScrollX.Size.Height);
 
-			this.inputOffsetLabel.Location = new Point(this.inputOffsetLabel.Location.X, centre(this.inputPanel.Size.Height, this.inputOffsetLabel.Size.Height));
-			this.inputOffset.Location = new Point(this.inputOffset.Location.X, -1 + centre(this.inputPanel.Size.Height, this.inputOffset.Size.Height));
-			this.inputSizeLabel.Location = new Point(this.inputSizeLabel.Location.X, centre(this.inputPanel.Size.Height, this.inputSizeLabel.Size.Height));
-
-			this.inputSend.Location = new Point(this.inputPanel.Size.Width - 160, -1 + centre(this.inputPanel.Size.Height, this.inputSend.Size.Height));
-			this.inputSample.Location = new Point(this.inputPanel.Size.Width - 60, -1 + centre(this.inputPanel.Size.Height, this.inputSample.Size.Height));
-			
 			this.ResumeLayout();
 
+			this.toolBoxTabs.Refresh();
 			_inputWnd.UpdateBars();
 			_spriteWnd.UpdateBars();
 			Draw();
@@ -157,7 +167,7 @@ namespace SpriteWave
 			ctrl.MouseUp   += new MouseEventHandler(this.mouseUpHandler);
 			return null;
 		}
-		
+
 		private void StartDrag(TileWindow wnd, int x, int y)
 		{
 			Transfer.Dest = null;
@@ -170,7 +180,7 @@ namespace SpriteWave
 				ClearSelection();
 			}
 		}
-		
+
 		private void ShowMenuAt(TileWindow wnd, int x, int y)
 		{
 			try {
@@ -221,8 +231,13 @@ namespace SpriteWave
 				if (_drag.Started)
 				{
 					_drag.End();
+/*
+					if ((Control.ModifierKeys & Keys.Shift) != 0)
+						Transfer.Swap();
+					else
+						Transfer.Paste();
+*/
 					Transfer.Paste();
-					
 					ClearSelection();
 				}
 				else
@@ -323,8 +338,10 @@ namespace SpriteWave
 
 			if ((mod & Keys.Control) != 0)
 			{
+				/*
 				if (e.KeyCode == Keys.G)
 					this.ActiveControl = this.inputOffset;
+				*/
 
 				int zoom = 0;
 				if (e.KeyCode == Keys.OemMinus)
@@ -413,6 +430,16 @@ namespace SpriteWave
 			}
 
 			Draw();
+		}
+
+		private void switchToolBoxWindow(object sender, EventArgs e)
+		{
+			if (_toolBox.ActiveWindow == _inputWnd)
+				_toolBox.ActiveWindow = _spriteWnd;
+			else if (_toolBox.ActiveWindow == _spriteWnd)
+				_toolBox.ActiveWindow = _inputWnd;
+
+			this.PerformLayout();
 		}
 
 		private void openBinary(object sender, EventArgs e)

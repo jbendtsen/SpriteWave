@@ -24,17 +24,16 @@ namespace SpriteWave
 		private PictureBox inputBox;
 		private VScrollBar inputScroll;
 		private ContextMenuStrip inputMenu;
-		private Panel inputPanel;
-		private Label inputOffsetLabel;
-		private TextBox inputOffset;
-		private Label inputSizeLabel;
-		private PictureBox inputSample;
-		private Button inputSend;
 
 		private PictureBox spriteBox;
 		private HScrollBar spriteScrollX;
 		private VScrollBar spriteScrollY;
 		private ContextMenuStrip spriteMenu;
+
+		private TabControl toolBoxTabs;
+		private TabPage paletteTab;
+		private Button toolBoxMinimise;
+		private Button toolBoxSwitchWindow;
 
 		private MenuStrip menuStrip1;
 		private ToolStripMenuItem fileToolStripMenuItem;
@@ -71,15 +70,13 @@ namespace SpriteWave
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
 			this.inputBox = new System.Windows.Forms.PictureBox();
 			this.inputScroll = new System.Windows.Forms.VScrollBar();
-			this.inputPanel = new System.Windows.Forms.Panel();
-			this.inputSend = new System.Windows.Forms.Button();
-			this.inputSample = new System.Windows.Forms.PictureBox();
-			this.inputSizeLabel = new System.Windows.Forms.Label();
-			this.inputOffsetLabel = new System.Windows.Forms.Label();
-			this.inputOffset = new System.Windows.Forms.TextBox();
 			this.spriteBox = new System.Windows.Forms.PictureBox();
 			this.spriteScrollX = new System.Windows.Forms.HScrollBar();
 			this.spriteScrollY = new System.Windows.Forms.VScrollBar();
+			this.toolBoxTabs = new System.Windows.Forms.TabControl();
+			this.paletteTab = new System.Windows.Forms.TabPage();
+			this.toolBoxMinimise = new System.Windows.Forms.Button();
+			this.toolBoxSwitchWindow = new System.Windows.Forms.Button();
 			this.menuStrip1 = new System.Windows.Forms.MenuStrip();
 			this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.openBinaryToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -93,9 +90,8 @@ namespace SpriteWave
 			this.copyTileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.spriteMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
 			((System.ComponentModel.ISupportInitialize)(this.inputBox)).BeginInit();
-			this.inputPanel.SuspendLayout();
-			((System.ComponentModel.ISupportInitialize)(this.inputSample)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.spriteBox)).BeginInit();
+			this.toolBoxTabs.SuspendLayout();
 			this.menuStrip1.SuspendLayout();
 			this.SuspendLayout();
 			// 
@@ -104,7 +100,7 @@ namespace SpriteWave
 			this.inputBox.BackColor = System.Drawing.SystemColors.ControlDark;
 			this.inputBox.Location = new System.Drawing.Point(0, 24);
 			this.inputBox.Name = "inputBox";
-			this.inputBox.Size = new System.Drawing.Size(331, 496);
+			this.inputBox.Size = new System.Drawing.Size(331, 518);
 			this.inputBox.TabIndex = 0;
 			this.inputBox.TabStop = false;
 			// 
@@ -112,78 +108,9 @@ namespace SpriteWave
 			// 
 			this.inputScroll.Location = new System.Drawing.Point(331, 24);
 			this.inputScroll.Name = "inputScroll";
-			this.inputScroll.Size = new System.Drawing.Size(17, 496);
+			this.inputScroll.Size = new System.Drawing.Size(17, 518);
 			this.inputScroll.TabIndex = 3;
 			this.inputScroll.Visible = false;
-			// 
-			// inputPanel
-			// 
-			this.inputPanel.Controls.Add(this.inputSend);
-			this.inputPanel.Controls.Add(this.inputSample);
-			this.inputPanel.Controls.Add(this.inputSizeLabel);
-			this.inputPanel.Controls.Add(this.inputOffsetLabel);
-			this.inputPanel.Controls.Add(this.inputOffset);
-			this.inputPanel.Location = new System.Drawing.Point(0, 520);
-			this.inputPanel.Name = "inputPanel";
-			this.inputPanel.Size = new System.Drawing.Size(370, 58);
-			this.inputPanel.TabIndex = 4;
-			// 
-			// inputSend
-			// 
-			this.inputSend.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-			this.inputSend.Location = new System.Drawing.Point(200, 12);
-			this.inputSend.Name = "inputSend";
-			this.inputSend.Size = new System.Drawing.Size(90, 24);
-			this.inputSend.TabIndex = 8;
-			this.inputSend.Text = "Send To Sprite";
-			this.inputSend.UseVisualStyleBackColor = true;
-			this.inputSend.Visible = false;
-			// 
-			// inputSample
-			// 
-			this.inputSample.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-			this.inputSample.BackColor = System.Drawing.SystemColors.ControlLight;
-			this.inputSample.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-			this.inputSample.Location = new System.Drawing.Point(300, 4);
-			this.inputSample.Name = "inputSample";
-			this.inputSample.Size = new System.Drawing.Size(40, 40);
-			this.inputSample.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
-			this.inputSample.TabIndex = 7;
-			this.inputSample.TabStop = false;
-			this.inputSample.Visible = false;
-			// 
-			// inputSizeLabel
-			// 
-			this.inputSizeLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-			this.inputSizeLabel.FlatStyle = System.Windows.Forms.FlatStyle.System;
-			this.inputSizeLabel.Location = new System.Drawing.Point(120, 18);
-			this.inputSizeLabel.Name = "inputSizeLabel";
-			this.inputSizeLabel.Size = new System.Drawing.Size(58, 15);
-			this.inputSizeLabel.TabIndex = 6;
-			this.inputSizeLabel.Text = "/";
-			this.inputSizeLabel.Visible = false;
-			// 
-			// inputOffsetLabel
-			// 
-			this.inputOffsetLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-			this.inputOffsetLabel.FlatStyle = System.Windows.Forms.FlatStyle.System;
-			this.inputOffsetLabel.Location = new System.Drawing.Point(10, 18);
-			this.inputOffsetLabel.Name = "inputOffsetLabel";
-			this.inputOffsetLabel.Size = new System.Drawing.Size(48, 15);
-			this.inputOffsetLabel.TabIndex = 0;
-			this.inputOffsetLabel.Text = "Offset: 0x";
-			this.inputOffsetLabel.Visible = false;
-			// 
-			// inputOffset
-			// 
-			this.inputOffset.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-			this.inputOffset.Enabled = false;
-			this.inputOffset.Location = new System.Drawing.Point(58, 15);
-			this.inputOffset.Name = "inputOffset";
-			this.inputOffset.Size = new System.Drawing.Size(60, 20);
-			this.inputOffset.TabIndex = 5;
-			this.inputOffset.Text = "0";
-			this.inputOffset.Visible = false;
 			// 
 			// spriteBox
 			// 
@@ -210,6 +137,50 @@ namespace SpriteWave
 			this.spriteScrollY.TabIndex = 4;
 			this.spriteScrollY.Visible = false;
 			// 
+			// toolBoxTabs
+			// 
+			this.toolBoxTabs.Controls.Add(this.paletteTab);
+			this.toolBoxTabs.Location = new System.Drawing.Point(376, 313);
+			this.toolBoxTabs.Multiline = true;
+			this.toolBoxTabs.Name = "toolBoxTabs";
+			this.toolBoxTabs.SelectedIndex = 0;
+			this.toolBoxTabs.Size = new System.Drawing.Size(324, 229);
+			this.toolBoxTabs.TabIndex = 5;
+			// 
+			// paletteTab
+			// 
+			this.paletteTab.Location = new System.Drawing.Point(4, 22);
+			this.paletteTab.Name = "paletteTab";
+			this.paletteTab.Padding = new System.Windows.Forms.Padding(3);
+			this.paletteTab.RightToLeft = System.Windows.Forms.RightToLeft.No;
+			this.paletteTab.Size = new System.Drawing.Size(316, 203);
+			this.paletteTab.TabIndex = 0;
+			this.paletteTab.Text = "Palette";
+			this.paletteTab.UseVisualStyleBackColor = true;
+			// 
+			// toolBoxMinimise
+			// 
+			this.toolBoxMinimise.BackColor = System.Drawing.SystemColors.ControlLight;
+			this.toolBoxMinimise.FlatAppearance.BorderSize = 0;
+			this.toolBoxMinimise.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+			this.toolBoxMinimise.Location = new System.Drawing.Point(666, 313);
+			this.toolBoxMinimise.Name = "toolBoxMinimise";
+			this.toolBoxMinimise.Size = new System.Drawing.Size(40, 20);
+			this.toolBoxMinimise.TabIndex = 6;
+			this.toolBoxMinimise.UseVisualStyleBackColor = false;
+			// 
+			// toolBoxSwitchWindow
+			// 
+			this.toolBoxSwitchWindow.BackColor = System.Drawing.SystemColors.ControlLight;
+			this.toolBoxSwitchWindow.FlatAppearance.BorderSize = 0;
+			this.toolBoxSwitchWindow.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+			this.toolBoxSwitchWindow.Location = new System.Drawing.Point(352, 334);
+			this.toolBoxSwitchWindow.Name = "toolBoxSwitchWindow";
+			this.toolBoxSwitchWindow.Size = new System.Drawing.Size(20, 208);
+			this.toolBoxSwitchWindow.TabIndex = 7;
+			this.toolBoxSwitchWindow.Text = "<";
+			this.toolBoxSwitchWindow.UseVisualStyleBackColor = false;
+			// 
 			// menuStrip1
 			// 
 			this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -218,7 +189,6 @@ namespace SpriteWave
 			this.menuStrip1.Name = "menuStrip1";
 			this.menuStrip1.Size = new System.Drawing.Size(704, 24);
 			this.menuStrip1.TabIndex = 4;
-			this.menuStrip1.Text = "menuStrip1";
 			// 
 			// fileToolStripMenuItem
 			// 
@@ -242,14 +212,14 @@ namespace SpriteWave
 			this.openBinaryToolStripMenuItem.Text = "Open Binary";
 			this.openBinaryToolStripMenuItem.Click += new System.EventHandler(this.openBinary);
 			// 
-			// toolStripMenuItem1
+			// openNESFileStripMenuItem
 			// 
 			this.openNESFileStripMenuItem.Name = "openNESFileStripMenuItem";
 			this.openNESFileStripMenuItem.Size = new System.Drawing.Size(209, 22);
 			this.openNESFileStripMenuItem.Text = "Open NES File";
 			this.openNESFileStripMenuItem.Click += new System.EventHandler(this.openNES);
 			// 
-			// toolStripMenuItem2
+			// openSNESFileStripMenuItem
 			// 
 			this.openSNESFileStripMenuItem.Name = "openSNESFileStripMenuItem";
 			this.openSNESFileStripMenuItem.Size = new System.Drawing.Size(209, 22);
@@ -302,9 +272,11 @@ namespace SpriteWave
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(704, 601);
+			this.Controls.Add(this.toolBoxSwitchWindow);
+			this.Controls.Add(this.toolBoxMinimise);
+			this.Controls.Add(this.toolBoxTabs);
 			this.Controls.Add(this.inputBox);
 			this.Controls.Add(this.inputScroll);
-			this.Controls.Add(this.inputPanel);
 			this.Controls.Add(this.spriteBox);
 			this.Controls.Add(this.spriteScrollX);
 			this.Controls.Add(this.spriteScrollY);
@@ -315,14 +287,13 @@ namespace SpriteWave
 			this.Name = "MainForm";
 			this.Text = "SpriteWave";
 			((System.ComponentModel.ISupportInitialize)(this.inputBox)).EndInit();
-			this.inputPanel.ResumeLayout(false);
-			this.inputPanel.PerformLayout();
-			((System.ComponentModel.ISupportInitialize)(this.inputSample)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.spriteBox)).EndInit();
+			this.toolBoxTabs.ResumeLayout(false);
 			this.menuStrip1.ResumeLayout(false);
 			this.menuStrip1.PerformLayout();
 			this.ResumeLayout(false);
 			this.PerformLayout();
+
 		}
 	}
 }

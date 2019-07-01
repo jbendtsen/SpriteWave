@@ -22,6 +22,9 @@ namespace SpriteWave
 		protected Position _selPos;
 		protected bool _isSel = false;
 
+		protected TabPage _controlsTab;
+		public abstract TabPage ControlsTab { get; }
+
 		public abstract HScrollBar ScrollX { set; }
 
 		protected VScrollBar _scrollY;
@@ -29,6 +32,8 @@ namespace SpriteWave
 
 		protected PictureBox _window;
 		public abstract PictureBox Canvas { set; }
+		public Point CanvasPos { get { return _window.Location; } }
+		public Size CanvasSize { get { return _window.Size; } }
 
 		protected ContextMenuStrip _menu;
 		public abstract ContextMenuStrip Menu { set; }
@@ -110,6 +115,8 @@ namespace SpriteWave
 		public abstract void AdjustWindow(int width = 0, int height = 0);
 
 		public abstract void DrawGrid(Graphics g);
+
+		public abstract void AdjustControlsTab();
 
 		protected TileWindow()
 		{
@@ -282,6 +289,18 @@ namespace SpriteWave
 		{
 			AdjustWindow(_window.Width, _window.Height);
 			//Draw();
+		}
+
+		public virtual void InitialiseControlsTab()
+		{
+			_controlsTab = new TabPage();
+			_controlsTab.Location = new System.Drawing.Point(4, 22);
+			_controlsTab.Name = "controlsTab";
+			_controlsTab.Padding = new System.Windows.Forms.Padding(3);
+			_controlsTab.Size = new System.Drawing.Size(316, 203);
+			_controlsTab.TabIndex = 1;
+			_controlsTab.Text = "Controls";
+			_controlsTab.UseVisualStyleBackColor = true;
 		}
 	}
 }

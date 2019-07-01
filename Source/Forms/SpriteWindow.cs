@@ -57,6 +57,8 @@ namespace SpriteWave
 			}
 		}
 
+		public override TabPage ControlsTab { get { return _controlsTab; } }
+
 		private HScrollBar _scrollX;
 		public override HScrollBar ScrollX
 		{
@@ -127,9 +129,6 @@ namespace SpriteWave
 						}
 					)
 				);
-
-				//_menu.Items.Add(new ToolStripSeparator());
-				//_menu.Items.Add("Edit Palette", null, null);
 			}
 		}
 
@@ -153,8 +152,8 @@ namespace SpriteWave
 		public override void Activate()
 		{
 			ResetScroll();
-
 			base.Activate();
+			_scrollX.Visible = true;
 			UpdateBars();
 		}
 
@@ -512,6 +511,11 @@ namespace SpriteWave
 				g.DrawLine(_gridPen, 0, yLn, wndW, yLn);
 				yLn += tileSc.Height;
 			}
+		}
+
+		public override void AdjustControlsTab()
+		{
+			
 		}
 		
 		private void windowScrollAction(object sender, MouseEventArgs e)
