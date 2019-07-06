@@ -5,7 +5,7 @@ using System.Windows.Forms;
 
 namespace SpriteWave
 {
-	public class SpriteWindow : TileWindow
+	public partial class SpriteWindow : TileWindow
 	{
 		private FileFormat _fmt;
 		public FileFormat FormatToLoad { set { _fmt = value; } }
@@ -57,91 +57,8 @@ namespace SpriteWave
 			}
 		}
 
-		public override TabPage ControlsTab { get { return _controlsTab; } }
-
-		private HScrollBar _scrollX;
-		public override HScrollBar ScrollX
-		{
-			set {
-				_scrollX = value;
-				_scrollX.Scroll += new ScrollEventHandler(this.xScrollAction);
-			}
-		}
-
-		public override VScrollBar ScrollY
-		{
-			set {
-				_scrollY = value;
-				_scrollY.Scroll += new ScrollEventHandler(this.yScrollAction);
-			}
-		}
-
-		private ContextMenuStrip _initialMenu;
-		public ContextMenuStrip InitialMenu
-		{
-			set {
-				_initialMenu = value;
-				_initialMenu.Items[0].Enabled = true;
-			}
-		}
-
-		public override ContextMenuStrip Menu
-		{
-			set {
-				_menu = value;
-				_menu.Items.Add("Erase Tile", null, (s, e) => Delete());
-				_menu.Items.Add(new ToolStripSeparator());
-
-				_menu.Items.Add(
-					new ToolStripMenuItem(
-						"Rotate Tile", null, new ToolStripMenuItem[] {
-							new ToolStripMenuItem("Left", null, (s, e) => FlipTile(Translation.Left)),
-							new ToolStripMenuItem("Right", null, (s, e) => FlipTile(Translation.Right))
-						}
-					)
-				);
-				_menu.Items.Add(
-					new ToolStripMenuItem(
-						"Mirror Tile", null, new ToolStripMenuItem[] {
-							new ToolStripMenuItem("Horizontally", null, (s, e) => FlipTile(Translation.Horizontal)),
-							new ToolStripMenuItem("Vertically", null, (s, e) => FlipTile(Translation.Vertical))
-						}
-					)
-				);
-				_menu.Items.Add(new ToolStripSeparator());
-
-				_menu.Items.Add(
-					new ToolStripMenuItem(
-						"Insert", null, new ToolStripMenuItem[] {
-							new ToolStripMenuItem("Column Left", null, (s, e) => InsertCollageColumn(_selPos.col)),
-							new ToolStripMenuItem("Column Right", null, (s, e) => InsertCollageColumn(_selPos.col+1)),
-							new ToolStripMenuItem("Row Above", null, (s, e) => InsertCollageRow(_selPos.row)),
-							new ToolStripMenuItem("Row Below", null, (s, e) => InsertCollageRow(_selPos.row+1))
-						}
-					)
-				);
-
-				_menu.Items.Add(
-					new ToolStripMenuItem(
-						"Delete", null, new ToolStripMenuItem[] {
-							new ToolStripMenuItem("Column", null, (s, e) => DeleteCollageColumn(_selPos.col)),
-							new ToolStripMenuItem("Row", null, (s, e) => DeleteCollageRow(_selPos.row))
-						}
-					)
-				);
-			}
-		}
-
-		public override PictureBox Canvas
-		{
-			set {
-				_window = value;
-				_window.Resize += new EventHandler(this.adjustWindowSize);
-				_window.MouseWheel += new MouseEventHandler(this.windowScrollAction);
-			}
-		}
-
-		public SpriteWindow() : base()
+		public SpriteWindow(MainForm main, Utils.TileAction copy, Utils.TileAction paste)
+			: base(main, copy, paste)
 		{
 			// Initialise all edges, including the invalid (centre) one
 			_edges = new Edge[9];
@@ -153,14 +70,7 @@ namespace SpriteWave
 		{
 			ResetScroll();
 			base.Activate();
-			_scrollX.Visible = true;
 			UpdateBars();
-		}
-
-		public override void Close()
-		{
-			base.Close();
-			_scrollX.Visible = false;
 		}
 
 		public override EdgeKind EdgeOf(Position loc)
@@ -184,8 +94,8 @@ namespace SpriteWave
 		public override IPiece PieceAt(Position loc)
 		{
 			if (_cl == null ||
-			    loc.col < -1 || loc.row < -1 ||
-			    loc.col > _cl.Columns || loc.row > _cl.Rows)
+				loc.col < -1 || loc.row < -1 ||
+				loc.col > _cl.Columns || loc.row > _cl.Rows)
 			{
 				return null;
 			}
@@ -269,7 +179,6 @@ namespace SpriteWave
 			_cl.SetTile(_selPos, obj as Tile);
 			Render();
 		}
-
 		public override void ReceiveTile(Tile obj)
 		{
 			ReceiveTile(obj, _selPos);
@@ -283,14 +192,6 @@ namespace SpriteWave
 			_cl.SetTile(_selPos, _fmt.NewTile());
 			Render();
 			Draw();
-		}
-
-		public override void ShowMenu(int x, int y)
-		{
-			if (_cl == null && Transfer.HasPiece)
-				_initialMenu.Show(_window, new Point(x, y));
-			else
-				base.ShowMenu(x, y);
 		}
 
 		private float AdjustScroll(ScrollBar scroll, float pos)
@@ -313,6 +214,22 @@ namespace SpriteWave
 			float x = _xOff + (dx * scrollFactor);
 			float y = _yOff + (dy * scrollFactor);
 			ScrollTo(x, y);
+		}
+
+		public void Centre()
+		{
+			if (_cl == null)
+				return;
+
+			float wndW = (float)_window.Size.Width / _zoom;
+			float wndH = (float)_window.Size.Height / _zoom;
+
+			ScrollTo(
+				(_cl.Width / 2f) - (wndW / 2f),
+				(_cl.Height / 2f) - (wndH / 2f)
+			);
+
+			UpdateBars();
 		}
 
 		private void ShiftCamera(int cols, int rows)
@@ -352,6 +269,10 @@ namespace SpriteWave
 			_xOff = xPos - ((float)x / z);
 			_yOff = yPos - ((float)y / z);
 			_zoom = z;
+		}
+		public void Zoom(int delta)
+		{
+			Zoom(delta, _window.Size.Width / 2, _window.Size.Height / 2);
 		}
 
 		public override void ResetScroll()
@@ -411,8 +332,8 @@ namespace SpriteWave
 			row -= yPos < 0 ? 1 : 0;
 
 			if (!allowOob &&
-			    (col < -1 || col > _cl.Columns ||
-			     row < -1 || row > _cl.Rows)
+				(col < -1 || col > _cl.Columns ||
+				 row < -1 || row > _cl.Rows)
 			) {
 				throw new ArgumentOutOfRangeException();
 			}
@@ -513,12 +434,7 @@ namespace SpriteWave
 			}
 		}
 
-		public override void AdjustControlsTab()
-		{
-			
-		}
-		
-		private void windowScrollAction(object sender, MouseEventArgs e)
+		protected override void windowScrollAction(object sender, MouseEventArgs e)
 		{
 			Keys mod = Control.ModifierKeys;
 			bool ctrlKey = (mod & Keys.Control) != 0;
@@ -541,12 +457,12 @@ namespace SpriteWave
 			Draw();
 		}
 
-		private void xScrollAction(object sender, ScrollEventArgs e)
+		protected override void xScrollAction(object sender, ScrollEventArgs e)
 		{
 			ScrollTo((float)e.NewValue / _zoom, _yOff);
 			Draw();
 		}
-		private void yScrollAction(object sender, ScrollEventArgs e)
+		protected override void yScrollAction(object sender, ScrollEventArgs e)
 		{
 			ScrollTo(_xOff, (float)e.NewValue / _zoom);
 			Draw();

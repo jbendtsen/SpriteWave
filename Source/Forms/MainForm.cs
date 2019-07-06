@@ -15,7 +15,6 @@ namespace SpriteWave
 
 		private Dictionary<FormatKind, FileFormat> _formatList;
 
-		private ToolStripMenuItem _pasteTile;
 		private DragObject _drag;
 
 		public MainForm()
@@ -37,97 +36,26 @@ namespace SpriteWave
 			);
 
 			InitializeComponent();
-
 			this.openFileDialog1.Filter = Utils.FilterBuilder(_formatList);
 
-			this.Layout += new LayoutEventHandler(this.layoutHandler);
-			this.ActiveControl = this.inputBox;
+			_inputWnd = new InputWindow(this, this.CopyTile);
+			var inputTab = _inputWnd.ControlsTab as InputControlsTab;
+			inputTab.SendTileAction = (s, e) => {CopyTile(_inputWnd); PasteTile(_spriteWnd);};
 
-			this.KeyPreview = true;
-			this.KeyDown += new KeyEventHandler(this.keysHandler);
-
-			Utils.ApplyRecursiveControlAction(this, this.SetMouseEventHandler);
-
-			this.inputMenu.Items.Add("Copy Tile", null, (s, e) => CopyTile(_inputWnd));
-			this.spriteMenu.Items.Add("Copy Tile", null, (s, e) => CopyTile(_spriteWnd));
-			
-			_pasteTile = new ToolStripMenuItem("Paste Tile", null, (s, e) => PasteTile(_spriteWnd));
-			_pasteTile.Enabled = false;
-			this.spriteMenu.Items.Add(_pasteTile);
-
-			var initialSpriteMenu = new ContextMenuStrip();
-			initialSpriteMenu.Items.Add(new ToolStripMenuItem("Paste Tile", null, (s, e) => PasteTile(_spriteWnd)));
-
-			_inputWnd = new InputWindow();
-			_inputWnd.InitialiseControlsTab();
-			_inputWnd.Canvas = this.inputBox;
-			_inputWnd.ScrollY = this.inputScroll;
-			_inputWnd.Menu = this.inputMenu;
-			_inputWnd.SendTileAction = (s, e) => {CopyTile(_inputWnd); PasteTile(_spriteWnd);};
-
-			_spriteWnd = new SpriteWindow();
-			_spriteWnd.InitialiseControlsTab();
-			_spriteWnd.Canvas = this.spriteBox;
-			_spriteWnd.ScrollX = this.spriteScrollX;
-			_spriteWnd.ScrollY = this.spriteScrollY;
-			_spriteWnd.InitialMenu = initialSpriteMenu;
-			_spriteWnd.Menu = this.spriteMenu;
+			_spriteWnd = new SpriteWindow(this, this.CopyTile, this.PasteTile);
 
 			_toolBox = new ToolBox(this.toolBoxTabs, _spriteWnd, this.toolBoxSwitchWindow, this.toolBoxMinimise);
+			_toolBox.MinimiseAction = this.minimiseToolBox;
+			_toolBox.SwitchWindowAction = this.switchToolBoxWindow;
 
-			this.toolBoxMinimise.Click += (s, e) => {_toolBox.Minimise(); this.PerformLayout();};
-			this.toolBoxSwitchWindow.Click += new EventHandler(this.switchToolBoxWindow);
-		}
+			// Setup MainForm events
+			this.KeyPreview = true;
+			this.KeyDown += this.keysHandler;
+			this.Layout += this.layoutHandler;
+			Utils.ApplyRecursiveControlAction(this, this.SetMouseEventHandler);
 
-		private void layoutHandler(object sender, LayoutEventArgs e)
-		{
-			int totalH = this.ClientSize.Height;
-			int menuH = this.menuStrip1.Size.Height;
-
-			int availX = this.ClientSize.Width - (this.inputScroll.Size.Width + this.spriteScrollY.Size.Width);
-			int tileBoxW = availX / 2;
-
-			PictureBox tbWndBox = null;
-			TileWindow tbWnd = _toolBox.ActiveWindow;
-			var tbLayout = ToolBoxOrientation.None;
-			if (tbWnd == _inputWnd)
-			{
-				tbWndBox = this.inputBox;
-				tbLayout = ToolBoxOrientation.Left;
-			}
-			else if (tbWnd == _spriteWnd)
-			{
-				tbWndBox = this.spriteBox;
-				tbLayout = ToolBoxOrientation.Right;
-			}
-
-			this.SuspendLayout();
-
-			this.inputBox.Location = new Point(0, menuH);
-			this.inputBox.Size = new Size(tileBoxW, totalH - menuH);
-
-			this.spriteBox.Location = new Point(this.inputBox.Size.Width + this.inputScroll.Size.Width, menuH);
-			this.spriteBox.Size = new Size(tileBoxW, totalH - (menuH + this.spriteScrollX.Size.Height));
-
-			_toolBox.UpdateLayout(tbLayout, this.ClientSize);
-			if (tbWndBox != null)
-				tbWndBox.Size = new Size(tbWndBox.Size.Width, tbWndBox.Size.Height - this.toolBoxTabs.Size.Height);
-
-			this.inputScroll.Location = new Point(tileBoxW, this.inputScroll.Location.Y);
-			this.inputScroll.Size = new Size(this.inputScroll.Size.Width, this.inputBox.Size.Height);
-
-			this.spriteScrollY.Location = new Point(this.spriteBox.Location.X + tileBoxW, menuH);
-			this.spriteScrollY.Size = new Size(this.spriteScrollY.Size.Width, this.spriteBox.Size.Height);
-
-			this.spriteScrollX.Location = new Point(this.spriteBox.Location.X, menuH + this.spriteBox.Size.Height);
-			this.spriteScrollX.Size = new Size(tileBoxW, this.spriteScrollX.Size.Height);
-
-			this.ResumeLayout();
-
-			this.toolBoxTabs.Refresh();
-			_inputWnd.UpdateBars();
-			_spriteWnd.UpdateBars();
-			Draw();
+			UpdateMinimumSize();
+			_inputWnd.Focus(this);
 		}
 
 		private void Draw()
@@ -142,14 +70,19 @@ namespace SpriteWave
 			wnd.Selected = true;
 			Transfer.Source = wnd.CurrentSelection();
 			Transfer.Start();
-			_pasteTile.Enabled = true;
 		}
-
 		private void PasteTile(TileWindow wnd)
 		{
 			wnd.Selected = true;
 			Transfer.Dest = wnd.CurrentSelection();
 			Transfer.Paste();
+			Draw();
+		}
+		private void SwapTile(TileWindow wnd)
+		{
+			wnd.Selected = true;
+			Transfer.Dest = wnd.CurrentSelection();
+			Transfer.Swap();
 			Draw();
 		}
 
@@ -196,17 +129,23 @@ namespace SpriteWave
 
 		private void mouseDownHandler(object sender, MouseEventArgs e)
 		{
+			var ctrl = sender as Control;
+			if (ctrl is TabControl)
+			{
+				_toolBox.HandleTabClick(e.X);
+				return;
+			}
+
 			if (_drag != null)
 				return;
 
-			var ctrl = sender as Control;
 			if (ctrl is PictureBox)
 				this.ActiveControl = ctrl;
 
 			TileWindow wnd = null;
-			if (ctrl == this.inputBox)
+			if (_inputWnd.WindowIs(ctrl))
 				wnd = _inputWnd;
-			else if (ctrl == this.spriteBox)
+			else if (_spriteWnd.WindowIs(ctrl))
 				wnd = _spriteWnd;
 
 			if (wnd != null)
@@ -269,15 +208,11 @@ namespace SpriteWave
 				return;
 
 			TileWindow wnd = null;
-			if (curCtrl == this.inputBox)
-			{
+			if (_inputWnd.WindowIs(curCtrl))
 				wnd = _inputWnd;
-			}
-			else if (curCtrl == this.spriteBox)
-			{
+			else if (_spriteWnd.WindowIs(curCtrl))
 				wnd = _spriteWnd;
-			}
-			
+
 			int x = 0, y = 0;
 			if (_drag.IsEdge)
 			{
@@ -306,20 +241,22 @@ namespace SpriteWave
 				return;
 
 			Control active = Utils.FindActiveControl(this);
-			
-			if (active is TextBox)
-			{
-				if (e.KeyCode == Keys.Escape)
-					this.ActiveControl = this.inputBox;
 
-				Draw();
-				return;
+			if (e.KeyCode == Keys.Escape || e.KeyCode == Keys.ControlKey)
+			{
+				if (active is TextBox)
+					_inputWnd.Focus(this);
+				else
+				{
+					ClearSelection();
+					_drag = null;
+				}
 			}
 
-			if (e.KeyCode == Keys.Escape)
+			if (active is TextBox)
 			{
-				ClearSelection();
-				_drag = null;
+				Draw();
+				return;
 			}
 
 			if (e.KeyCode == Keys.Delete)
@@ -338,10 +275,20 @@ namespace SpriteWave
 
 			if ((mod & Keys.Control) != 0)
 			{
-				/*
-				if (e.KeyCode == Keys.G)
-					this.ActiveControl = this.inputOffset;
-				*/
+				if (e.KeyCode == Keys.G && _inputWnd.IsActive)
+				{
+					_toolBox.CurrentWindow = _inputWnd;
+					_toolBox.CurrentTab = "controlsTab";
+					if (!_toolBox.IsOpen)
+						_toolBox.Minimise();
+
+					UpdateMinimumSize();
+					this.PerformLayout();
+					this.ActiveControl = _toolBox.GetControl("inputOffset");
+				}
+
+				if (e.KeyCode == Keys.D0)
+					_spriteWnd.Centre();
 
 				int zoom = 0;
 				if (e.KeyCode == Keys.OemMinus)
@@ -350,7 +297,7 @@ namespace SpriteWave
 					zoom = 1;
 
 				if (zoom != 0)
-					_spriteWnd.Zoom(zoom, this.spriteBox.Size.Width / 2, this.spriteBox.Size.Height / 2);
+					_spriteWnd.Zoom(zoom);
 
 				Action<EdgeKind> moveEdge = _spriteWnd.InsertEdge;
 				if ((mod & Keys.Shift) != 0)
@@ -387,15 +334,9 @@ namespace SpriteWave
 
 				if (swap)
 				{
-					_spriteWnd.Selected = true;
-					Transfer.Source = _spriteWnd.CurrentSelection();
-					Transfer.Start();
-
+					CopyTile(_spriteWnd);
 					_spriteWnd.MoveSelection(x, y);
-					Transfer.Dest = _spriteWnd.CurrentSelection();
-					Transfer.Swap();
-
-					Draw();
+					SwapTile(_spriteWnd);
 					return;
 				}
 			}
@@ -432,13 +373,60 @@ namespace SpriteWave
 			Draw();
 		}
 
+		private void UpdateMinimumSize()
+		{
+			int minW = _inputWnd.ScrollYWidth + _spriteWnd.ScrollYWidth + (_toolBox.MinimumWidth * 2);
+
+			this.MinimumSize = new Size(minW, this.MinimumSize.Height);
+		}
+
+		private void layoutHandler(object sender, LayoutEventArgs e)
+		{
+			int totalH = this.ClientSize.Height;
+			int menuH = this.menuStrip1.Size.Height;
+			int tileBoxW = this.ClientSize.Width / 2;
+
+			var tbLayout = ToolBoxOrientation.None;
+
+			TileWindow tbWnd = _toolBox.CurrentWindow;
+			if (tbWnd == _inputWnd)
+				tbLayout = ToolBoxOrientation.Left;
+			else if (tbWnd == _spriteWnd)
+				tbLayout = ToolBoxOrientation.Right;
+
+			_inputWnd.UpdateLayout(0, tileBoxW, totalH, menuH);
+			_spriteWnd.UpdateLayout(tileBoxW, tileBoxW, totalH, menuH);
+
+			_toolBox.UpdateLayout(tbLayout, this.ClientSize);
+			if (tbWnd != null)
+			{
+				int wndMaxH = totalH - (menuH + tbWnd.ScrollXHeight);
+				tbWnd.ReduceWindowTo(wndMaxH - _toolBox.Height);
+			}
+
+			//_inputWnd.AdjustControlsTab();
+			//_spriteWnd.AdjustControlsTab();
+
+			_inputWnd.UpdateBars();
+			_spriteWnd.UpdateBars();
+			Draw();
+		}
+
+		private void minimiseToolBox(object sender, EventArgs e)
+		{
+			_toolBox.Minimise();
+			UpdateMinimumSize();
+			this.PerformLayout();
+		}
+
 		private void switchToolBoxWindow(object sender, EventArgs e)
 		{
-			if (_toolBox.ActiveWindow == _inputWnd)
-				_toolBox.ActiveWindow = _spriteWnd;
-			else if (_toolBox.ActiveWindow == _spriteWnd)
-				_toolBox.ActiveWindow = _inputWnd;
+			if (_toolBox.CurrentWindow == _inputWnd)
+				_toolBox.CurrentWindow = _spriteWnd;
+			else if (_toolBox.CurrentWindow == _spriteWnd)
+				_toolBox.CurrentWindow = _inputWnd;
 
+			UpdateMinimumSize();
 			this.PerformLayout();
 		}
 
@@ -475,10 +463,14 @@ namespace SpriteWave
 			var data = File.ReadAllBytes(openFileDialog1.FileName);
 			FileFormat fmt = _formatList[kind];
 
-			_spriteWnd.Close();
+			closeWorkspace(null, null);
+
 			_inputWnd.Load(fmt, data);
 			_spriteWnd.FormatToLoad = fmt;
 			//_spriteWnd.Prompt = "Drag or send a tile to begin!";
+
+			_inputWnd.ToggleMenu(true);
+			_spriteWnd.EnablePaste();
 
 			Draw();
 		}

@@ -4,44 +4,26 @@ using System.Windows.Forms;
 
 namespace SpriteWave
 {
-	public abstract class TileWindow
+	public abstract partial class TileWindow
 	{
 		protected Collage _cl;
-
-		//bool active = false;
-
-		//public bool IsActive { get { return _cl != null && active; } }
-
-		//public abstract Position VisibleSelection { get; }
 
 		public abstract SizeF TileDimensions { get; }
 		public abstract Rectangle VisibleCollageBounds { get; }
 
 		protected Brush _defHl, _cursorHl;
 		protected Brush _selHl;
+
+		protected Selection _cursor;
 		protected Position _selPos;
 		protected bool _isSel = false;
 
-		protected TabPage _controlsTab;
-		public abstract TabPage ControlsTab { get; }
-
-		public abstract HScrollBar ScrollX { set; }
-
-		protected VScrollBar _scrollY;
-		public abstract VScrollBar ScrollY { set; }
-
-		protected PictureBox _window;
-		public abstract PictureBox Canvas { set; }
-		public Point CanvasPos { get { return _window.Location; } }
-		public Size CanvasSize { get { return _window.Size; } }
-
-		protected ContextMenuStrip _menu;
-		public abstract ContextMenuStrip Menu { set; }
-
-		//public virtual string Prompt { set { return; } }
+		//public virtual string Prompt { set {} }
 
 		protected Rectangle _bounds;
 		protected Pen _gridPen;
+
+		public bool IsActive { get { return _cl != null; } }
 
 		public bool Selected
 		{
@@ -66,7 +48,6 @@ namespace SpriteWave
 			}
 		}
 
-		protected Selection _cursor;
 		public Selection Cursor
 		{
 			set {
@@ -103,6 +84,12 @@ namespace SpriteWave
 		public virtual void ReceiveTile(Tile t, Position loc) {}
 		public virtual void DeleteSelection() {}
 
+		protected virtual void xScrollAction(object sender, ScrollEventArgs e) {}
+		protected abstract void yScrollAction(object sender, ScrollEventArgs e);
+
+		protected abstract void windowScrollAction(object sender, MouseEventArgs e);
+		//protected abstract void adjustWindowSize(object sender, EventArgs e);
+
 		public abstract void Scroll(float dx, float dy);
 		public abstract void ScrollTo(float x, float y);
 
@@ -116,26 +103,14 @@ namespace SpriteWave
 
 		public abstract void DrawGrid(Graphics g);
 
-		public abstract void AdjustControlsTab();
-
-		protected TileWindow()
+		protected TileWindow(MainForm main, Utils.TileAction copy, Utils.TileAction paste = null)
 		{
 			_selPos = new Position(0, 0);
 			_defHl = new SolidBrush(Color.FromArgb(96, 0, 64, 255));
 			_cursorHl = new SolidBrush(Color.FromArgb(96, 0, 255, 64));
 			_selHl = _defHl;
-		}
 
-		public virtual void Activate()
-		{
-			_scrollY.Visible = true;
-		}
-
-		public virtual void Close()
-		{
-			_scrollY.Visible = false;
-			_cl = null;
-			DeleteFrame();
+			InitialiseUI(main, copy, paste);
 		}
 
 		public virtual void Render()
@@ -158,12 +133,6 @@ namespace SpriteWave
 				_window.Image.Dispose();
 				_window.Image = null;
 			}
-		}
-
-		public virtual void ShowMenu(int x, int y)
-		{
-			if ( _window != null && _cl != null)
-				_menu.Show(_window, new Point(x, y));
 		}
 
 		public virtual void MoveSelection(int dCol, int dRow)
@@ -285,22 +254,10 @@ namespace SpriteWave
 			}
 		}
 
-		protected void adjustWindowSize(object sender, EventArgs e)
+		protected virtual void adjustWindowSize(object sender, EventArgs e)
 		{
 			AdjustWindow(_window.Width, _window.Height);
 			//Draw();
-		}
-
-		public virtual void InitialiseControlsTab()
-		{
-			_controlsTab = new TabPage();
-			_controlsTab.Location = new System.Drawing.Point(4, 22);
-			_controlsTab.Name = "controlsTab";
-			_controlsTab.Padding = new System.Windows.Forms.Padding(3);
-			_controlsTab.Size = new System.Drawing.Size(316, 203);
-			_controlsTab.TabIndex = 1;
-			_controlsTab.Text = "Controls";
-			_controlsTab.UseVisualStyleBackColor = true;
 		}
 	}
 }

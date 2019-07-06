@@ -22,6 +22,8 @@ namespace SpriteWave
 	public static class Utils
 	{
 		public const int cLen = 4;
+
+		public delegate void TileAction(TileWindow tw);
 		
 		public static string FilterBuilder(Dictionary<FormatKind, FileFormat> fmtList)
 		{
@@ -111,6 +113,15 @@ namespace SpriteWave
 			bar.Maximum = max;
 			if (bar.Visible && value >= bar.Minimum && value <= bar.Maximum)
 				bar.Value = value;
+		}
+
+		public static void SetupTab(this TabPage tab, string name)
+		{
+			tab.Location = new Point(4, 22);
+			tab.Padding = new Padding(3);
+			tab.Text = name;
+			tab.Name = tab.Text.ToLower() + "Tab";
+			tab.UseVisualStyleBackColor = true;
 		}
 
 		public static void ToggleSmoothing(this Graphics g, bool smooth)
