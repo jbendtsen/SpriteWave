@@ -12,8 +12,20 @@ namespace SpriteWave
 		public int MinimumWidth { get { return 100; } }
 		public int MinimumHeight { get { return 50; } }
 
-		public PaletteTab()
+		public PaletteTab(TileWindow wnd)
 		{
+			_wnd = wnd;
+			this.SetupTab("Palette");
+		}
+
+		public void SetControlOrigins()
+		{
+			
+		}
+
+		public void AdjustContents()
+		{
+			
 		}
 	}
 }

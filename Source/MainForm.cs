@@ -132,7 +132,9 @@ namespace SpriteWave
 			var ctrl = sender as Control;
 			if (ctrl is TabControl)
 			{
-				_toolBox.HandleTabClick(e.X);
+				_toolBox.HandleTabClick();
+				UpdateMinimumSize();
+				this.PerformLayout();
 				return;
 			}
 
@@ -297,7 +299,7 @@ namespace SpriteWave
 					zoom = 1;
 
 				if (zoom != 0)
-					_spriteWnd.Zoom(zoom);
+					_spriteWnd.ZoomByTiles(zoom);
 
 				Action<EdgeKind> moveEdge = _spriteWnd.InsertEdge;
 				if ((mod & Keys.Shift) != 0)

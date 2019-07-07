@@ -13,10 +13,19 @@ namespace SpriteWave
 		public int MinimumHeight { get { return 50; } }
 
 		public SpriteControlsTab(SpriteWindow wnd)
-			: base()
 		{
 			_wnd = wnd;
 			this.SetupTab("Controls");
+		}
+
+		public void SetControlOrigins()
+		{
+			
+		}
+
+		public void AdjustContents()
+		{
+			
 		}
 	}
 }

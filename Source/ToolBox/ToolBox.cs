@@ -13,7 +13,6 @@ namespace SpriteWave
 	{
 		private const int MaxHeight = 300;
 		private const int MinMinWidth = 100;
-		private const int MinPaletteWidth = 150;
 		private const float HeightFraction = 0.4f;
 
 		private bool _isOpen;
@@ -69,6 +68,18 @@ namespace SpriteWave
 				return w + _switch.Size.Width;
 			}
 		}
+		public int MinimumHeight
+		{
+			get {
+				int h = 0;
+
+				ITab tab = _tabs.SelectedTab as ITab;
+				if (_isOpen && tab != null)
+					h = tab.MinimumHeight;
+
+				return h + _tabs.ItemSize.Height + _tabs.Padding.Y - 1;
+			}
+		}
 
 		public int Height { get { return _tabs.Size.Height; } }
 
@@ -82,8 +93,9 @@ namespace SpriteWave
 			_switch = switchWindow;
 			_minimise = minimiseTb;
 
-			_tabs.Selected += (s, e) => {_tabChanged = true; ((TabControl)s).SelectedTab.PerformLayout();};
+			_tabs.Controls.Add(new PaletteTab(_wnd));
 			_tabs.Controls.Add(_wnd.ControlsTab);
+			_tabs.Selected += this.tabSelectHandler;
 
 			_imgMinimise = new Bitmap(10, 16);
 			_imgMaximise = new Bitmap(10, 16);
@@ -110,6 +122,16 @@ namespace SpriteWave
 			_isOpen = true;
 		}
 
+		private void tabSelectHandler(object sender, TabControlEventArgs e)
+		{
+			_tabChanged = true;
+			var tab = _tabs.SelectedTab as ITab;
+			if (tab != null)
+				tab.AdjustContents();
+			else
+				System.Diagnostics.Debug.WriteLine("not a tab :(");
+		}
+
 		public Control GetControl(string name)
 		{
 			if (!_isOpen || _wnd == null)
@@ -130,29 +152,22 @@ namespace SpriteWave
 
 		public void UpdateLayout(ToolBoxOrientation layout, Size clientSize)
 		{
+			ITab tab = _tabs.SelectedTab as ITab;
+			if (tab != null)
+				tab.AdjustContents();
+
 			int tileWndWidth = _wnd.CanvasSize.Width;
 			int tileWndX = _wnd.CanvasPos.X;
 
-			int tbTabH = _tabs.Padding.Y + _tabs.ItemSize.Height;
+			int tbW = tileWndWidth - _switch.Size.Width;
+			int tbH = this.MinimumHeight;
 
 			int tbX = tileWndX;
-			int tbW = tileWndWidth - _switch.Size.Width;
-
-			int tbH;
-			if (_isOpen)
-				tbH = (int)((float)clientSize.Height * HeightFraction);
-			else
-				tbH = tbTabH - 1;
-
-			if (tbH > MaxHeight)
-				tbH = MaxHeight;
-
-			int tbY = clientSize.Height - (tbH);
+			int tbY = clientSize.Height - tbH;
 
 			int swX, minX;
 			if (layout == ToolBoxOrientation.Left)
 			{
-				//tbX += 3;
 				swX = tbX + tbW;
 				minX = tbX;
 
@@ -175,20 +190,22 @@ namespace SpriteWave
 				_switch.Text = "<";
 			}
 
+			int tbTabH = _tabs.Padding.Y + _tabs.ItemSize.Height;
+			_minimise.Location = new Point(minX, tbY + tbH - tbTabH);
+
 			_tabs.Location = new Point(tbX, tbY);
 			_switch.Location = new Point(swX, tbY);
-			_minimise.Location = new Point(minX, tbY + tbH - tbTabH);
 
 			_tabs.Size = new Size(tbW, tbH);
 			_switch.Size = new Size(20, tbH - 1);
 		}
 
-		public void HandleTabClick(int x)
+		public void HandleTabClick()
 		{
 			if (!_isOpen)
-				_minimise.PerformClick();
+				Minimise();
 			else if (!_tabChanged)
-				_minimise.PerformClick();
+				Minimise();
 
 			_tabChanged = false;
 		}

@@ -22,7 +22,6 @@ namespace SpriteWave
 		private IContainer components = null;
 
 		private TabControl toolBoxTabs;
-		private TabPage paletteTab;
 		private Button toolBoxMinimise;
 		private Button toolBoxSwitchWindow;
 
@@ -62,7 +61,6 @@ namespace SpriteWave
 		{
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
 			this.toolBoxTabs = new System.Windows.Forms.TabControl();
-			this.paletteTab = new System.Windows.Forms.TabPage();
 			this.toolBoxMinimise = new System.Windows.Forms.Button();
 			this.toolBoxSwitchWindow = new System.Windows.Forms.Button();
 			this.menuStrip1 = new System.Windows.Forms.MenuStrip();
@@ -82,24 +80,12 @@ namespace SpriteWave
 			// toolBoxTabs
 			// 
 			this.toolBoxTabs.Alignment = System.Windows.Forms.TabAlignment.Bottom;
-			this.toolBoxTabs.Controls.Add(this.paletteTab);
 			this.toolBoxTabs.Location = new System.Drawing.Point(376, 313);
 			this.toolBoxTabs.Multiline = true;
 			this.toolBoxTabs.Name = "toolBoxTabs";
 			this.toolBoxTabs.SelectedIndex = 0;
 			this.toolBoxTabs.Size = new System.Drawing.Size(324, 229);
 			this.toolBoxTabs.TabIndex = 5;
-			// 
-			// paletteTab
-			// 
-			this.paletteTab.Location = new System.Drawing.Point(4, 4);
-			this.paletteTab.Name = "paletteTab";
-			this.paletteTab.Padding = new System.Windows.Forms.Padding(3);
-			this.paletteTab.RightToLeft = System.Windows.Forms.RightToLeft.No;
-			this.paletteTab.Size = new System.Drawing.Size(316, 203);
-			this.paletteTab.TabIndex = 0;
-			this.paletteTab.Text = "Palette";
-			this.paletteTab.UseVisualStyleBackColor = true;
 			// 
 			// toolBoxMinimise
 			// 

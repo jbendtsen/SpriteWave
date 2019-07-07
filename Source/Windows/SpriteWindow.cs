@@ -244,6 +244,15 @@ namespace SpriteWave
 				We call MoveSelection() here as it will check to see whether it is still valid.
 			*/
 			MoveSelection(0, 0);
+
+			bool useWidth = true;
+			int delta = cols;
+			if (cols == 0)
+			{
+				useWidth = false;
+				delta = rows;
+			}
+			ZoomByTiles(delta / -2f, useWidth);
 		}
 		private void ShiftCamera(EdgeKind e)
 		{
@@ -252,27 +261,35 @@ namespace SpriteWave
 			ShiftCamera(Math.Abs(x), Math.Abs(y));
 		}
 
-		public void Zoom(int delta, int x, int y)
+		private void Zoom(float factor, int x, int y)
 		{
 			float xPos = _xOff + ((float)x / _zoom);
 			float yPos = _yOff + ((float)y / _zoom);
 
-			float n = Math.Abs(delta);
-			float amount = 1f + (n / zoomFactor);
-
-			float z;
-			if (delta < 0)
-				z = _zoom / amount;
-			else
-				z = _zoom * amount;
+			float z = _zoom * factor;
 
 			_xOff = xPos - ((float)x / z);
 			_yOff = yPos - ((float)y / z);
 			_zoom = z;
 		}
-		public void Zoom(int delta)
+
+		public void ZoomOver(int delta, int x, int y)
 		{
-			Zoom(delta, _window.Size.Width / 2, _window.Size.Height / 2);
+			float n = Math.Abs(delta);
+			float amount = 1f + (n / zoomFactor);
+			if (delta < 0)
+				amount = 1 / amount;
+
+			Zoom(amount, x, y);
+		}
+		public void ZoomByTiles(float delta, bool useWidth = true)
+		{
+			float length = useWidth ? _cl.Columns : _cl.Rows;
+			float amount = (length + Math.Abs(delta)) / length;
+			if (delta < 0)
+				amount = 1 / amount;
+
+			Zoom(amount, _window.Size.Width / 2, _window.Size.Height / 2);
 		}
 
 		public override void ResetScroll()
@@ -442,7 +459,7 @@ namespace SpriteWave
 
 			if (ctrlKey)
 			{
-				Zoom(e.Delta / 120, e.X, e.Y);
+				ZoomOver(e.Delta / 120, e.X, e.Y);
 			}
 			else
 			{

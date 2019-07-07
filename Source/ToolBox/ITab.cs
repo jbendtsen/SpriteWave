@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Windows.Forms;
 
 namespace SpriteWave
 {
@@ -8,5 +7,8 @@ namespace SpriteWave
 		TileWindow Window { get; set; }
 		int MinimumWidth { get; }
 		int MinimumHeight { get; }
+
+		void SetControlOrigins();
+		void AdjustContents();
 	}
 }
