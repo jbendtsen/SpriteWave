@@ -62,6 +62,10 @@
     <Compile Include="Source\Windows\TileWindow.Designer.cs">
       <DependentUpon>TileWindow.cs</DependentUpon>
     </Compile>
+    <Compile Include="Source\MainForm.cs" />
+    <Compile Include="Source\MainForm.Designer.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Source\Selection\Drag.cs" />
     <Compile Include="Source\Selection\Edge.cs" />
     <Compile Include="Source\Selection\Selection.cs" />
@@ -75,10 +79,6 @@
     <Compile Include="Source\Program.cs" />
     <Compile Include="Source\Tiles\SNESTile.cs" />
     <Compile Include="Source\Windows\InputWindow.cs" />
-    <Compile Include="Source\MainForm.cs" />
-    <Compile Include="Source\MainForm.Designer.cs">
-      <DependentUpon>MainForm.cs</DependentUpon>
-    </Compile>
     <Compile Include="Source\Windows\SpriteWindow.cs" />
     <Compile Include="Source\Windows\TileWindow.cs" />
     <Compile Include="Source\ToolBox\InputControlsTab.cs" />
@@ -102,6 +102,9 @@
   <ItemGroup>
     <EmbeddedResource Include="Source\MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Source\ToolBox\SpriteControlsTab.resx">
+      <DependentUpon>SpriteControlsTab.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

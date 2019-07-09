@@ -73,7 +73,6 @@ namespace SpriteWave
 			this.quitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
 			this.copyTileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.toolBoxTabs.SuspendLayout();
 			this.menuStrip1.SuspendLayout();
 			this.SuspendLayout();
 			// 
@@ -200,7 +199,6 @@ namespace SpriteWave
 			this.MinimumSize = new System.Drawing.Size(200, 400);
 			this.Name = "MainForm";
 			this.Text = "SpriteWave";
-			this.toolBoxTabs.ResumeLayout(false);
 			this.menuStrip1.ResumeLayout(false);
 			this.menuStrip1.PerformLayout();
 			this.ResumeLayout(false);

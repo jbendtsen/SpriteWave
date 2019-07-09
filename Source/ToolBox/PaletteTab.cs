@@ -18,11 +18,6 @@ namespace SpriteWave
 			this.SetupTab("Palette");
 		}
 
-		public void SetControlOrigins()
-		{
-			
-		}
-
 		public void AdjustContents()
 		{
 			

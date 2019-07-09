@@ -184,7 +184,7 @@ namespace SpriteWave
 			ReceiveTile(obj, _selPos);
 		}
 
-		public void Delete()
+		public void EraseTile()
 		{
 			if (_cl == null || !_isSel)
 				return;
@@ -551,7 +551,7 @@ namespace SpriteWave
 				DeleteCollageRow(_cl.Rows - 1);
 		}
 
-		private void FlipTile(Translation tr)
+		public void FlipTile(Translation tr)
 		{
 			if (_cl == null || !_isSel)
 				return;

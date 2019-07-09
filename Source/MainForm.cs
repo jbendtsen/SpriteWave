@@ -17,6 +17,8 @@ namespace SpriteWave
 
 		private DragObject _drag;
 
+		public delegate void LayoutDelegate();
+
 		public MainForm()
 		{
 			_formatList = new Dictionary<FormatKind, FileFormat>();
@@ -44,8 +46,7 @@ namespace SpriteWave
 
 			_spriteWnd = new SpriteWindow(this, this.CopyTile, this.PasteTile);
 
-			_toolBox = new ToolBox(this.toolBoxTabs, _spriteWnd, this.toolBoxSwitchWindow, this.toolBoxMinimise);
-			_toolBox.MinimiseAction = this.minimiseToolBox;
+			_toolBox = new ToolBox(this.toolBoxTabs, _spriteWnd, this.toolBoxSwitchWindow, this.toolBoxMinimise, this.PerformLayout);
 			_toolBox.SwitchWindowAction = this.switchToolBoxWindow;
 
 			// Setup MainForm events
@@ -133,7 +134,6 @@ namespace SpriteWave
 			if (ctrl is TabControl)
 			{
 				_toolBox.HandleTabClick();
-				UpdateMinimumSize();
 				this.PerformLayout();
 				return;
 			}
@@ -263,7 +263,7 @@ namespace SpriteWave
 
 			if (e.KeyCode == Keys.Delete)
 			{
-				_spriteWnd.Delete();
+				_spriteWnd.EraseTile();
 			}
 
 			if (e.KeyCode == Keys.Enter)
@@ -284,7 +284,6 @@ namespace SpriteWave
 					if (!_toolBox.IsOpen)
 						_toolBox.Minimise();
 
-					UpdateMinimumSize();
 					this.PerformLayout();
 					this.ActiveControl = _toolBox.GetControl("inputOffset");
 				}
@@ -408,17 +407,12 @@ namespace SpriteWave
 
 			//_inputWnd.AdjustControlsTab();
 			//_spriteWnd.AdjustControlsTab();
+			
+			UpdateMinimumSize();
 
 			_inputWnd.UpdateBars();
 			_spriteWnd.UpdateBars();
 			Draw();
-		}
-
-		private void minimiseToolBox(object sender, EventArgs e)
-		{
-			_toolBox.Minimise();
-			UpdateMinimumSize();
-			this.PerformLayout();
 		}
 
 		private void switchToolBoxWindow(object sender, EventArgs e)
@@ -428,7 +422,6 @@ namespace SpriteWave
 			else if (_toolBox.CurrentWindow == _spriteWnd)
 				_toolBox.CurrentWindow = _inputWnd;
 
-			UpdateMinimumSize();
 			this.PerformLayout();
 		}
 

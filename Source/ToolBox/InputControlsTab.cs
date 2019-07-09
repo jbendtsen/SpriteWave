@@ -13,9 +13,6 @@ namespace SpriteWave
 		private Button _sendTile;
 		private PictureBox _tileSample;
 
-		private Dictionary<Control, Rectangle> _origin;
-		private bool _originSet;
-
 		private bool _isRaised = false;
 		private const int _raiseAmount = 50;
 
@@ -25,8 +22,7 @@ namespace SpriteWave
 		public int MinimumWidth
 		{
 			get {
-				var rect = _origin[_sizeLabel];
-				return rect.X + rect.Width + 20;
+				return 200;
 			}
 		}
 		public int MinimumHeight
@@ -88,28 +84,6 @@ namespace SpriteWave
 			this.Controls.Add(_sizeLabel);
 			this.Controls.Add(_sendTile);
 			this.Controls.Add(_tileSample);
-
-			_origin = new Dictionary<Control, Rectangle>();
-			SetControlOrigins();
-			_originSet = false;
-		}
-
-		public void SetControlOrigins()
-		{
-			if (_originSet)
-				return;
-
-			foreach (Control c in this.Controls)
-			{
-				_origin[c] = new Rectangle(
-					c.Location.X,
-					c.Location.Y,
-					c.Size.Width,
-					c.Size.Height
-				);
-			}
-
-			_originSet = true;
 		}
 
 		public void AdjustContents()
@@ -118,31 +92,23 @@ namespace SpriteWave
 
 			Action<Control, int, int> position = (ctrl, x, gap) =>
 			{
-				var rect = _origin[ctrl];
-				int y = this.Size.Height - (rect.Height + gap);
-				System.Diagnostics.Debug.WriteLine(
-					"rX = {0}, rY = {1}, rW = {2}, rH = {3}, tabH = {4}, gap = {5}, y = {6}",
-					rect.X, rect.Y, rect.Width, rect.Height,
-					this.Size.Height,
-					gap,
-					y
-				);
+				int y = this.Size.Height - gap;
 				ctrl.Location = new Point(x, y);
 			};
+
+			System.Diagnostics.Debug.WriteLine("this.Size.Height = {0}", this.Size.Height);
 
 			_isRaised = (_sendTile.Location.X <= _sizeLabel.Location.X + _sizeLabel.Size.Width);
 			int raise = 0;
 			if (_isRaised)
 				raise = _raiseAmount;
 
-			position(_offsetLabel, _offsetLabel.Location.X, 24);
-			position(_offsetBox, _offsetBox.Location.X, 22);
-			position(_sizeLabel, _sizeLabel.Location.X, 26);
+			position(_offsetLabel, _offsetLabel.Location.X, 39);
+			position(_offsetBox, _offsetBox.Location.X, 42);
+			position(_sizeLabel, _sizeLabel.Location.X, 39);
 
-			position(_sendTile, this.Size.Width - 150, raise + 21);
-			position(_tileSample, this.Size.Width - 50, raise + 13);
-
-			SetControlOrigins();
+			position(_sendTile, this.Size.Width - 150, raise + 45);
+			position(_tileSample, this.Size.Width - 50, raise + 53);
 		}
 
 		public void ToggleSample(bool state)

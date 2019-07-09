@@ -8,7 +8,6 @@ namespace SpriteWave
 		int MinimumWidth { get; }
 		int MinimumHeight { get; }
 
-		void SetControlOrigins();
 		void AdjustContents();
 	}
 }

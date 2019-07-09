@@ -24,7 +24,7 @@ namespace SpriteWave
 			_menu.Items.Add(new ToolStripMenuItem("Copy Tile", null, (s, e) => copyTile(this), "copyTile"));
 			_menu.Items.Add(new ToolStripMenuItem("Paste Tile", null, (s, e) => pasteTile(this), "pasteTile"));
 
-			_menu.Items.Add(new ToolStripMenuItem("Erase Tile", null, (s, e) => Delete(), "eraseTile"));
+			_menu.Items.Add(new ToolStripMenuItem("Erase Tile", null, (s, e) => EraseTile(), "eraseTile"));
 			_menu.Items.Add(new ToolStripSeparator());
 
 			_menu.Items.Add(

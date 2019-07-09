@@ -86,7 +86,7 @@ namespace SpriteWave
 		public EventHandler SwitchWindowAction { set { _switch.Click += value; } }
 		public EventHandler MinimiseAction { set { _minimise.Click += value; } }
 
-		public ToolBox(TabControl box, TileWindow initialWnd, Button switchWindow, Button minimiseTb)
+		public ToolBox(TabControl box, TileWindow initialWnd, Button switchWindow, Button minimiseTb, MainForm.LayoutDelegate refresh)
 		{
 			_tabs = box;
 			_wnd = initialWnd;
@@ -95,7 +95,9 @@ namespace SpriteWave
 
 			_tabs.Controls.Add(new PaletteTab(_wnd));
 			_tabs.Controls.Add(_wnd.ControlsTab);
-			_tabs.Selected += this.tabSelectHandler;
+
+			_tabs.Selected += (s, e) => { _tabChanged = true; refresh(); };
+			_minimise.Click += (s, e) => { Minimise(); refresh(); };
 
 			_imgMinimise = new Bitmap(10, 16);
 			_imgMaximise = new Bitmap(10, 16);
@@ -122,16 +124,6 @@ namespace SpriteWave
 			_isOpen = true;
 		}
 
-		private void tabSelectHandler(object sender, TabControlEventArgs e)
-		{
-			_tabChanged = true;
-			var tab = _tabs.SelectedTab as ITab;
-			if (tab != null)
-				tab.AdjustContents();
-			else
-				System.Diagnostics.Debug.WriteLine("not a tab :(");
-		}
-
 		public Control GetControl(string name)
 		{
 			if (!_isOpen || _wnd == null)
@@ -152,10 +144,6 @@ namespace SpriteWave
 
 		public void UpdateLayout(ToolBoxOrientation layout, Size clientSize)
 		{
-			ITab tab = _tabs.SelectedTab as ITab;
-			if (tab != null)
-				tab.AdjustContents();
-
 			int tileWndWidth = _wnd.CanvasSize.Width;
 			int tileWndX = _wnd.CanvasPos.X;
 
@@ -198,6 +186,10 @@ namespace SpriteWave
 
 			_tabs.Size = new Size(tbW, tbH);
 			_switch.Size = new Size(20, tbH - 1);
+
+			ITab tab = _tabs.SelectedTab as ITab;
+			if (tab != null)
+				tab.AdjustContents();
 		}
 
 		public void HandleTabClick()
