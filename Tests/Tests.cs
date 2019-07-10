@@ -37,48 +37,24 @@ namespace SpriteWave
 			return actual == expected;
 		}
 
-		public bool TestCreateSuffixException(string fmt)
+		public bool TestException(string exType, Action action)
 		{
 			string msg = null;
+			bool success = false;
 
 			try {
-				var suff = new Suffix(fmt);
+				action();
 			}
 			catch (Exception ex) {
-				if (ex is ArgumentException || ex is ArgumentOutOfRangeException)
-					msg = ex.Message;
+				msg = ex.Message;
+				if (ex.GetType() == Type.GetType("System." + exType))
+					success = true;
 				else
 					throw;
 			}
 
-			Console.WriteLine(
-				"new Suffix(\"{0}\") -> {1}",
-				fmt, msg != null ? msg : "No exception"
-			);
-
-			return msg != null;
-		}
-
-		public bool TestSuffixGenerateException(string fmt, int num)
-		{
-			string msg = null;
-
-			try {
-				string str = new Suffix(fmt).Generate(num);
-			}
-			catch (Exception ex) {
-				if (ex is ArgumentException || ex is ArgumentOutOfRangeException)
-					msg = ex.Message;
-				else
-					throw;
-			}
-
-			Console.WriteLine(
-				"new Suffix(\"{0}\").Generate({1}) -> {2}",
-				fmt, num, msg != null ? msg : "No exception"
-			);
-
-			return msg != null;
+			Console.WriteLine(msg != null ? msg : "No exception");
+			return success;
 		}
 
 		public bool TestSuffixGenerate(string expected, string fmt, int num)
@@ -86,6 +62,13 @@ namespace SpriteWave
 			string output = new Suffix(fmt).Generate(num);
 			Console.WriteLine("Expected: " + expected + ", Actual: " + output);
 			return output == expected;
+		}
+
+		public bool TestSuffixValueOf(int expected, string fmt, string str)
+		{
+			int value = new Suffix(fmt).ValueOf(str);
+			Console.WriteLine("Expected: " + expected + ", Actual: " + value);
+			return value == expected;
 		}
 
 		public void Run()
@@ -96,16 +79,34 @@ namespace SpriteWave
 			ViewResults("RGBAToNative", TestRGBAToNative(0xFFE0, 0xFFFF00FF));
 			ViewResults("RGBAToNative", TestRGBAToNative(0x7FFF, 0xFFFFFF00));
 
-			ViewResults("CreateSuffix (trailing '{')", TestCreateSuffixException("_{{d2}"));
-			ViewResults("CreateSuffix (too short)", TestCreateSuffixException("-{d}"));
-			ViewResults("CreateSuffix (base type)", TestCreateSuffixException("-{l}"));
-			ViewResults("CreateSuffix (nDigits < 1)", TestCreateSuffixException("_{d0}"));
+			ViewResults("CreateSuffix (trailing '{')", TestException("ArgumentException", () => {var suff = new Suffix("_{{d2");}));
+			ViewResults("CreateSuffix (too short)", TestException("ArgumentException", () => {var suff = new Suffix("-{d}");}));
+			ViewResults("CreateSuffix (base type)", TestException("ArgumentException", () => {var suff = new Suffix("-{l}");}));
+			ViewResults("CreateSuffix (nDigits < 1)", TestException("ArgumentException", () => {var suff = new Suffix("_{d0}");}));
 
-			ViewResults("SuffixGenerate (num is -ve)", TestSuffixGenerateException("_{d2}", -10));
-			ViewResults("SuffixGenerate (num exceeds limit)", TestSuffixGenerateException("_{b3}", 10));
+			ViewResults("SuffixGenerate (num is -ve)", TestException("ArgumentException", () => {var str = new Suffix("_{d2}").Generate(-10);}));
+			ViewResults("SuffixGenerate (num exceeds limit)", TestException("ArgumentException", () => {var str = new Suffix("_{b3}").Generate(10);}));
+
 			ViewResults("SuffixGenerate", TestSuffixGenerate("number 090 here", "number {d3} here", 90));
 			ViewResults("SuffixGenerate", TestSuffixGenerate("_0f4", "_{x3}", 244));
 			ViewResults("SuffixGenerate", TestSuffixGenerate("_0F4", "_{X3}", 244));
+
+			ViewResults("SuffixValueOf (no insert)", TestException("InvalidOperationException", () => {var num = new Suffix("nothing here").ValueOf("nothing here");}));
+			ViewResults("SuffixValueOf (incorrect size 1)", TestException("ArgumentException", () => {var num = new Suffix("{d2} cc").ValueOf("not correct");}));
+			ViewResults("SuffixValueOf (incorrect size 2)", TestException("ArgumentException", () => {var num = new Suffix("aa {d2} cc").ValueOf("not correct");}));
+			ViewResults("SuffixValueOf (incorrect size 3)", TestException("ArgumentException", () => {var num = new Suffix("aa {d2}").ValueOf("not correct");}));
+			ViewResults("SuffixValueOf (invalid input 1)", TestException("ArgumentException", () => {var num = new Suffix("{d2} cc").ValueOf("00 cd");}));
+			ViewResults("SuffixValueOf (invalid input 2)", TestException("ArgumentException", () => {var num = new Suffix("aa {d2} cc").ValueOf("aa 00 cd");}));
+			ViewResults("SuffixValueOf (invalid input 3)", TestException("ArgumentException", () => {var num = new Suffix("aa {d2} cc").ValueOf("ab 00 cc");}));
+			ViewResults("SuffixValueOf (invalid input 4)", TestException("ArgumentException", () => {var num = new Suffix("aa {d2}").ValueOf("ab 00");}));
+			ViewResults("SuffixValueOf (invalid input 4)", TestException("ArgumentOutOfRangeException", () => {var num = new Suffix("aa {d2}").ValueOf("aa 0-");}));
+			ViewResults("SuffixValueOf (oob digit)", TestException("ArgumentOutOfRangeException", () => {var num = new Suffix("aa {o2}").ValueOf("aa 09");}));
+
+			ViewResults("SuffixValueOf", TestSuffixValueOf(345, "the number is: {b10}", "the number is: 0101011001"));
+			ViewResults("SuffixValueOf", TestSuffixValueOf(987, "{o4} is the number", "1733 is the number"));
+			ViewResults("SuffixValueOf", TestSuffixValueOf(90, "number {d3} here", "number 090 here"));
+			ViewResults("SuffixValueOf", TestSuffixValueOf(244, "_{x3}", "_0f4"));
+			ViewResults("SuffixValueOf", TestSuffixValueOf(244, "_{X3}", "_0F4"));
 
 			Console.WriteLine("\nTests Passed: " + nSuccesses + "/" + nTests);
 		}
