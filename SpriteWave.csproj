@@ -53,6 +53,7 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Source\Format.cs" />
+    <Compile Include="Source\Suffix.cs" />
     <Compile Include="Source\Windows\InputWindow.Designer.cs">
       <DependentUpon>InputWindow.cs</DependentUpon>
     </Compile>

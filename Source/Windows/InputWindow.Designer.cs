@@ -21,7 +21,7 @@ namespace SpriteWave
 			_controlsTab = new InputControlsTab(this);
 		}
 
-		protected override void InitialiseRightClickMenu(Utils.TileAction copyTile, Utils.TileAction pasteTile = null)
+		protected override void InitialiseRightClickMenu(MainForm.TileAction copyTile, MainForm.TileAction pasteTile = null)
 		{
 			_menu.Items.Add(new ToolStripMenuItem("Copy Tile", null, (s, e) => copyTile(this), "copyTile"));
 		}

@@ -103,7 +103,7 @@ namespace SpriteWave
 
 		public abstract void DrawGrid(Graphics g);
 
-		protected TileWindow(MainForm main, Utils.TileAction copy, Utils.TileAction paste = null)
+		protected TileWindow(MainForm main, MainForm.TileAction copy, MainForm.TileAction paste = null)
 		{
 			_selPos = new Position(0, 0);
 			_defHl = new SolidBrush(Color.FromArgb(96, 0, 64, 255));

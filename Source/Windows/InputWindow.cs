@@ -38,7 +38,7 @@ namespace SpriteWave
 			}
 		}
 
-		public InputWindow(MainForm main, Utils.TileAction copy)
+		public InputWindow(MainForm main, MainForm.TileAction copy)
 			: base(main, copy)
 		{
 			_row = 0;

@@ -57,7 +57,9 @@ namespace SpriteWave
 			}
 		}
 
-		public SpriteWindow(MainForm main, Utils.TileAction copy, Utils.TileAction paste)
+		public string ExportExtension { get { return ".png"; } }
+
+		public SpriteWindow(MainForm main, MainForm.TileAction copy, MainForm.TileAction paste)
 			: base(main, copy, paste)
 		{
 			// Initialise all edges, including the invalid (centre) one
@@ -71,6 +73,15 @@ namespace SpriteWave
 			ResetScroll();
 			base.Activate();
 			UpdateBars();
+		}
+
+		public void Export(string fullPath, int scale)
+		{
+			string ext = this.ExportExtension;
+			if (fullPath.Substring(fullPath.Length - ext.Length) != ext)
+				fullPath += ext;
+
+			_cl.Bitmap.Scale(scale).Save(fullPath);
 		}
 
 		public override EdgeKind EdgeOf(Position loc)

@@ -18,6 +18,7 @@ namespace SpriteWave
 		private DragObject _drag;
 
 		public delegate void LayoutDelegate();
+		public delegate void TileAction(TileWindow tw);
 
 		public MainForm()
 		{
@@ -38,7 +39,13 @@ namespace SpriteWave
 			);
 
 			InitializeComponent();
-			this.openFileDialog1.Filter = Utils.FilterBuilder(_formatList);
+
+			string filter = "";
+			foreach (var fmt in _formatList)
+				filter += fmt.Value.Filter;
+
+			filter = filter.Remove(filter.Length-1);
+			this.openFileDialog1.Filter = filter;
 
 			_inputWnd = new InputWindow(this, this.CopyTile);
 			var inputTab = _inputWnd.ControlsTab as InputControlsTab;

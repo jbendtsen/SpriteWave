@@ -21,7 +21,7 @@ namespace SpriteWave
 		public int ScrollXHeight { get { return _scrollX.Size.Height; } }
 
 		protected abstract void SetupWindowUI();
-		protected abstract void InitialiseRightClickMenu(Utils.TileAction copyTile, Utils.TileAction pasteTile = null);
+		protected abstract void InitialiseRightClickMenu(MainForm.TileAction copyTile, MainForm.TileAction pasteTile = null);
 		protected abstract void InitialiseControlsTab();
 
 		public void Dispose()
@@ -33,7 +33,7 @@ namespace SpriteWave
 			_controlsTab.Dispose();
 		}
 
-		protected void InitialiseUI(MainForm main, Utils.TileAction copyTile, Utils.TileAction pasteTile = null)
+		protected void InitialiseUI(MainForm main, MainForm.TileAction copyTile, MainForm.TileAction pasteTile = null)
 		{
 			InitialiseControlsTab();
 

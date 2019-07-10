@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -23,17 +22,6 @@ namespace SpriteWave
 	{
 		public const int cLen = 4;
 
-		public delegate void TileAction(TileWindow tw);
-		
-		public static string FilterBuilder(Dictionary<FormatKind, FileFormat> fmtList)
-		{
-			string filter = "";
-			foreach (var fmt in fmtList)
-				filter += fmt.Value.Filter;
-
-			return filter.Remove(filter.Length-1);
-		}
-		
 		public static Type TileType(string name)
 		{
 			return Type.GetType("SpriteWave." + name);
@@ -165,11 +153,11 @@ namespace SpriteWave
 		public static Bitmap SetAlpha(this Bitmap bmp, float alpha)
 		{
 			float[][] ptsArray = {
-				new float[] {1, 0, 0, 0, 0},
-				new float[] {0, 1, 0, 0, 0},
-				new float[] {0, 0, 1, 0, 0},
-				new float[] {0, 0, 0, alpha, 0},
-				new float[] {0, 0, 0, 0, 1}
+				new[] {1f, 0, 0, 0, 0},
+				new[] {0f, 1, 0, 0, 0},
+				new[] {0f, 0, 1, 0, 0},
+				new[] {0f, 0, 0, alpha, 0},
+				new[] {0f, 0, 0, 0, 1}
 			};
 
 			Bitmap faded = new Bitmap(bmp.Width, bmp.Height);

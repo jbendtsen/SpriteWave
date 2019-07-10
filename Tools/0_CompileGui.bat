@@ -8,7 +8,7 @@ if "%~1"=="" (
 	goto exit
 )
 
-call %CSC% "%~1" ..\Source\Utils.cs ..\Source\Format.cs ..\Source\Selection\IPiece.cs ..\Source\GFX\*
+call %CSC% /t:winexe "%~1" ..\Source\Utils.cs ..\Source\GFX\ColourTable.cs
 
 :exit
 	echo.
