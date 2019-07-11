@@ -12,9 +12,6 @@ namespace SpriteWave
 		int _row;
 		protected Position _vis;
 
-		private Bitmap _tileSampleBmp;
-		public Bitmap SampleImage { get { return _tileSampleBmp; } }
-
 		public override SizeF TileDimensions
 		{
 			get {
@@ -38,8 +35,10 @@ namespace SpriteWave
 			}
 		}
 
-		public InputWindow(MainForm main, MainForm.TileAction copy)
-			: base(main, copy)
+		public Tile TileSample { set { ((InputControlsTab)_controlsTab).Sample = TileBitmap(value); } }
+
+		public InputWindow(MainForm main)
+			: base(main)
 		{
 			_row = 0;
 			_vis = new Position(0, 0);
@@ -68,6 +67,7 @@ namespace SpriteWave
 		{
 			_selPos = new Position(0, 0);
 			Selected = false;
+			TileSample = null;
 
 			_contents = file;
 			_cl = new Collage(fmt);
@@ -87,6 +87,7 @@ namespace SpriteWave
 
 			_selPos = new Position(0, 0);
 			Selected = false;
+			TileSample = null;
 
 			if (_cl != null && _contents != null)
 			{
@@ -156,15 +157,19 @@ namespace SpriteWave
 			}
 		}
 
-		public override void ResetSample()
+		/*
+		private int _count = 0;
+		public override void ResetSample(Tile t)
 		{
-			Tile t = null;
-			if (_isSel)
+			System.Diagnostics.Debug.WriteLine("{0} ResetSample()", _count++);
+
+			if (t == null && _isSel)
 				t = PieceAt(_selPos) as Tile;
 
 			((InputControlsTab)_controlsTab).ToggleSample(t != null);
 			_tileSampleBmp = TileBitmap(t);
 		}
+		*/
 
 		public override RectangleF PieceHitbox(Position p)
 		{

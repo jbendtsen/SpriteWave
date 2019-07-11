@@ -11,8 +11,13 @@ namespace SpriteWave
 		private static IPiece _obj;
 		public static bool HasPiece { get { return _obj != null; } }
 
+		private static bool _completed;
+		public static bool Completed { get { return _completed; } }
+
 		public static void Start()
 		{
+			_completed = false;
+
 			if (_src == null)
 				return;
 
@@ -32,6 +37,8 @@ namespace SpriteWave
 
 		public static void Paste()
 		{
+			_completed = false;
+
 			if (_obj == null || _src == null || _dst == null || _dst.Window == null)
 				return;
 
@@ -40,11 +47,16 @@ namespace SpriteWave
 			if (e != null)
 				_dst.Window.ResizeCollage(e);
 			else
+			{
 				_dst.Window.ReceiveTile(_obj as Tile);
+				_completed = true;
+			}
 		}
 
 		public static void Swap()
 		{
+			_completed = false;
+
 			Tile cur = _obj as Tile;
 			if (cur == null || _src == null || _dst == null)
 				return;
@@ -60,6 +72,8 @@ namespace SpriteWave
 
 			sender.ReceiveTile(other.Clone() as Tile, _src.Location);
 			recver.ReceiveTile(cur, _dst.Location);
+
+			_completed = true;
 		}
 	}
 }

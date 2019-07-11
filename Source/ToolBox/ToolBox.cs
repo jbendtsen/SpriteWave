@@ -28,6 +28,8 @@ namespace SpriteWave
 		private Bitmap _imgMinimise;
 		private Bitmap _imgMaximise;
 
+		private Action _refresh;
+
 		public bool IsOpen { get { return _isOpen; } }
 
 		public TileWindow CurrentWindow
@@ -37,15 +39,16 @@ namespace SpriteWave
 			}
 			set {
 				bool ctrlTabOpen = _tabs.SelectedTab == _wnd.ControlsTab;
-				_tabs.Controls.Remove(_wnd.ControlsTab);
+				_tabs.TabPages.Remove(_wnd.ControlsTab);
 
 				_wnd = value;
-				_tabs.Controls.Add(_wnd.ControlsTab);
+				_tabs.TabPages.Add(_wnd.ControlsTab);
 
 				if (ctrlTabOpen)
 					_tabs.SelectedTab = _wnd.ControlsTab;
 
 				_tabChanged = false;
+				Refresh();
 			}
 		}
 
@@ -84,20 +87,21 @@ namespace SpriteWave
 		public int Height { get { return _tabs.Size.Height; } }
 
 		public EventHandler SwitchWindowAction { set { _switch.Click += value; } }
-		public EventHandler MinimiseAction { set { _minimise.Click += value; } }
 
-		public ToolBox(TabControl box, TileWindow initialWnd, Button switchWindow, Button minimiseTb, MainForm.LayoutDelegate refresh)
+		public ToolBox(TabControl box, TileWindow initialWnd, Button switchWindow, Button minimiseTb, Action refresh)
 		{
 			_tabs = box;
 			_wnd = initialWnd;
 			_switch = switchWindow;
 			_minimise = minimiseTb;
+			_refresh = refresh;
 
 			_tabs.Controls.Add(new PaletteTab(_wnd));
 			_tabs.Controls.Add(_wnd.ControlsTab);
 
-			_tabs.Selected += (s, e) => { _tabChanged = true; refresh(); };
-			_minimise.Click += (s, e) => { Minimise(); refresh(); };
+			_tabs.Deselected += (s, e) => TogglePage(e.TabPageIndex, false);
+			_tabs.Selected += (s, e) => { TogglePage(e.TabPageIndex, true); _tabChanged = true; };
+			_minimise.Click += (s, e) => { Minimise(); Refresh(); };
 
 			_imgMinimise = new Bitmap(10, 16);
 			_imgMaximise = new Bitmap(10, 16);
@@ -122,6 +126,21 @@ namespace SpriteWave
 
 			_tabChanged = false;
 			_isOpen = true;
+		}
+
+		public void TogglePage(int idx, bool state)
+		{
+			if (idx >= 0 && idx < _tabs.Controls.Count)
+			{
+				System.Diagnostics.Debug.WriteLine("_tabs[{0}].Visible = {1}", idx, state);
+				_tabs.Controls[idx].Visible = state;
+			}
+		}
+
+		public void Refresh()
+		{
+			if (_refresh != null)
+				_refresh();
 		}
 
 		public Control GetControl(string name)

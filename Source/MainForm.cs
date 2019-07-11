@@ -5,6 +5,8 @@ using System.Drawing;
 using System.Windows.Forms;
 using System.ComponentModel;
 
+using System.Diagnostics;
+
 namespace SpriteWave
 {
 	public partial class MainForm : Form
@@ -17,7 +19,7 @@ namespace SpriteWave
 
 		private DragObject _drag;
 
-		public delegate void LayoutDelegate();
+		public delegate void GrowWindowDelegate(int dW, int dH);
 		public delegate void TileAction(TileWindow tw);
 
 		public MainForm()
@@ -47,11 +49,11 @@ namespace SpriteWave
 			filter = filter.Remove(filter.Length-1);
 			this.openFileDialog1.Filter = filter;
 
-			_inputWnd = new InputWindow(this, this.CopyTile);
+			_inputWnd = new InputWindow(this);
 			var inputTab = _inputWnd.ControlsTab as InputControlsTab;
 			inputTab.SendTileAction = (s, e) => {CopyTile(_inputWnd); PasteTile(_spriteWnd);};
 
-			_spriteWnd = new SpriteWindow(this, this.CopyTile, this.PasteTile);
+			_spriteWnd = new SpriteWindow(this);
 
 			_toolBox = new ToolBox(this.toolBoxTabs, _spriteWnd, this.toolBoxSwitchWindow, this.toolBoxMinimise, this.PerformLayout);
 			_toolBox.SwitchWindowAction = this.switchToolBoxWindow;
@@ -59,6 +61,7 @@ namespace SpriteWave
 			// Setup MainForm events
 			this.KeyPreview = true;
 			this.KeyDown += this.keysHandler;
+			//this.Resize += (s, e) => Debug.WriteLine("W = {0}, H = {1}, called from {2}", this.Size.Width, this.Size.Height, new StackTrace().GetFrame(31).GetMethod().Name);
 			this.Layout += this.layoutHandler;
 			Utils.ApplyRecursiveControlAction(this, this.SetMouseEventHandler);
 
@@ -73,13 +76,13 @@ namespace SpriteWave
 			_spriteWnd.Draw();
 		}
 
-		private void CopyTile(TileWindow wnd)
+		public void CopyTile(TileWindow wnd)
 		{
 			wnd.Selected = true;
 			Transfer.Source = wnd.CurrentSelection();
 			Transfer.Start();
 		}
-		private void PasteTile(TileWindow wnd)
+		public void PasteTile(TileWindow wnd)
 		{
 			wnd.Selected = true;
 			Transfer.Dest = wnd.CurrentSelection();
@@ -119,6 +122,14 @@ namespace SpriteWave
 			catch (ArgumentOutOfRangeException) {
 				_drag = null;
 				ClearSelection();
+				_inputWnd.TileSample = null;
+			}
+
+			if (_drag != null && wnd == _inputWnd)
+			{
+				Tile t = _drag.Current().Piece as Tile;
+				if (t != null)
+					_inputWnd.TileSample = t;
 			}
 		}
 
@@ -126,13 +137,61 @@ namespace SpriteWave
 		{
 			try {
 				wnd.Position = wnd.GetPosition(x, y);
+				if (wnd == _inputWnd)
+					_inputWnd.TileSample = _inputWnd.PieceAt(_inputWnd.Position) as Tile;
+
 				Transfer.Source = wnd.CurrentSelection();
 				if (wnd.EdgeOf(wnd.Position) == EdgeKind.None)
 					wnd.ShowMenu(x, y);
 			}
 			catch (ArgumentOutOfRangeException) {
 				ClearSelection();
+				_inputWnd.TileSample = null;
 			}
+		}
+
+		private object FindControlWithMouse(Control c, object args)
+		{
+			if (c.HasMouse())
+				args = c;
+
+			return args;
+		}
+		
+		private void mouseMoveHandler(object sender, MouseEventArgs e)
+		{
+			var startCtrl = sender as Control;
+			var curCtrl = Utils.ApplyRecursiveControlAction(this, FindControlWithMouse) as Control;
+
+			if (_drag == null)
+				return;
+
+			TileWindow wnd = null;
+			if (_inputWnd.WindowIs(curCtrl))
+				wnd = _inputWnd;
+			else if (_spriteWnd.WindowIs(curCtrl))
+				wnd = _spriteWnd;
+
+			int x = 0, y = 0;
+			if (_drag.IsEdge)
+			{
+				x = e.X;
+				y = e.Y;
+			}
+			else if (wnd != null)
+			{
+				// When the mouse is held, e.X and e.Y are relative to startCtrl.Location
+				Point toCur = new Point(
+					curCtrl.Location.X - startCtrl.Location.X,
+					curCtrl.Location.Y - startCtrl.Location.Y
+				);
+
+				x = e.X - toCur.X;
+				y = e.Y - toCur.Y;
+			}
+
+			Transfer.Dest = _drag.Update(wnd, x, y);
+			Draw();
 		}
 
 		private void mouseDownHandler(object sender, MouseEventArgs e)
@@ -186,6 +245,9 @@ namespace SpriteWave
 						Transfer.Paste();
 */
 					Transfer.Paste();
+					if (!Transfer.Completed)
+						_inputWnd.TileSample = null;
+
 					ClearSelection();
 				}
 				else
@@ -195,52 +257,6 @@ namespace SpriteWave
 			}
 
 			_drag = null;
-			Draw();
-		}
-
-		private object RefreshControl(Control c, object args)
-		{
-			if (c.HasMouse())
-				args = c;
-			if (c is ScrollBar || c is TextBox || c is Button)
-				c.Refresh();
-
-			return args;
-		}
-		
-		private void mouseMoveHandler(object sender, MouseEventArgs e)
-		{
-			var startCtrl = sender as Control;
-			var curCtrl = Utils.ApplyRecursiveControlAction(this, RefreshControl) as Control;
-
-			if (_drag == null)
-				return;
-
-			TileWindow wnd = null;
-			if (_inputWnd.WindowIs(curCtrl))
-				wnd = _inputWnd;
-			else if (_spriteWnd.WindowIs(curCtrl))
-				wnd = _spriteWnd;
-
-			int x = 0, y = 0;
-			if (_drag.IsEdge)
-			{
-				x = e.X;
-				y = e.Y;
-			}
-			else if (wnd != null)
-			{
-				// When the mouse is held, e.X and e.Y are relative to startCtrl.Location
-				Point toCur = new Point(
-					curCtrl.Location.X - startCtrl.Location.X,
-					curCtrl.Location.Y - startCtrl.Location.Y
-				);
-
-				x = e.X - toCur.X;
-				y = e.Y - toCur.Y;
-			}
-
-			Transfer.Dest = _drag.Update(wnd, x, y);
 			Draw();
 		}
 
@@ -258,7 +274,7 @@ namespace SpriteWave
 				else
 				{
 					ClearSelection();
-					_drag = null;
+					_inputWnd.TileSample = null;
 				}
 			}
 
@@ -305,7 +321,7 @@ namespace SpriteWave
 					zoom = 1;
 
 				if (zoom != 0)
-					_spriteWnd.ZoomByTiles(zoom);
+					_spriteWnd.ZoomIn(zoom);
 
 				Action<EdgeKind> moveEdge = _spriteWnd.InsertEdge;
 				if ((mod & Keys.Shift) != 0)
@@ -388,11 +404,19 @@ namespace SpriteWave
 			this.MinimumSize = new Size(minW, this.MinimumSize.Height);
 		}
 
+		public void GrowWindow(int dW, int dH)
+		{
+			Debug.WriteLine("Resize: _dW = {0}, _dH = {1}", dW, dH);
+			this.Size = new Size(this.Size.Width + dW, this.Size.Height + dH);
+		}
+
 		private void layoutHandler(object sender, LayoutEventArgs e)
 		{
 			int totalH = this.ClientSize.Height;
 			int menuH = this.menuStrip1.Size.Height;
 			int tileBoxW = this.ClientSize.Width / 2;
+
+			//System.Diagnostics.Debug.WriteLine("{0} client W = {1}, client H = {2}", _count++, this.ClientSize.Width, totalH);
 
 			var tbLayout = ToolBoxOrientation.None;
 
@@ -411,9 +435,6 @@ namespace SpriteWave
 				int wndMaxH = totalH - (menuH + tbWnd.ScrollXHeight);
 				tbWnd.ReduceWindowTo(wndMaxH - _toolBox.Height);
 			}
-
-			//_inputWnd.AdjustControlsTab();
-			//_spriteWnd.AdjustControlsTab();
 			
 			UpdateMinimumSize();
 

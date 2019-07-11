@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -13,8 +12,9 @@ namespace SpriteWave
 		private Button _sendTile;
 		private PictureBox _tileSample;
 
-		private bool _isRaised = false;
-		private const int _raiseAmount = 50;
+		private Bitmap _sampleBmp;
+
+		private MainForm.GrowWindowDelegate _growForm;
 
 		private readonly InputWindow _wnd;
 		public TileWindow Window { get { return _wnd as TileWindow; } set {} }
@@ -29,8 +29,30 @@ namespace SpriteWave
 		{
 			get {
 				int h = 70;
-				h += (_isRaised && _sendTile.Visible) ? _raiseAmount : 0;
+				if (this.Visible && _sendTile.Visible &&
+				    _sendTile.Location.X <= _sizeLabel.Location.X + _sizeLabel.Size.Width)
+				{
+					h += 50;
+				}
+
 				return h;
+			}
+		}
+
+		public Bitmap Sample
+		{
+			set {
+				System.Diagnostics.Debug.WriteLine("ICT.Sample { set; }");
+
+				_sampleBmp = value;
+				bool state = _sampleBmp != null;
+
+				int h = this.MinimumHeight;
+				_sendTile.Visible = state;
+				_tileSample.Visible = state;
+
+				int newH = this.MinimumHeight;
+				_growForm(0, newH - h);
 			}
 		}
 
@@ -38,10 +60,10 @@ namespace SpriteWave
 
 		public int SizeText { set { _sizeLabel.Text = "/ 0x" + value.ToString("X"); } }
 
-		public InputControlsTab(InputWindow wnd)
+		public InputControlsTab(InputWindow wnd, MainForm.GrowWindowDelegate growForm)
 		{
 			_wnd = wnd;
-
+			_growForm = growForm;
 			this.SetupTab("Controls");
 
 			_offsetLabel = new Label();
@@ -96,25 +118,15 @@ namespace SpriteWave
 				ctrl.Location = new Point(x, y);
 			};
 
-			System.Diagnostics.Debug.WriteLine("this.Size.Height = {0}", this.Size.Height);
+			int w = this.Size.Width;
+			int h = this.MinimumHeight;
 
-			_isRaised = (_sendTile.Location.X <= _sizeLabel.Location.X + _sizeLabel.Size.Width);
-			int raise = 0;
-			if (_isRaised)
-				raise = _raiseAmount;
+			_offsetLabel.Location = new Point(_offsetLabel.Location.X, h - 45);
+			_offsetBox.Location = new Point(_offsetBox.Location.X, h - 48);
+			_sizeLabel.Location = new Point(_sizeLabel.Location.X, h - 45);
 
-			position(_offsetLabel, _offsetLabel.Location.X, 39);
-			position(_offsetBox, _offsetBox.Location.X, 42);
-			position(_sizeLabel, _sizeLabel.Location.X, 39);
-
-			position(_sendTile, this.Size.Width - 150, raise + 45);
-			position(_tileSample, this.Size.Width - 50, raise + 53);
-		}
-
-		public void ToggleSample(bool state)
-		{
-			_sendTile.Visible = state;
-			_tileSample.Visible = state;
+			_sendTile.Location = new Point(w - 150, 19);
+			_tileSample.Location = new Point(w - 50, 11);
 		}
 
 		private void editOffsetBox(object sender, EventArgs e)
@@ -142,12 +154,11 @@ namespace SpriteWave
 
 		private void paintSample(object sender, PaintEventArgs e)
 		{
-			Bitmap sample = _wnd.SampleImage;
-			if (sample == null)
+			if (_sampleBmp == null)
 				return;
 
 			e.Graphics.ToggleSmoothing(false);
-			e.Graphics.DrawImage(sample, 0, 0, _tileSample.Width - 1, _tileSample.Height - 1);
+			e.Graphics.DrawImage(_sampleBmp, 0, 0, _tileSample.Width - 1, _tileSample.Height - 1);
 		}
 	}
 }

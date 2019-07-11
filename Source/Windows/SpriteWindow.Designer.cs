@@ -14,9 +14,9 @@ namespace SpriteWave
 			_menu.Name = "spriteMenu";
 		}
 
-		protected override void InitialiseControlsTab()
+		protected override void InitialiseControlsTab(MainForm.GrowWindowDelegate growForm)
 		{
-			_controlsTab = new SpriteControlsTab(this);
+			_controlsTab = new SpriteControlsTab(this, growForm);
 		}
 
 		protected override void InitialiseRightClickMenu(MainForm.TileAction copyTile, MainForm.TileAction pasteTile = null)

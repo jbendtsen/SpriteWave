@@ -10,12 +10,6 @@ namespace SpriteWave
 {
 	public class SpriteControlsTab : TabPage, ITab
 	{
-		private readonly SpriteWindow _wnd;
-		public TileWindow Window { get { return _wnd; } set {} }
-
-		public int MinimumWidth { get { return 320; } }
-		public int MinimumHeight { get { return 200; } }
-
 		private readonly Color infoColour = Color.FromArgb(255, 48, 48, 48);
 
 		private Rectangle _divider;
@@ -46,15 +40,24 @@ namespace SpriteWave
 		private FolderBrowserDialog _folderBrowser;
 		private bool _pathSelected = false;
 
-		public SpriteControlsTab(SpriteWindow wnd)
+		private MainForm.GrowWindowDelegate _growForm;
+
+		private readonly SpriteWindow _wnd;
+		public TileWindow Window { get { return _wnd; } set {} }
+
+		public int MinimumWidth { get { return 320; } }
+		public int MinimumHeight { get { return 192; } }
+
+		public SpriteControlsTab(SpriteWindow wnd, MainForm.GrowWindowDelegate growForm)
 		{
 			_wnd = wnd;
+			_growForm = growForm;
 			this.SetupTab("Controls");
 
 			_folderBrowser = new FolderBrowserDialog();
 			var resources = new ComponentResourceManager(typeof(SpriteControlsTab));
 
-			_divider = new Rectangle(120, 5, 0, 180);
+			_divider = new Rectangle(120, 5, 0, 172);
 			_dividerPen = new Pen(Color.Silver);
 
 			_tileLabel = new Label();
@@ -221,10 +224,10 @@ namespace SpriteWave
 
 		public void AdjustContents()
 		{
-			Func<Control, Size> stretch = (ctrl) => new Size(this.Size.Width - ctrl.Location.X - 5, ctrl.Size.Height);
+			Action<Control> stretch = (ctrl) => ctrl.Size = new Size(this.Size.Width - ctrl.Location.X - 5, ctrl.Size.Height);
 
-			_folderText.Size = stretch(_folderText);
-			_saveMsg.Size = stretch(_saveMsg);
+			stretch(_folderText);
+			stretch(_saveMsg);
 		}
 
 		public void UpdateUI()
@@ -274,6 +277,7 @@ namespace SpriteWave
 				try {
 					var suff = new Suffix(name);
 					int[] exportList = suff.ListOfValues(fileList);
+
 					int nextNum = 0;
 					if (exportList != null)
 						nextNum = exportList[exportList.Length - 1] + 1;

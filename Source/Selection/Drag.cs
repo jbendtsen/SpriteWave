@@ -86,6 +86,7 @@ namespace SpriteWave
 
 		public Selection Cancel()
 		{
+			// maybe clear inputcontrolstab sample?
 			_orgWnd.Cursor = null;
 			_orgWnd.Selected = true;
 			return _orgWnd.CurrentSelection();

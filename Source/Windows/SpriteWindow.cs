@@ -16,6 +16,8 @@ namespace SpriteWave
 
 		private const float scrollFactor = 5f;
 		private const float zoomFactor = 5f;
+		private const float zoomMin = 0.001f;
+		private const float zoomMax = 1000f;
 
 		// 'zoom' = number of screen pixels that fit into the width of a scaled collage pixel
 		private float _zoom;
@@ -59,8 +61,8 @@ namespace SpriteWave
 
 		public string ExportExtension { get { return ".png"; } }
 
-		public SpriteWindow(MainForm main, MainForm.TileAction copy, MainForm.TileAction paste)
-			: base(main, copy, paste)
+		public SpriteWindow(MainForm main)
+			: base(main)
 		{
 			// Initialise all edges, including the invalid (centre) one
 			_edges = new Edge[9];
@@ -278,6 +280,8 @@ namespace SpriteWave
 			float yPos = _yOff + ((float)y / _zoom);
 
 			float z = _zoom * factor;
+			if (z < zoomMin || z > zoomMax)
+				return;
 
 			_xOff = xPos - ((float)x / z);
 			_yOff = yPos - ((float)y / z);
@@ -293,8 +297,16 @@ namespace SpriteWave
 
 			Zoom(amount, x, y);
 		}
+		public void ZoomIn(int delta)
+		{
+			ZoomOver(delta, _window.Size.Width / 2, _window.Size.Height / 2);
+		}
+
 		public void ZoomByTiles(float delta, bool useWidth = true)
 		{
+			if (_cl == null)
+				return;
+
 			float length = useWidth ? _cl.Columns : _cl.Rows;
 			float amount = (length + Math.Abs(delta)) / length;
 			if (delta < 0)

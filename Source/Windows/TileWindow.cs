@@ -32,7 +32,7 @@ namespace SpriteWave
 			}
 			set {
 				_isSel = value;
-				ResetSample();
+				//ResetSample(null);
 			}
 		}
 
@@ -103,14 +103,14 @@ namespace SpriteWave
 
 		public abstract void DrawGrid(Graphics g);
 
-		protected TileWindow(MainForm main, MainForm.TileAction copy, MainForm.TileAction paste = null)
+		protected TileWindow(MainForm main)
 		{
 			_selPos = new Position(0, 0);
 			_defHl = new SolidBrush(Color.FromArgb(96, 0, 64, 255));
 			_cursorHl = new SolidBrush(Color.FromArgb(96, 0, 255, 64));
 			_selHl = _defHl;
 
-			InitialiseUI(main, copy, paste);
+			InitialiseUI(main);
 		}
 
 		public virtual void Render()
@@ -158,8 +158,6 @@ namespace SpriteWave
 
 			return _cl.RenderTile(t);
 		}
-		
-		public virtual void ResetSample() {}
 
 		public virtual EdgeKind EdgeOf(Position p) { return EdgeKind.None; }
 		public virtual PointF[] ShapeEdge(Edge edge) { return null; }
