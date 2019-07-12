@@ -1,12 +1,12 @@
 ﻿using System;
+using System.Drawing;
 
 namespace SpriteWave
 {
 	public interface ITab
 	{
 		TileWindow Window { get; set; }
-		int MinimumWidth { get; }
-		int MinimumHeight { get; }
+		Size Minimum { get; }
 
 		void AdjustContents();
 	}

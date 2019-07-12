@@ -38,6 +38,8 @@ namespace SpriteWave
 				return _wnd;
 			}
 			set {
+				_tabs.SelectedTab.Visible = false;
+
 				bool ctrlTabOpen = _tabs.SelectedTab == _wnd.ControlsTab;
 				_tabs.TabPages.Remove(_wnd.ControlsTab);
 
@@ -59,28 +61,18 @@ namespace SpriteWave
 			}
 		}
 
-		public int MinimumWidth
+		public Size Minimum
 		{
 			get {
-				int w = MinMinWidth;
+				Size s = new Size(MinMinWidth, 0);
 
-				ITab tab = _tabs.SelectedTab as ITab;
-				if (_isOpen && tab != null)
-					w = tab.MinimumWidth;
+				ITab t = _tabs.SelectedTab as ITab;
+				if (_isOpen && t != null)
+					s = t.Minimum;
 
-				return w + _switch.Size.Width;
-			}
-		}
-		public int MinimumHeight
-		{
-			get {
-				int h = 0;
-
-				ITab tab = _tabs.SelectedTab as ITab;
-				if (_isOpen && tab != null)
-					h = tab.MinimumHeight;
-
-				return h + _tabs.ItemSize.Height + _tabs.Padding.Y - 1;
+				s.Width += _switch.Size.Width;
+				s.Height += _tabs.ItemSize.Height + _tabs.Padding.Y - 1;
+				return s;
 			}
 		}
 
@@ -131,10 +123,7 @@ namespace SpriteWave
 		public void TogglePage(int idx, bool state)
 		{
 			if (idx >= 0 && idx < _tabs.Controls.Count)
-			{
-				System.Diagnostics.Debug.WriteLine("_tabs[{0}].Visible = {1}", idx, state);
 				_tabs.Controls[idx].Visible = state;
-			}
 		}
 
 		public void Refresh()
@@ -167,7 +156,7 @@ namespace SpriteWave
 			int tileWndX = _wnd.CanvasPos.X;
 
 			int tbW = tileWndWidth - _switch.Size.Width;
-			int tbH = this.MinimumHeight;
+			int tbH = this.Minimum.Height;
 
 			int tbX = tileWndX;
 			int tbY = clientSize.Height - tbH;
@@ -217,6 +206,8 @@ namespace SpriteWave
 				Minimise();
 			else if (!_tabChanged)
 				Minimise();
+			else
+				Refresh();
 
 			_tabChanged = false;
 		}

@@ -22,7 +22,7 @@ namespace SpriteWave
 
 		protected abstract void SetupWindowUI();
 		protected abstract void InitialiseRightClickMenu(MainForm.TileAction copyTile, MainForm.TileAction pasteTile = null);
-		protected abstract void InitialiseControlsTab(MainForm.GrowWindowDelegate growForm);
+		protected abstract void InitialiseControlsTab();
 
 		public void Dispose()
 		{
@@ -35,7 +35,7 @@ namespace SpriteWave
 
 		protected void InitialiseUI(MainForm main)
 		{
-			InitialiseControlsTab(main.GrowWindow);
+			InitialiseControlsTab();
 
 			_window = new PictureBox();
 			_scrollX = new HScrollBar();

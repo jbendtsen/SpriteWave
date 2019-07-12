@@ -16,9 +16,9 @@ namespace SpriteWave
 			_scrollX.Enabled = false;
 		}
 
-		protected override void InitialiseControlsTab(MainForm.GrowWindowDelegate growForm)
+		protected override void InitialiseControlsTab()
 		{
-			_controlsTab = new InputControlsTab(this, growForm);
+			_controlsTab = new InputControlsTab(this);
 		}
 
 		protected override void InitialiseRightClickMenu(MainForm.TileAction copyTile, MainForm.TileAction pasteTile = null)

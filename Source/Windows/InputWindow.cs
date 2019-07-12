@@ -49,17 +49,6 @@ namespace SpriteWave
 		{
 			_vis.col = _cl.Columns;
 			AdjustWindow();
-/*
-			//_infoPanel.Visible = true;
-
-			_offsetLabel.Visible = true;
-
-			_offsetBox.Visible = true;
-			_offsetBox.Enabled = true;
-			_offsetBox.Text = "0";
-
-			_sizeLabel.Visible = true;
-*/
 			base.Activate();
 		}
 

@@ -12,8 +12,8 @@ namespace SpriteWave
 	{
 		private readonly Color infoColour = Color.FromArgb(255, 48, 48, 48);
 
-		private Rectangle _divider;
-		private readonly Pen _dividerPen;
+		private Rectangle _divider = new Rectangle(120, 5, 0, 172);
+		private readonly Pen _dividerPen = new Pen(Color.Silver);
 
 		private Label _tileLabel;
 		private Label _outputLabel;
@@ -40,25 +40,18 @@ namespace SpriteWave
 		private FolderBrowserDialog _folderBrowser;
 		private bool _pathSelected = false;
 
-		private MainForm.GrowWindowDelegate _growForm;
-
 		private readonly SpriteWindow _wnd;
 		public TileWindow Window { get { return _wnd; } set {} }
 
-		public int MinimumWidth { get { return 320; } }
-		public int MinimumHeight { get { return 192; } }
+		public Size Minimum { get { return new Size(320, 192); } }
 
-		public SpriteControlsTab(SpriteWindow wnd, MainForm.GrowWindowDelegate growForm)
+		public SpriteControlsTab(SpriteWindow wnd)
 		{
 			_wnd = wnd;
-			_growForm = growForm;
 			this.SetupTab("Controls");
 
 			_folderBrowser = new FolderBrowserDialog();
 			var resources = new ComponentResourceManager(typeof(SpriteControlsTab));
-
-			_divider = new Rectangle(120, 5, 0, 172);
-			_dividerPen = new Pen(Color.Silver);
 
 			_tileLabel = new Label();
 			_tileLabel.Font = new Font(Label.DefaultFont, FontStyle.Bold);

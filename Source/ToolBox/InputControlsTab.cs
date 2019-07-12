@@ -14,45 +14,30 @@ namespace SpriteWave
 
 		private Bitmap _sampleBmp;
 
-		private MainForm.GrowWindowDelegate _growForm;
-
 		private readonly InputWindow _wnd;
 		public TileWindow Window { get { return _wnd as TileWindow; } set {} }
 
-		public int MinimumWidth
-		{
-			get {
-				return 200;
-			}
-		}
-		public int MinimumHeight
+		public Size Minimum
 		{
 			get {
 				int h = 70;
-				if (this.Visible && _sendTile.Visible &&
-				    _sendTile.Location.X <= _sizeLabel.Location.X + _sizeLabel.Size.Width)
-				{
+				if (this.Visible && _sendTile.Location.X <= _sizeLabel.Location.X + _sizeLabel.Size.Width)
 					h += 50;
-				}
 
-				return h;
+				return new Size(200, h);
 			}
 		}
 
 		public Bitmap Sample
 		{
 			set {
-				System.Diagnostics.Debug.WriteLine("ICT.Sample { set; }");
-
 				_sampleBmp = value;
 				bool state = _sampleBmp != null;
 
-				int h = this.MinimumHeight;
-				_sendTile.Visible = state;
-				_tileSample.Visible = state;
+				_sendTile.Enabled = state;
+				_tileSample.Enabled = state;
 
-				int newH = this.MinimumHeight;
-				_growForm(0, newH - h);
+				AdjustContents();
 			}
 		}
 
@@ -60,10 +45,9 @@ namespace SpriteWave
 
 		public int SizeText { set { _sizeLabel.Text = "/ 0x" + value.ToString("X"); } }
 
-		public InputControlsTab(InputWindow wnd, MainForm.GrowWindowDelegate growForm)
+		public InputControlsTab(InputWindow wnd)
 		{
 			_wnd = wnd;
-			_growForm = growForm;
 			this.SetupTab("Controls");
 
 			_offsetLabel = new Label();
@@ -77,7 +61,7 @@ namespace SpriteWave
 			_offsetBox.Name = "inputOffset";
 			_offsetBox.Size = new System.Drawing.Size(60, 20);
 			_offsetBox.Text = "0";
-			_offsetBox.TextChanged += new EventHandler(this.editOffsetBox);
+			_offsetBox.TextChanged += this.editOffsetBox;
 
 			_sizeLabel = new Label();
 			_sizeLabel.Location = new System.Drawing.Point(122, 18);
@@ -99,7 +83,7 @@ namespace SpriteWave
 			_tileSample.Name = "inputSample";
 			_tileSample.Size = new System.Drawing.Size(40, 40);
 			_tileSample.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
-			_tileSample.Paint += new PaintEventHandler(this.paintSample);
+			_tileSample.Paint += this.paintSample;
 
 			this.Controls.Add(_offsetLabel);
 			this.Controls.Add(_offsetBox);
@@ -119,7 +103,7 @@ namespace SpriteWave
 			};
 
 			int w = this.Size.Width;
-			int h = this.MinimumHeight;
+			int h = this.Minimum.Height;
 
 			_offsetLabel.Location = new Point(_offsetLabel.Location.X, h - 45);
 			_offsetBox.Location = new Point(_offsetBox.Location.X, h - 48);

@@ -19,7 +19,6 @@ namespace SpriteWave
 
 		private DragObject _drag;
 
-		public delegate void GrowWindowDelegate(int dW, int dH);
 		public delegate void TileAction(TileWindow tw);
 
 		public MainForm()
@@ -104,6 +103,12 @@ namespace SpriteWave
 			Transfer.Clear();
 		}
 
+		private void SetSample(Tile t)
+		{
+			_inputWnd.TileSample = t;
+			this.PerformLayout();
+		}
+
 		private object SetMouseEventHandler(Control ctrl, object args)
 		{
 			ctrl.MouseDown += new MouseEventHandler(this.mouseDownHandler);
@@ -122,14 +127,14 @@ namespace SpriteWave
 			catch (ArgumentOutOfRangeException) {
 				_drag = null;
 				ClearSelection();
-				_inputWnd.TileSample = null;
+				SetSample(null);
 			}
 
 			if (_drag != null && wnd == _inputWnd)
 			{
 				Tile t = _drag.Current().Piece as Tile;
 				if (t != null)
-					_inputWnd.TileSample = t;
+					SetSample(t);
 			}
 		}
 
@@ -138,7 +143,7 @@ namespace SpriteWave
 			try {
 				wnd.Position = wnd.GetPosition(x, y);
 				if (wnd == _inputWnd)
-					_inputWnd.TileSample = _inputWnd.PieceAt(_inputWnd.Position) as Tile;
+					SetSample(_inputWnd.PieceAt(_inputWnd.Position) as Tile);
 
 				Transfer.Source = wnd.CurrentSelection();
 				if (wnd.EdgeOf(wnd.Position) == EdgeKind.None)
@@ -146,7 +151,7 @@ namespace SpriteWave
 			}
 			catch (ArgumentOutOfRangeException) {
 				ClearSelection();
-				_inputWnd.TileSample = null;
+				SetSample(null);
 			}
 		}
 
@@ -246,7 +251,7 @@ namespace SpriteWave
 */
 					Transfer.Paste();
 					if (!Transfer.Completed)
-						_inputWnd.TileSample = null;
+						SetSample(null);
 
 					ClearSelection();
 				}
@@ -274,7 +279,7 @@ namespace SpriteWave
 				else
 				{
 					ClearSelection();
-					_inputWnd.TileSample = null;
+					SetSample(null);
 				}
 			}
 
@@ -399,15 +404,9 @@ namespace SpriteWave
 
 		private void UpdateMinimumSize()
 		{
-			int minW = _inputWnd.ScrollYWidth + _spriteWnd.ScrollYWidth + (_toolBox.MinimumWidth * 2);
+			int minW = _inputWnd.ScrollYWidth + _spriteWnd.ScrollYWidth + (_toolBox.Minimum.Width * 2);
 
 			this.MinimumSize = new Size(minW, this.MinimumSize.Height);
-		}
-
-		public void GrowWindow(int dW, int dH)
-		{
-			Debug.WriteLine("Resize: _dW = {0}, _dH = {1}", dW, dH);
-			this.Size = new Size(this.Size.Width + dW, this.Size.Height + dH);
 		}
 
 		private void layoutHandler(object sender, LayoutEventArgs e)
@@ -415,8 +414,6 @@ namespace SpriteWave
 			int totalH = this.ClientSize.Height;
 			int menuH = this.menuStrip1.Size.Height;
 			int tileBoxW = this.ClientSize.Width / 2;
-
-			//System.Diagnostics.Debug.WriteLine("{0} client W = {1}, client H = {2}", _count++, this.ClientSize.Width, totalH);
 
 			var tbLayout = ToolBoxOrientation.None;
 
