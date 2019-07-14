@@ -15,6 +15,10 @@ namespace SpriteWave
 		private int _nDigits = 0;
 		private bool _upperCase = false;
 
+		public bool HasInsert { get { return _insert; } }
+		public int Base { get { return _fmtBase; } }
+		public int Digits { get { return _nDigits; } }
+
 		public Suffix(string fmt)
 		{
 			var subs = new[] { new { start = 0, len = 0} }.ToList();

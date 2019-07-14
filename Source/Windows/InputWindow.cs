@@ -21,7 +21,7 @@ namespace SpriteWave
 				);
 			}
 		}
-		
+
 		public override Rectangle VisibleCollageBounds
 		{
 			get
@@ -185,8 +185,11 @@ namespace SpriteWave
 
 			int wndW = width > 0 ? width : _window.Size.Width;
 			int wndH = height > 0 ? height : _window.Size.Height;
-			float thF = (float)_cl.TileH;
 
+			if (wndW <= 0 || wndH <= 0)
+				return;
+
+			float thF = (float)_cl.TileH;
 			float scaleX = (float)wndW / (float)_cl.Width;
 
 			// The number of visible rows is the foundation from which all InputWindow sizing is based
