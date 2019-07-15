@@ -1,11 +1,23 @@
 ﻿using System;
-using System.Drawing;
 using System.Windows.Forms;
 
 namespace SpriteWave
 {
 	public partial class InputWindow
 	{
+		public override void Activate()
+		{
+			_vis.col = _cl.Columns;
+			AdjustWindow();
+			base.Activate();
+		}
+
+		public override void Close()
+		{
+			base.Close();
+			this.Prompt = "Open a file containing tiles to begin!";
+		}
+
 		protected override void SetupWindowUI()
 		{
 			_window.Name = "inputBox";

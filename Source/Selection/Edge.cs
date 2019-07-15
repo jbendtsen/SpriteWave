@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Drawing;
 
-using System.Diagnostics;
-
 namespace SpriteWave
 {
 	public enum EdgeKind

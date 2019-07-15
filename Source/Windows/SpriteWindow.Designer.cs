@@ -6,6 +6,13 @@ namespace SpriteWave
 {
 	public partial class SpriteWindow
 	{
+		public override void Activate()
+		{
+			ResetScroll();
+			base.Activate();
+			UpdateBars();
+		}
+
 		protected override void SetupWindowUI()
 		{
 			_window.Name = "spriteBox";

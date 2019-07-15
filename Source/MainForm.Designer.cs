@@ -198,6 +198,7 @@ namespace SpriteWave
 			this.MainMenuStrip = this.menuStrip1;
 			this.MinimumSize = new System.Drawing.Size(200, 400);
 			this.Name = "MainForm";
+			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
 			this.Text = "SpriteWave";
 			this.menuStrip1.ResumeLayout(false);
 			this.menuStrip1.PerformLayout();

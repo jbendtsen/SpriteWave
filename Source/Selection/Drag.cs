@@ -32,8 +32,10 @@ namespace SpriteWave
 			try {
 				bool allowOob = _selObj is Edge;
 				p = _lastWnd.GetPosition(_lastX, _lastY, allowOob);
+				_lastWnd.Selected = true;
 			}
 			catch {
+				_lastWnd.Selected = false;
 				return null;
 			}
 

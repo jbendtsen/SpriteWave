@@ -4,8 +4,6 @@ using System.Drawing;
 using System.Windows.Forms;
 using System.ComponentModel;
 
-using System.Diagnostics;
-
 namespace SpriteWave
 {
 	public class SpriteControlsTab : TabPage, ITab

@@ -41,6 +41,8 @@ namespace SpriteWave
 			}
 		}
 
+		public bool IsSampleVisible { get { return this.Visible && _sampleBmp != null; } }
+
 		public EventHandler SendTileAction { set { _sendTile.Click += value; } }
 
 		public int SizeText { set { _sizeLabel.Text = "/ 0x" + value.ToString("X"); } }

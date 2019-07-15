@@ -37,19 +37,14 @@ namespace SpriteWave
 
 		public Tile TileSample { set { ((InputControlsTab)_controlsTab).Sample = TileBitmap(value); } }
 
+		public bool IsTileSampleVisible { get { return ((InputControlsTab)_controlsTab).IsSampleVisible; } }
+
 		public InputWindow(MainForm main)
 			: base(main)
 		{
 			_row = 0;
 			_vis = new Position(0, 0);
 			DeleteFrame();
-		}
-
-		public override void Activate()
-		{
-			_vis.col = _cl.Columns;
-			AdjustWindow();
-			base.Activate();
 		}
 
 		public void Load(FileFormat fmt, byte[] file, int offset = 0)
@@ -146,20 +141,6 @@ namespace SpriteWave
 			}
 		}
 
-		/*
-		private int _count = 0;
-		public override void ResetSample(Tile t)
-		{
-			System.Diagnostics.Debug.WriteLine("{0} ResetSample()", _count++);
-
-			if (t == null && _isSel)
-				t = PieceAt(_selPos) as Tile;
-
-			((InputControlsTab)_controlsTab).ToggleSample(t != null);
-			_tileSampleBmp = TileBitmap(t);
-		}
-		*/
-
 		public override RectangleF PieceHitbox(Position p)
 		{
 			int col = p.col;
@@ -178,10 +159,6 @@ namespace SpriteWave
 		{
 			if (_cl == null || _window == null)
 				return;
-
-			// Start with our "constants"
-			//int wndW = width > 0 ? width : _infoPanel.Size.Width;
-			//int wndH = height > 0 ? height : _infoPanel.Location.Y;
 
 			int wndW = width > 0 ? width : _window.Size.Width;
 			int wndH = height > 0 ? height : _window.Size.Height;

@@ -70,13 +70,6 @@ namespace SpriteWave
 				_edges[i] = new Edge((EdgeKind)i);
 		}
 
-		public override void Activate()
-		{
-			ResetScroll();
-			base.Activate();
-			UpdateBars();
-		}
-
 		public void Export(string fullPath, int scale)
 		{
 			string ext = this.ExportExtension;

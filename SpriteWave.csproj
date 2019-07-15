@@ -54,6 +54,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Source\Format.cs" />
     <Compile Include="Source\Suffix.cs" />
+    <Compile Include="Source\ToolBox\SpriteControlsTab.cs" />
     <Compile Include="Source\Windows\InputWindow.Designer.cs">
       <DependentUpon>InputWindow.cs</DependentUpon>
     </Compile>
@@ -85,7 +86,6 @@
     <Compile Include="Source\ToolBox\InputControlsTab.cs" />
     <Compile Include="Source\ToolBox\ITab.cs" />
     <Compile Include="Source\ToolBox\PaletteTab.cs" />
-    <Compile Include="Source\ToolBox\SpriteControlsTab.cs" />
     <Compile Include="Source\ToolBox\ToolBox.cs" />
     <Compile Include="Source\Utils.cs" />
   </ItemGroup>

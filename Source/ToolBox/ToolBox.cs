@@ -15,6 +15,7 @@ namespace SpriteWave
 		private const int MinMinWidth = 100;
 		private const float HeightFraction = 0.4f;
 
+		private bool _isActive;
 		private bool _isOpen;
 
 		private TileWindow _wnd;
@@ -30,7 +31,20 @@ namespace SpriteWave
 
 		private Action _refresh;
 
-		public bool IsOpen { get { return _isOpen; } }
+		public bool IsOpen { get { return _isOpen && _wnd != null && _wnd.IsActive; } }
+
+		public bool IsActive
+		{
+			get {
+				return _isActive;
+			}
+			set {
+				_isActive = value;
+				_tabs.Visible = value;
+				_switch.Visible = value;
+				_minimise.Visible = value;
+			}
+		}
 
 		public TileWindow CurrentWindow
 		{
@@ -67,7 +81,7 @@ namespace SpriteWave
 				Size s = new Size(MinMinWidth, 0);
 
 				ITab t = _tabs.SelectedTab as ITab;
-				if (_isOpen && t != null)
+				if (this.IsOpen && t != null)
 					s = t.Minimum;
 
 				s.Width += _switch.Size.Width;
@@ -117,7 +131,13 @@ namespace SpriteWave
 			_minimise.Image = _imgMinimise;
 
 			_tabChanged = false;
+			IsActive = false;
 			_isOpen = true;
+		}
+
+		public void ConfigureTabs(Utils.ControlAction method)
+		{
+			Utils.ApplyRecursiveControlAction(_tabs, method);
 		}
 
 		public void TogglePage(int idx, bool state)
@@ -134,7 +154,7 @@ namespace SpriteWave
 
 		public Control GetControl(string name)
 		{
-			if (!_isOpen || _wnd == null)
+			if (!this.IsOpen)
 				return null;
 
 			Control c = Utils.FindControl(_tabs.SelectedTab, name);
@@ -152,6 +172,9 @@ namespace SpriteWave
 
 		public void UpdateLayout(ToolBoxOrientation layout, Size clientSize)
 		{
+			if (!IsActive)
+				return;
+
 			int tileWndWidth = _wnd.CanvasSize.Width;
 			int tileWndX = _wnd.CanvasPos.X;
 
@@ -210,6 +233,11 @@ namespace SpriteWave
 				Refresh();
 
 			_tabChanged = false;
+		}
+
+		public void Cycle(int dir)
+		{
+			_tabs.SelectedIndex = (_tabs.SelectedIndex + _tabs.TabCount + dir) % _tabs.TabCount;
 		}
 	}
 }
