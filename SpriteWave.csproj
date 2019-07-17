@@ -53,6 +53,14 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Source\Format.cs" />
+    <Compile Include="Source\Forms\EditColourTable.cs" />
+    <Compile Include="Source\Forms\MainForm.cs" />
+    <Compile Include="Source\Forms\MainForm.Designer.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Source\GFX\Palette.cs" />
+    <Compile Include="Source\PaletteUI\ColourPicker.cs" />
+    <Compile Include="Source\PaletteUI\PaletteBox.cs" />
     <Compile Include="Source\Suffix.cs" />
     <Compile Include="Source\ToolBox\SpriteControlsTab.cs" />
     <Compile Include="Source\Windows\InputWindow.Designer.cs">
@@ -64,10 +72,6 @@
     <Compile Include="Source\Windows\TileWindow.Designer.cs">
       <DependentUpon>TileWindow.cs</DependentUpon>
     </Compile>
-    <Compile Include="Source\MainForm.cs" />
-    <Compile Include="Source\MainForm.Designer.cs">
-      <DependentUpon>MainForm.cs</DependentUpon>
-    </Compile>
     <Compile Include="Source\Selection\Drag.cs" />
     <Compile Include="Source\Selection\Edge.cs" />
     <Compile Include="Source\Selection\Selection.cs" />
@@ -76,7 +80,6 @@
     <Compile Include="Source\Tiles\NESTile.cs" />
     <Compile Include="Source\GFX\Collage.cs" />
     <Compile Include="Source\GFX\ColourTable.cs" />
-    <Compile Include="Source\GFX\Palette.cs" />
     <Compile Include="Source\GFX\Tile.cs" />
     <Compile Include="Source\Program.cs" />
     <Compile Include="Source\Tiles\SNESTile.cs" />
@@ -95,14 +98,19 @@
   <ItemGroup>
     <Folder Include="Source" />
     <Folder Include="Source\GFX" />
+    <Folder Include="Source\Forms" />
+    <Folder Include="Source\PaletteUI" />
     <Folder Include="Source\Windows" />
     <Folder Include="Source\ToolBox" />
     <Folder Include="Source\Selection" />
     <Folder Include="Source\Tiles" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Source\MainForm.resx">
+    <EmbeddedResource Include="Source\Forms\MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Source\PaletteUI\ColourPicker.resx">
+      <DependentUpon>ColourPicker.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Source\ToolBox\SpriteControlsTab.resx">
       <DependentUpon>SpriteControlsTab.cs</DependentUpon>

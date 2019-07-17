@@ -289,6 +289,12 @@ namespace SpriteWave
 			array[offset] = (byte)(val & 0xff);
 		}
 
+		/*
+			This method takes a byte array of 32-bit pixels and converts it into a Bitmap (which can be used in rendering).
+			It assumes that 'pixbuf' stores each pixel as 4 consecutive bytes, in the format B, G, R & A respectively.
+			Note: Bitmaps often require padding at the end of each row to the next multiple of 4 bytes,
+			  however since this method only deals with 4-byte pixels, no padding is ever necessary.
+		*/
 		public static Bitmap BitmapFrom(byte[] pixbuf, int width, int height)
 		{
 			// Create a BMP header, so that the API knows how to arrange our pixels
@@ -311,7 +317,7 @@ namespace SpriteWave
 			// Height
 			height.EmbedLE(hdr, 22);
 
-			// Not sure what this is lmao
+			// Number of drawing planes (zoooooom)
 			hdr[26] = 1;
 			// BGRA = 32BPP
 			hdr[28] = 32;
@@ -329,7 +335,7 @@ namespace SpriteWave
 				and then pass that to a Bitmap constructor. This creates a perfectly good Bitmap, but there's a catch.
 				When creating a Bitmap in this way, it references the MemoryStream instead of making a copy of the data.
 				This is fine, but we need our Bitmap to outlive the MemoryStream. So, we make a copy of the first Bitmap and return that instead.
-				Note that a 'using' block means that whichever object you specified to use gets Disposed of once the block ends.
+				Note that a 'using' block means that whichever object you specified to use gets "Dispose()d" of once the block ends.
 			*/
 			Bitmap bmp;
 			using (var ms = new MemoryStream(bmpFile))

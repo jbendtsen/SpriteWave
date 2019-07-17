@@ -35,6 +35,8 @@ namespace SpriteWave
 		private ToolStripMenuItem quitToolStripMenuItem;
 		private OpenFileDialog openFileDialog1;
 		private ToolStripMenuItem copyTileToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem editToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem colourTableToolStripMenuItem;
 
 		/// <summary>
 		/// Disposes resources used by the form.
@@ -73,6 +75,8 @@ namespace SpriteWave
 			this.quitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
 			this.copyTileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.colourTableToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.menuStrip1.SuspendLayout();
 			this.SuspendLayout();
 			// 
@@ -112,7 +116,8 @@ namespace SpriteWave
 			// menuStrip1
 			// 
 			this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-			this.fileToolStripMenuItem});
+			this.fileToolStripMenuItem,
+			this.editToolStripMenuItem});
 			this.menuStrip1.Location = new System.Drawing.Point(0, 0);
 			this.menuStrip1.Name = "menuStrip1";
 			this.menuStrip1.Size = new System.Drawing.Size(704, 24);
@@ -184,6 +189,21 @@ namespace SpriteWave
 			// 
 			this.copyTileToolStripMenuItem.Name = "copyTileToolStripMenuItem";
 			this.copyTileToolStripMenuItem.Size = new System.Drawing.Size(32, 19);
+			// 
+			// editToolStripMenuItem
+			// 
+			this.editToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+			this.colourTableToolStripMenuItem});
+			this.editToolStripMenuItem.Name = "editToolStripMenuItem";
+			this.editToolStripMenuItem.Size = new System.Drawing.Size(39, 20);
+			this.editToolStripMenuItem.Text = "Edit";
+			// 
+			// colourTableToolStripMenuItem
+			// 
+			this.colourTableToolStripMenuItem.Name = "colourTableToolStripMenuItem";
+			this.colourTableToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+			this.colourTableToolStripMenuItem.Text = "Colour Table";
+			this.colourTableToolStripMenuItem.Click += new System.EventHandler(this.editColourTable);
 			// 
 			// MainForm
 			// 

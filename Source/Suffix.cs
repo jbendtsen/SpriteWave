@@ -200,8 +200,8 @@ namespace SpriteWave
 						return null;
 
 					if (ex is ArgumentNullException ||
-					    ex is ArgumentException ||
-					    ex is ArgumentOutOfRangeException)
+						ex is ArgumentException ||
+						ex is ArgumentOutOfRangeException)
 					{
 						continue;
 					}

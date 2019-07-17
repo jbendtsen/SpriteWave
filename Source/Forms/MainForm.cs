@@ -528,6 +528,12 @@ namespace SpriteWave
 			Application.Exit();
 		}
 
+		private void editColourTable(object sender, EventArgs e)
+		{
+			var ctForm = new EditColourTable();
+			ctForm.Show(this);
+		}
+
 		private void openFileDialog1FileOk(object sender, CancelEventArgs e)
 		{
 			_keyHeld = false; // the hackiest hack

@@ -63,6 +63,7 @@ namespace SpriteWave
 				if (ctrlTabOpen)
 					_tabs.SelectedTab = _wnd.ControlsTab;
 
+				(_tabs.SelectedTab as ITab).Window = _wnd;
 				_tabChanged = false;
 				Refresh();
 			}
@@ -142,8 +143,12 @@ namespace SpriteWave
 
 		public void TogglePage(int idx, bool state)
 		{
-			if (idx >= 0 && idx < _tabs.Controls.Count)
-				_tabs.Controls[idx].Visible = state;
+			if (idx < 0 || idx >= _tabs.TabCount)
+				return;
+
+			_tabs.Controls[idx].Visible = state;
+			if (state)
+				(_tabs.Controls[idx] as ITab).Window = _wnd;
 		}
 
 		public void Refresh()
