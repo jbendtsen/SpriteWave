@@ -116,5 +116,12 @@
       <DependentUpon>SpriteControlsTab.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="ProfilingSessions\Session20190717_182014.sdps" />
+    <Content Include="ProfilingSessions\Session20190717_202214.sdps" />
+    <Content Include="ProfilingSessions\Session20190718_153057.sdps" />
+    <Content Include="ProfilingSessions\Session20190718_153845.sdps" />
+    <Content Include="ProfilingSessions\Session20190718_161427.sdps" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

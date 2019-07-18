@@ -16,7 +16,7 @@ namespace SpriteWave
 			// When setting the size of the client area inside the window (.ClientSize),
 			//  the overall window size (.Size) is also set, to a larger area.
 			// .MinimumSize makes use of .Size, so we set it after .Size has been calculated.
-			this.ClientSize = new Size(320, 300);
+			this.ClientSize = new Size(400, 300);
 			this.MinimumSize = this.Size;
 
 			_picker = new ColourPicker(this);
@@ -25,6 +25,7 @@ namespace SpriteWave
 			//this.PerformLayout();
 		}
 
+		bool _once = false;
 		protected override void OnPaint(PaintEventArgs e)
 		{
 			base.OnPaint(e);
