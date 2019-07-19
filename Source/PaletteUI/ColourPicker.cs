@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Windows.Forms;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace SpriteWave
 {
@@ -12,34 +13,44 @@ namespace SpriteWave
 		Blue, Green, Red, Alpha
 	};
 
+	public enum ColourMode
+	{
+		RGB, HSV, Invalid
+	};
+
 	public class ColourPicker
 	{
 		public delegate void CursorHandler(int x, int y);
+		public delegate void ScrollHandler(int delta);
 
 		private const int nChans = 4;
-		private const float dimmed = 0.7f;
+		private const float dimmed = 0.8f;
+		private const float scrollUnit = 40f;
 
-		private float[] _chn;
+		private float[] _chn; // ordered by BGRA
 		private int[] _order;
+		private ColourMode _mode;
 
-		private float[] _alphaShades;
+		private readonly string[] _labels;
+		private readonly float[] _alphaShades = {0.6f, 0.8f};
 
 		private Bitmap _slider;
 		private Bitmap _dot;
+		private Bitmap[] _modeImg;
 
 		private Control _owner;
 
 		private ColourBox _boxA;
 		private ColourBox _boxXY;
 		private ColourBox _boxZ;
+		private ColourBox _boxSample;
 
 		private Label[] _chnLabel;
 		private TextBox[] _chnBox;
+		private bool _allowTextEvent = true;
 
-		public int Red { get; set; }
-		public int Green { get; set; }
-		public int Blue { get; set; }
-		public int Alpha { get; set; }
+		private Button _cycle;
+		private Button _switchMode;
 
 		public Rectangle DotRect
 		{
@@ -70,9 +81,10 @@ namespace SpriteWave
 			);
 		}
 
-		public ColourPicker(Control owner)
+		public ColourPicker(Control owner, int boxSize)
 		{
 			_owner = owner;
+			_mode = ColourMode.RGB;
 
 			_chn = new[] {
 				1f, 1f, 1f, 1f
@@ -85,61 +97,98 @@ namespace SpriteWave
 				(int)BGRA.Blue
 			};
 
-			_alphaShades = new[] {
-				0.6f,
-				0.8f
-			};
+			_labels = new string[4];
+			_labels[(int)BGRA.Red] = "R";
+			_labels[(int)BGRA.Green] = "G";
+			_labels[(int)BGRA.Blue] = "B";
+			_labels[(int)BGRA.Alpha] = "A";
 
 			var resources = new ComponentResourceManager(typeof(ColourPicker));
 			_slider = (Bitmap)(resources.GetObject("slider"));
 			_dot = (Bitmap)(resources.GetObject("dot"));
 
-			_boxA = new ColourBox(this.moveLeftSlider);
+			_modeImg = new Bitmap[2];
+			_modeImg[(int)ColourMode.RGB] = (Bitmap)(resources.GetObject("rgb"));
+			_modeImg[(int)ColourMode.HSV] = (Bitmap)(resources.GetObject("hsv"));
+
+			_boxA = new ColourBox(this.moveLeftSlider, this.scrollLeftSlider);
 			_boxA.Name = "alphaBox";
 			_boxA.Location = new Point(20, 20);
-			_boxA.Size = new Size(20, 200);
+			_boxA.Size = new Size(20, boxSize);
 			_boxA.Paint += this.paintLeftSlider;
 
-			_boxXY = new ColourBox(this.moveDot);
+			_boxXY = new ColourBox(this.moveDot, null);
 			_boxXY.Name = "xyBox";
 			_boxXY.Location = new Point(60, 20);
-			_boxXY.Size = new Size(200, 200);
+			_boxXY.Size = new Size(boxSize, boxSize);
 			_boxXY.Paint += this.paintDot;
 
-			_boxZ = new ColourBox(this.moveRightSlider);
+			_boxZ = new ColourBox(this.moveRightSlider, this.scrollRightSlider);
 			_boxZ.Name = "zBox";
-			_boxZ.Location = new Point(280, 20);
-			_boxZ.Size = new Size(20, 200);
+			_boxZ.Location = new Point(80 + boxSize, 20);
+			_boxZ.Size = new Size(20, boxSize);
 			_boxZ.Paint += this.paintRightSlider;
+
+			_boxSample = new ColourBox(null, null);
+			_boxSample.Name = "sampleBox";
+			_boxSample.Location = new Point(114 + boxSize, 20 + boxSize - 72);
+			_boxSample.Size = new Size(72, 72);
+
+			_cycle = new Button();
+			_cycle.Name = "cycleChans";
+			_cycle.Location = new Point(114 + boxSize, 20);
+			_cycle.Size = new Size(32, 32);
+			_cycle.Image = (Bitmap)resources.GetObject("cycle");
+			_cycle.Click += (s, e) => Cycle();
+
+			_switchMode = new Button();
+			_switchMode.Name = "switchMode";
+			_switchMode.Location = new Point(152 + boxSize, 20);
+			_switchMode.Size = new Size(32, 32);
+			_switchMode.Image = _modeImg[(int)ColourMode.HSV];
+			_switchMode.Click += (s, e) => SwitchMode();
 
 			_chnLabel = new Label[nChans];
 			for (int i = 0; i < nChans; i++)
 			{
 				_chnLabel[i] = new Label();
 				_chnLabel[i].Name = "chnLabel" + i;
-				_chnLabel[i].Location = new Point(312, 40 + i * 40);
+				_chnLabel[i].Location = new Point(114 + boxSize, 67 + i * 32);
 				_chnLabel[i].Size = new Size(10, 20);
 				_owner.Controls.Add(_chnLabel[i]);
 			}
-
-			_chnLabel[0].Text = "R";
-			_chnLabel[1].Text = "G";
-			_chnLabel[2].Text = "B";
-			_chnLabel[3].Text = "A";
 
 			_chnBox = new TextBox[nChans];
 			for (int i = 0; i < nChans; i++)
 			{
 				_chnBox[i] = new TextBox();
 				_chnBox[i].Name = "chnBox" + i;
-				_chnBox[i].Location = new Point(330, 37 + i * 40);
-				_chnBox[i].Size = new Size(50, 20);
+				_chnBox[i].Location = new Point(132 + boxSize, 64 + i * 32);
+				_chnBox[i].Size = new Size(52, 20);
+				_chnBox[i].TextChanged += this.updateField;
 				_owner.Controls.Add(_chnBox[i]);
 			}
+
+			RefreshInputFields();
 
 			_owner.Controls.Add(_boxA);
 			_owner.Controls.Add(_boxXY);
 			_owner.Controls.Add(_boxZ);
+			_owner.Controls.Add(_boxSample);
+
+			_owner.Controls.Add(_cycle);
+			_owner.Controls.Add(_switchMode);
+		}
+
+		public void RefreshInputFields()
+		{
+			_allowTextEvent = false;
+			for (int i = 0; i < nChans; i++)
+			{
+				_chnLabel[3-i].Text = _labels[_order[i]];
+				_chnBox[3-i].Text = Math.Floor(_chn[_order[i]] * 255f).ToString();
+			}
+			_allowTextEvent = true;
 		}
 
 		public void SetAxis(int idx, float f)
@@ -151,10 +200,39 @@ namespace SpriteWave
 			SetAxis(idx, 1f - ((float)num / (float)denom));
 		}
 
-		public void RefreshInputFields()
+		public void updateField(object sender, EventArgs e)
 		{
-			for (int i = 0; i < nChans; i++)
-				_chnBox[_order[i]].Text = Math.Floor(_chn[_order[i]] * 255f).ToString();
+			if (!_allowTextEvent)
+				return;
+
+			string name = (sender as Control).Name;
+			if (name.Length != 7 || name.Substring(0, 6) != "chnBox")
+				return;
+
+			int idx = name[6] - '0';
+			if (idx < 0 || idx > 3)
+				return;
+
+			float f = 0f;
+			try {
+				int n = Convert.ToInt32(_chnBox[idx].Text);
+				if (n < 0 || n > 255)
+					throw new InvalidOperationException();
+
+				f = (float)n / 255f;
+			}
+			catch (Exception ex) {
+				if (ex is FormatException ||
+				    ex is OverflowException ||
+				    ex is InvalidOperationException
+				)
+					return;
+
+				throw;
+			}
+
+			_chn[_order[3 - idx]] = f;
+			Render();
 		}
 
 		public void Cycle()
@@ -163,6 +241,24 @@ namespace SpriteWave
 			tick(_order, 1);
 			tick(_order, 2);
 			tick(_order, 3);
+
+			RefreshInputFields();
+			Render();
+		}
+
+		public void SwitchMode()
+		{
+			Func<ColourMode, ColourMode> cycleMode = (m) =>
+			{
+				m++;
+				if (m == ColourMode.Invalid)
+					m = 0;
+
+				return m;
+			};
+
+			_mode = cycleMode(_mode);
+			_switchMode.Image = _modeImg[(int)cycleMode(_mode)];
 		}
 
 		public void Render()
@@ -170,7 +266,96 @@ namespace SpriteWave
 			RenderAlphaBar();
 			RenderMainBox();
 			RenderRightBar();
+			RenderSampleBox();
 			_owner.Invalidate();
+		}
+
+		private struct AlphaPixel
+		{
+			public int blockSize;
+
+			public float[] shades;
+
+			public float blue;
+			public float green;
+			public float red;
+			public float alpha;
+
+			public AlphaPixel(int size, float[] sh, float b, float g, float r, float a)
+			{
+				blockSize = size;
+				shades = new[] { sh[0], sh[1] };
+				blue = b;
+				green = g;
+				red = r;
+				alpha = a;
+			}
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static void RenderAlphaPixel(AlphaPixel info, byte[] buf, int w, int h, int idx)
+		{
+			const int frame = ColourBox.Border;
+			int x = idx % w;
+			int y = idx / w;
+
+			int xOdd = (x / info.blockSize) % 2;
+			int yOdd = (y / info.blockSize) % 2;
+			float shade = info.shades[xOdd ^ yOdd];
+
+			float lum = 255f;
+			if (x < frame || x >= w - frame || y < frame || y >= h - frame)
+				lum = 255f * dimmed;
+
+			int i = idx * 4;
+			buf[i + (int)BGRA.Blue] = (byte)((shade + (info.blue - shade) * info.alpha) * lum);
+			buf[i + (int)BGRA.Green] = (byte)((shade + (info.green - shade) * info.alpha) * lum);
+			buf[i + (int)BGRA.Red] = (byte)((shade + (info.red - shade) * info.alpha) * lum);
+			buf[i + (int)BGRA.Alpha] = 255;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static void RenderOpaquePixel(float b, float g, float r, byte[] buf, int w, int h, int idx)
+		{
+			const int frame = ColourBox.Border;
+			int x = idx % w;
+			int y = idx / w;
+
+			if (x < frame || x >= w - frame || y < frame || y >= h - frame)
+			{
+				b *= dimmed;
+				g *= dimmed;
+				r *= dimmed;
+			}
+
+			int i = idx * 4;
+			buf[i + (int)BGRA.Blue] = (byte)(b * 255f);
+			buf[i + (int)BGRA.Green] = (byte)(g * 255f);
+			buf[i + (int)BGRA.Red] = (byte)(r * 255f);
+			buf[i + (int)BGRA.Alpha] = 255; // axis0
+		}
+
+		private void RenderSampleBox()
+		{
+			_boxSample.Lock();
+
+			var buf = _boxSample.Buffer;
+			int w = _boxSample.Size.Width;
+			int h = _boxSample.Size.Height;
+
+			var info = new AlphaPixel(
+				w / 8,
+				_alphaShades,
+				_chn[0],
+				_chn[1],
+				_chn[2],
+				_chn[3]
+			);
+
+			for (int idx = 0; idx < buf.Length / 4; idx++)
+				RenderAlphaPixel(info, buf, w, h, idx);
+
+			_boxSample.Unlock();
 		}
 
 		private void RenderAlphaBar()
@@ -180,30 +365,21 @@ namespace SpriteWave
 			var buf = _boxA.Buffer;
 			int w = _boxA.Size.Width;
 			int h = _boxA.Size.Height;
-			int frame = ColourBox.Border;
 
-			float axis1 = _chn[_order[1]];
-			float axis2 = _chn[_order[2]];
-			float axis3 = _chn[_order[3]];
+			var info = new AlphaPixel(
+				(w + 1) / 2,
+				_alphaShades,
+				_chn[0],
+				_chn[1],
+				_chn[2],
+				1f
+			);
 
-			int blockSize = (w + 1) / 2;
 			for (int i = 0; i < buf.Length; i += 4)
 			{
-				int xOdd = (((i / 4) % w) / blockSize) % 2;
-				int yOdd = (((i / 4) / w) / blockSize) % 2;
-				float shade = _alphaShades[xOdd ^ yOdd];
-
-				float y = 1f - (float)((i / 4) / w) / (float)h;
-
-				float lum = 255f;
-				int p = i/4;
-				if (p%w < frame || p%w >= w - frame || p/w < frame || p/w >= h - frame)
-					lum = 255f * dimmed;
-
-				buf[i + _order[0]] = 255;
-				buf[i + _order[1]] = (byte)((shade + (axis1 - shade) * y) * lum);
-				buf[i + _order[2]] = (byte)((shade + (axis2 - shade) * y) * lum);
-				buf[i + _order[3]] = (byte)((shade + (axis3 - shade) * y) * lum);
+				int idx = i / 4;
+				info.alpha = 1f - (float)(idx / w) / (float)h;
+				RenderAlphaPixel(info, buf, w, h, idx);
 			}
 
 			_boxA.Unlock();
@@ -216,28 +392,18 @@ namespace SpriteWave
 			var buf = _boxXY.Buffer;
 			int w = _boxXY.Size.Width;
 			int h = _boxXY.Size.Height;
-			int frame = ColourBox.Border;
 
-			float axis3 = _chn[_order[3]];
+			float[] axes = new float[3];
+			int a1 = _order[1];
+			int a2 = _order[2];
+			axes[_order[3]] = _chn[_order[3]];
 
 			for (int i = 0; i < buf.Length; i += 4)
 			{
-				float x = 1f - (float)((i / 4) % w) / (float)w;
-				float y = 1f - (float)((i / 4) / w) / (float)h;
-				float chn3 = axis3;
+				axes[a1] = 1f - (float)((i / 4) % w) / (float)w;
+				axes[a2] = 1f - (float)((i / 4) / w) / (float)h;
 
-				int p = i/4;
-				if (p%w < frame || p%w >= w - frame || p/w < frame || p/w >= h - frame)
-				{
-					x *= dimmed;
-					y *= dimmed;
-					chn3 *= dimmed;
-				}
-
-				buf[i + _order[0]] = 255; // axis0
-				buf[i + _order[1]] = (byte)(x * 255f);
-				buf[i + _order[2]] = (byte)(y * 255f);
-				buf[i + _order[3]] = (byte)(chn3 * 255f);
+				RenderOpaquePixel(axes[0], axes[1], axes[2], buf, w, h, i / 4);
 			}
 
 			_boxXY.Unlock();
@@ -250,32 +416,81 @@ namespace SpriteWave
 			var buf = _boxZ.Buffer;
 			int w = _boxZ.Size.Width;
 			int h = _boxZ.Size.Height;
-			int frame = ColourBox.Border;
 
-			float axis1 = _chn[_order[1]];
-			float axis2 = _chn[_order[2]];
+			float[] axes = new float[3];
+			axes[_order[1]] = _chn[_order[1]];
+			axes[_order[2]] = _chn[_order[2]];
+			int a3 = _order[3];
 
 			for (int i = 0; i < buf.Length; i += 4)
 			{
-				float y = 1f - (float)((i / 4) / w) / (float)h;
-				float chn1 = axis1;
-				float chn2 = axis2;
+				axes[a3] = 1f - (float)((i / 4) / w) / (float)h;
 
-				int p = i/4;
-				if (p%w < frame || p%w >= w - frame || p/w < frame || p/w >= h - frame)
-				{
-					y *= dimmed;
-					chn1 *= dimmed;
-					chn2 *= dimmed;
-				}
-
-				buf[i + _order[0]] = 255; // axis0
-				buf[i + _order[1]] = (byte)(chn1 * 255f);
-				buf[i + _order[2]] = (byte)(chn2 * 255f);
-				buf[i + _order[3]] = (byte)(y * 255f);
+				RenderOpaquePixel(axes[0], axes[1], axes[2], buf, w, h, i / 4);
 			}
 
 			_boxZ.Unlock();
+		}
+
+		private void RefreshLeftSlider()
+		{
+			RenderSampleBox();
+			RefreshInputFields();
+
+			_boxA.Invalidate();
+			_owner.Invalidate();
+		}
+		private void RefreshDot()
+		{
+			RenderAlphaBar();
+			RenderRightBar();
+			RenderSampleBox();
+
+			RefreshInputFields();
+
+			_boxXY.Invalidate();
+			_owner.Invalidate();
+		}
+		private void RefreshRightSlider()
+		{
+			RenderAlphaBar();
+			RenderMainBox();
+			RenderSampleBox();
+
+			RefreshInputFields();
+
+			_boxZ.Invalidate();
+			_owner.Invalidate();
+		}
+
+		private void moveLeftSlider(int x, int y)
+		{
+			SetAxis(0, y, _boxA.Size.Height);
+			RefreshLeftSlider();
+		}
+		private void moveDot(int x, int y)
+		{
+			SetAxis(1, x, _boxXY.Size.Height);
+			SetAxis(2, y, _boxXY.Size.Width);
+			RefreshDot();
+		}
+		private void moveRightSlider(int x, int y)
+		{
+			SetAxis(3, y, _boxZ.Size.Height);
+			RefreshRightSlider();
+		}
+
+		private void scrollLeftSlider(int amount)
+		{
+			float delta = (float)amount / scrollUnit;
+			SetAxis(0, _chn[_order[0]] + delta);
+			RefreshLeftSlider();
+		}
+		private void scrollRightSlider(int amount)
+		{
+			float delta = (float)amount / scrollUnit;
+			SetAxis(3, _chn[_order[3]] + delta);
+			RefreshRightSlider();
 		}
 
 		private void paintLeftSlider(object sender, PaintEventArgs e)
@@ -293,29 +508,6 @@ namespace SpriteWave
 
 		public void PaintUnderUI(Graphics g)
 		{
-			/*
-			Action<Graphics, Pen, Pen, PictureBox> drawOutline = (gx, light, dark, ctrl) =>
-			{
-				int x1 = ctrl.Location.X - 1;
-				int y1 = ctrl.Location.Y - 1;
-				int x2 = x1 + ctrl.Size.Width + 1;
-				int y2 = y1 + ctrl.Size.Height + 1;
-
-				gx.DrawLine(dark, x1, y1, x2, y1);
-				gx.DrawLine(dark, x1, y1, x1, y2);
-				gx.DrawLine(light, x2, y2, x2, y1);
-				gx.DrawLine(light, x2, y2, x1, y2);
-			};
-
-			using (var white = new Pen(Color.Silver))
-			using (var outline = new Pen(Color.Silver))
-			{
-				drawOutline(g, white, outline, _boxA);
-				drawOutline(g, white, outline, _boxXY);
-				drawOutline(g, white, outline, _boxZ);
-			}
-			*/
-
 			Func<PictureBox, Rectangle, Rectangle> addLoc = (ctrl, box)
 			=> new Rectangle(
 				   ctrl.Location.X + box.X,
@@ -328,66 +520,29 @@ namespace SpriteWave
 			g.DrawImage(_dot, addLoc(_boxXY, DotRect));
 			g.DrawImage(_slider, addLoc(_boxZ, SliderRect(_boxZ, 3)));
 		}
-
-		private void moveLeftSlider(int x, int y)
-		{
-			SetAxis(0, y, _boxA.Size.Height);
-
-			RefreshInputFields();
-
-			_boxA.Invalidate();
-			_owner.Invalidate();
-		}
-		private void moveDot(int x, int y)
-		{
-			SetAxis(1, x, _boxXY.Size.Height);
-			SetAxis(2, y, _boxXY.Size.Width);
-
-			RenderAlphaBar();
-			RenderRightBar();
-
-			RefreshInputFields();
-
-			_boxXY.Invalidate();
-			_owner.Invalidate();
-		}
-		private void moveRightSlider(int x, int y)
-		{
-			SetAxis(3, y, _boxZ.Size.Height);
-
-			RenderAlphaBar();
-			RenderMainBox();
-
-			RefreshInputFields();
-
-			_boxZ.Invalidate();
-			_owner.Invalidate();
-		}
 	}
 
 	// If this class is situated above the ColourPicker class in this file,
 	//  the ColourPicker's resource manager fails to load the UI icons.
 	public class ColourBox : PictureBox
 	{
-		private bool _mouseHeld;
-		private Size _oldSize;
+		public const int Border = 2;
+		public byte[] Buffer;
 
-		private byte[] _pixbuf;
+		private Size _oldSize;
 		private BitmapData _data;
 
-		public Size OldSize { get { return _oldSize; } }
-		public byte[] Buffer { get { return _pixbuf; } }
-
-		public const int Border = 2;
-
-		public ColourBox(ColourPicker.CursorHandler moveCursor)
+		public ColourBox(ColourPicker.CursorHandler moveCursor, ColourPicker.ScrollHandler scroll)
 		{
-			_mouseHeld = false;
 			_oldSize = new Size(0, 0);
 
-			this.MouseDown += (s, e) => { _mouseHeld = true; moveCursor(e.X, e.Y); };
-			this.MouseMove += (s, e) => { if (_mouseHeld) moveCursor(e.X, e.Y); };
-			this.MouseUp += (s, e) => _mouseHeld = false;
+			if (moveCursor != null)
+			{
+				this.MouseDown += (s, e) => moveCursor(e.X, e.Y);
+				this.MouseMove += (s, e) => { if (e.Button != MouseButtons.None && s == this) moveCursor(e.X, e.Y); };
+			}
+			if (scroll != null)
+				this.MouseWheel += (s, e) => scroll(e.Delta / 120);
 		}
 
 		public void Lock()
@@ -395,7 +550,7 @@ namespace SpriteWave
 			if (_oldSize != this.Size || this.Image == null)
 			{
 				this.Image = new Bitmap(this.Size.Width, this.Size.Height);
-				_pixbuf = new byte[this.Size.Width * this.Size.Height * 4];
+				Buffer = new byte[this.Size.Width * this.Size.Height * 4];
 			}
 
 			_data = (this.Image as Bitmap).LockBits(
@@ -410,7 +565,7 @@ namespace SpriteWave
 			if (_data == null)
 				return;
 
-			Marshal.Copy(_pixbuf, 0, _data.Scan0, _pixbuf.Length);
+			Marshal.Copy(Buffer, 0, _data.Scan0, Buffer.Length);
 			(this.Image as Bitmap).UnlockBits(_data);
 			this.Invalidate();
 
