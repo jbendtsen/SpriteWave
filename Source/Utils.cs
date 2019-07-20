@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -176,6 +177,27 @@ namespace SpriteWave
 			}
 
 			return faded;
+		}
+
+		public unsafe static void Clear(this PictureBox box)
+		{
+			Color clr = box.BackColor;
+			uint pix = 0xff000000 | (uint)clr.R << 16 | (uint)clr.G << 8 | (uint)clr.B;
+
+			var data = (box.Image as Bitmap).LockBits(
+				box.DisplayRectangle,
+				ImageLockMode.ReadWrite,
+				PixelFormat.Format32bppArgb
+			);
+
+			uint *fb = (uint*)data.Scan0.ToPointer();
+			int size = box.Size.Width * box.Size.Height;
+
+			for (int i = 0; i < size; i++)
+				*fb++ = pix;
+
+			(box.Image as Bitmap).UnlockBits(data);
+			box.Invalidate();
 		}
 
 		public static int Between(this int n, int min, int max)

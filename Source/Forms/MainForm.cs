@@ -59,7 +59,6 @@ namespace SpriteWave
 			this.KeyPreview = true;
 			this.KeyUp += this.keyUpHandler;
 			this.KeyDown += this.keysHandler;
-			//this.Resize += (s, e) => Debug.WriteLine("W = {0}, H = {1}, called from {2}", this.Size.Width, this.Size.Height, new StackTrace().GetFrame(31).GetMethod().Name);
 			this.Layout += this.layoutHandler;
 			Utils.ApplyRecursiveControlAction(this, this.ConfigureControls);
 
@@ -69,7 +68,6 @@ namespace SpriteWave
 
 		private void Draw()
 		{
-			this.Refresh();
 			_inputWnd.Draw();
 			_spriteWnd.Draw();
 		}
@@ -162,14 +160,11 @@ namespace SpriteWave
 
 			return args;
 		}
-		
+
 		private void mouseMoveHandler(object sender, MouseEventArgs e)
 		{
 			var startCtrl = sender as Control;
 			var curCtrl = Utils.ApplyRecursiveControlAction(this, FindControlWithMouse) as Control;
-
-			if (_drag == null)
-				return;
 
 			TileWindow wnd = null;
 			if (_inputWnd.WindowIs(curCtrl))
@@ -178,7 +173,7 @@ namespace SpriteWave
 				wnd = _spriteWnd;
 
 			int x = 0, y = 0;
-			if (_drag.IsEdge)
+			if (_drag != null && _drag.IsEdge)
 			{
 				x = e.X;
 				y = e.Y;
@@ -195,8 +190,28 @@ namespace SpriteWave
 				y = e.Y - toCur.Y;
 			}
 
-			Transfer.Dest = _drag.Update(wnd, x, y);
-			Draw();
+			bool changed;
+			if (_drag == null)
+			{
+				if (wnd == _spriteWnd)
+					changed = _spriteWnd.HighlightEdgeAt(x, y);
+				else
+					changed = _spriteWnd.ClearMousedEdge();
+			}
+			else
+			{
+				Selection sel = _drag.Update(wnd, x, y);
+
+				if (Transfer.Dest == null)
+					changed = sel != null;
+				else
+					changed = !Transfer.Dest.Equals(sel);
+
+				Transfer.Dest = sel;
+			}
+
+			if (wnd != null && changed)
+				wnd.Draw();
 		}
 
 		bool _mouseHeld = false;
@@ -210,34 +225,24 @@ namespace SpriteWave
 			{
 				_toolBox.HandleTabClick();
 				this.PerformLayout();
-				_mouseHeld = true;
-				return;
 			}
-
-			if (_drag != null)
+			else if (_drag == null)
 			{
-				_mouseHeld = true;
-				return;
-			}
-
-			if (ctrl is PictureBox)
-				this.ActiveControl = ctrl;
-
-			TileWindow wnd = null;
-			if (_inputWnd.WindowIs(ctrl))
-				wnd = _inputWnd;
-			else if (_spriteWnd.WindowIs(ctrl))
-				wnd = _spriteWnd;
-
-			if (wnd != null)
-			{
-				if (e.Button == MouseButtons.Left)
+				if (ctrl is PictureBox)
+					this.ActiveControl = ctrl;
+	
+				TileWindow wnd = null;
+				if (_inputWnd.WindowIs(ctrl))
+					wnd = _inputWnd;
+				else if (_spriteWnd.WindowIs(ctrl))
+					wnd = _spriteWnd;
+	
+				if (wnd != null)
 				{
-					StartDrag(wnd, e.X, e.Y);
-				}
-				else if (e.Button == MouseButtons.Right)
-				{
-					ShowMenuAt(wnd, e.X, e.Y);
+					if (e.Button == MouseButtons.Left)
+						StartDrag(wnd, e.X, e.Y);
+					else if (e.Button == MouseButtons.Right)
+						ShowMenuAt(wnd, e.X, e.Y);
 				}
 			}
 
@@ -543,6 +548,8 @@ namespace SpriteWave
 			FileFormat fmt = _formatList[kind];
 
 			closeWorkspace(null, null);
+
+			this.colourTableToolStripMenuItem.Enabled = fmt.ColourTable.IsList;
 
 			_inputWnd.Load(fmt, data);
 

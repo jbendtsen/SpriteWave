@@ -107,7 +107,7 @@ namespace SpriteWave
 			// Corner Edge
 			if (x != 0 && y != 0)
 			{
-				_shape = new PointF[] {
+				_shape = new[] {
 					new PointF(-taperW, fitH),
 					new PointF(fitW, -taperH),
 					new PointF(-taperW, -taperH)
@@ -116,7 +116,7 @@ namespace SpriteWave
 			// Vertical Edge
 			else if (x != 0)
 			{
-				_shape = new PointF[] {
+				_shape = new[] {
 					new PointF(-gapW, taperH),
 					new PointF(-gapW, clHeight - taperH),
 					new PointF(-gapW - taperW, clHeight / 2f)
@@ -125,7 +125,7 @@ namespace SpriteWave
 			// Horizontal Edge
 			else
 			{
-				_shape = new PointF[] {
+				_shape = new[] {
 					new PointF(taperW, -gapH),
 					new PointF(clWidth - taperW, -gapH),
 					new PointF(clWidth / 2f, -taperH - gapH)

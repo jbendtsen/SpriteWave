@@ -25,14 +25,13 @@ namespace SpriteWave
 
 		public bool IsActive { get { return _cl != null; } }
 
-		public bool Selected
+		public virtual bool Selected
 		{
 			get {
 				return _isSel;
 			}
 			set {
 				_isSel = value;
-				//ResetSample(null);
 			}
 		}
 
@@ -84,6 +83,8 @@ namespace SpriteWave
 		public virtual void ReceiveTile(Tile t, Position loc) {}
 		public virtual void DeleteSelection() {}
 
+		public virtual void AdjustWindow(int width = 0, int height = 0) {}
+
 		protected virtual void xScrollAction(object sender, ScrollEventArgs e) {}
 		protected abstract void yScrollAction(object sender, ScrollEventArgs e);
 
@@ -93,13 +94,10 @@ namespace SpriteWave
 		public abstract void Scroll(float dx, float dy);
 		public abstract void ScrollTo(float x, float y);
 
-		public abstract void ResetScroll();
 		public abstract void UpdateBars();
 		
 		public abstract Position GetPosition(int x, int y, bool allowOob = false);
 		public abstract RectangleF PieceHitbox(Position p);
-
-		public abstract void AdjustWindow(int width = 0, int height = 0);
 
 		public abstract void DrawGrid(Graphics g);
 
@@ -222,8 +220,17 @@ namespace SpriteWave
 			if (_cl.Bitmap == null)
 				Render();
 
-			DeleteFrame();
-			_window.Image = new Bitmap(wndW, wndH);
+			if (_window.Image == null)
+			{
+				_window.Image = new Bitmap(wndW, wndH);
+			}
+			else if (_window.Image.Width != wndW || _window.Image.Height != wndH)
+			{
+				DeleteFrame();
+				_window.Image = new Bitmap(wndW, wndH);
+			}
+			else
+				_window.Clear();
 
 			using (var g = Graphics.FromImage(_window.Image))
 			{

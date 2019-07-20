@@ -204,6 +204,7 @@ namespace SpriteWave
 			this.colourTableToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
 			this.colourTableToolStripMenuItem.Text = "Colour Table";
 			this.colourTableToolStripMenuItem.Click += new System.EventHandler(this.editColourTable);
+			this.colourTableToolStripMenuItem.Enabled = false;
 			// 
 			// MainForm
 			// 

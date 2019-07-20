@@ -25,6 +25,7 @@ namespace SpriteWave
 			_scrollY.Name = "inputScrollY";
 			_menu.Name = "inputMenu";
 
+			_window.MouseLeave += (s, e) => Draw();
 			_scrollX.Enabled = false;
 		}
 

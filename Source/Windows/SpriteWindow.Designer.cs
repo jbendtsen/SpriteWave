@@ -8,9 +8,10 @@ namespace SpriteWave
 	{
 		public override void Activate()
 		{
-			ResetScroll();
-			base.Activate();
+			_zoom = InitialZoom;
 			UpdateBars();
+			Centre();
+			base.Activate();
 		}
 
 		protected override void SetupWindowUI()
@@ -19,6 +20,8 @@ namespace SpriteWave
 			_scrollX.Name = "spriteScrollX";
 			_scrollY.Name = "spriteScrollY";
 			_menu.Name = "spriteMenu";
+
+			_window.MouseLeave += (s, e) => { _hlEdge = null; Draw(); };
 		}
 
 		protected override void InitialiseControlsTab()

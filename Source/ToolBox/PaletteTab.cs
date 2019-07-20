@@ -27,9 +27,11 @@ namespace SpriteWave
 			_wnd = wnd;
 			this.SetupTab("Palette");
 
-			_primary = new PaletteBox();
+			Point org = new Point(20, 10);
+			Size s = new Size(this.ClientSize.Width - org.X * 2, this.ClientSize.Height - org.Y * 2);
+
+			_primary = new PaletteBox(org, s);
 			_primary.Name = "primaryBox";
-			_primary.Location = new Point(20, 10);
 			_primary.Fill = Utils.FromRGB((uint)Math.Abs(_wnd.GetHashCode()));
 
 			this.Controls.Add(_primary);
@@ -45,7 +47,7 @@ namespace SpriteWave
 			s.Height -= _primary.Location.Y * 2;
 
 			_primary.Size = s;
-			_primary.Image = new Bitmap(s.Width, s.Height);
+			_primary.AdjustContents();
 			_primary.Draw();
 		}
 	}

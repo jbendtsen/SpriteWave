@@ -99,7 +99,7 @@ namespace SpriteWave
 			Scroll(0, (int)y - _row);
 		}
 
-		public override void ResetScroll()
+		public void ResetScroll()
 		{
 			AdjustWindow();
 			_scrollY.Reset();

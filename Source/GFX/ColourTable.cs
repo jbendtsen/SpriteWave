@@ -19,6 +19,7 @@ namespace SpriteWave
 		// Default selection of colours, in the native format. Useful if a palette has not yet been decided.
 		private uint[] _defSel;
 
+		public bool IsList { get { return _clrList != null; } }
 		public uint[] Defaults { get { return _defSel; } }
 
 		public ColourTable(uint[] clrList, uint[] defSel)

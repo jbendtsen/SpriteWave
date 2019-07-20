@@ -11,6 +11,9 @@ namespace SpriteWave
 		public FileFormat FormatToLoad { set { _fmt = value; } }
 
 		private Edge[] _edges;
+		private Edge _hlEdge;
+
+		private readonly SolidBrush mouseOverBrush;
 		private readonly Color outlineColour = Utils.FromRGB(0x303030);
 		private const float outlineFactor = 4f;
 
@@ -19,12 +22,32 @@ namespace SpriteWave
 		private const float zoomMin = 0.001f;
 		private const float zoomMax = 1000f;
 
+		private const int initialTopGap = 4;
+
 		// 'zoom' = number of screen pixels that fit into the width of a scaled collage pixel
 		private float _zoom;
+		public float InitialZoom
+		{
+			get {
+				return _window.Size.Height / (float)((initialTopGap * 2 + _cl.Rows) * _cl.TileH);
+			}
+		}
 
 		// 'xOff' and 'yOff' are measures in units of collage pixels
 		private float _xOff, _yOff;
-		
+
+		public override bool Selected
+		{
+			get {
+				return _isSel;
+			}
+			set {
+				_isSel = value;
+				if (_isSel)
+					_hlEdge = null;
+			}
+		}
+
 		public override SizeF TileDimensions
 		{
 			get {
@@ -64,10 +87,15 @@ namespace SpriteWave
 		public SpriteWindow(MainForm main)
 			: base(main)
 		{
-			// Initialise all edges, including the invalid (centre) one
+			mouseOverBrush = new SolidBrush(SystemColors.ScrollBar);
+
+			// Initialise all edges, excluding the invalid (centre) one
 			_edges = new Edge[9];
 			for (int i = 0; i < 9; i++)
-				_edges[i] = new Edge((EdgeKind)i);
+			{
+				var kind = (EdgeKind)i;
+				_edges[i] = kind != EdgeKind.None ? new Edge(kind) : null;
+			}
 		}
 
 		public void Export(string fullPath, int scale)
@@ -111,6 +139,30 @@ namespace SpriteWave
 				return _cl.TileAt(loc);
 
 			return _edges[(int)kind];
+		}
+
+		public bool ClearMousedEdge()
+		{
+			bool changed = _hlEdge != null;
+			_hlEdge = null;
+			return changed;
+		}
+
+		public bool HighlightEdgeAt(int x, int y)
+		{
+			var kind = EdgeKind.None;
+			try {
+				kind = EdgeOf(GetPosition(x, y));
+			}
+			catch (Exception ex) {
+				if (!(ex is ArgumentOutOfRangeException))
+					throw;
+			}
+
+			Edge e = _edges[(int)kind];
+			bool changed = _hlEdge != e;
+			_hlEdge = e;
+			return changed;
 		}
 
 		public override void ResizeCollage(Edge msg)
@@ -308,20 +360,6 @@ namespace SpriteWave
 			Zoom(amount, _window.Size.Width / 2, _window.Size.Height / 2);
 		}
 
-		public override void ResetScroll()
-		{
-			if (_cl != null)
-			{
-				const int topGap = 2;
-				_yOff = -_cl.TileH * topGap;
-				_zoom = _window.Size.Height / (float)((topGap * 2 + _cl.Rows) * _cl.TileH);
-				_xOff = (-(_window.Size.Width / _zoom) + _cl.Width) / 2f;
-			}
-
-			_scrollX.Reset();
-			_scrollY.Reset();
-		}
-
 		public override void UpdateBars()
 		{
 			if (_cl == null || _window == null)
@@ -389,8 +427,6 @@ namespace SpriteWave
 			);
 		}
 
-		public override void AdjustWindow(int width = 0, int height = 0) {}
-
 		public override PointF[] ShapeEdge(Edge edge)
 		{
 			if (edge == null || edge.EdgeKind == EdgeKind.None)
@@ -436,7 +472,12 @@ namespace SpriteWave
 			{
 				PointF[] tri = this.ShapeEdge(e);
 				if (tri != null)
+				{
+					if (e == _hlEdge)
+						g.FillPolygon(mouseOverBrush, tri);
+
 					g.DrawPolygon(outline, tri);
+				}
 			}
 
 			g.SmoothingMode = SmoothingMode.None;

@@ -21,7 +21,6 @@ namespace SpriteWave
 		private TileWindow _wnd;
 
 		private TabControl _tabs;
-		private bool _tabChanged;
 
 		private Button _switch;
 		private Button _minimise;
@@ -64,7 +63,6 @@ namespace SpriteWave
 					_tabs.SelectedTab = _wnd.ControlsTab;
 
 				(_tabs.SelectedTab as ITab).Window = _wnd;
-				_tabChanged = false;
 				Refresh();
 			}
 		}
@@ -103,11 +101,11 @@ namespace SpriteWave
 			_minimise = minimiseTb;
 			_refresh = refresh;
 
-			_tabs.Controls.Add(new PaletteTab(_wnd));
 			_tabs.Controls.Add(_wnd.ControlsTab);
+			_tabs.Controls.Add(new PaletteTab(_wnd));
 
 			_tabs.Deselected += (s, e) => TogglePage(e.TabPageIndex, false);
-			_tabs.Selected += (s, e) => { TogglePage(e.TabPageIndex, true); _tabChanged = true; };
+			_tabs.Selected += (s, e) => TogglePage(e.TabPageIndex, true);
 			_minimise.Click += (s, e) => { Minimise(); Refresh(); };
 
 			_imgMinimise = new Bitmap(10, 16);
@@ -131,7 +129,6 @@ namespace SpriteWave
 
 			_minimise.Image = _imgMinimise;
 
-			_tabChanged = false;
 			IsActive = false;
 			_isOpen = true;
 		}
@@ -232,12 +229,8 @@ namespace SpriteWave
 		{
 			if (!_isOpen)
 				Minimise();
-			else if (!_tabChanged)
-				Minimise();
 			else
 				Refresh();
-
-			_tabChanged = false;
 		}
 
 		public void Cycle(int dir)

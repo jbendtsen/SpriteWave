@@ -19,16 +19,11 @@ namespace SpriteWave
 			this.ClientSize = new Size(456, 300);
 			this.MinimumSize = this.Size;
 
-			_picker = new ColourPicker(this, 256);
+			_picker = new ColourPicker(256);
+			this.Controls.Add(_picker);
 			_picker.Render();
 
 			//this.PerformLayout();
-		}
-
-		protected override void OnPaint(PaintEventArgs e)
-		{
-			base.OnPaint(e);
-			_picker.PaintUnderUI(e.Graphics);
 		}
 	}
 }

@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Windows.Forms;
 using System.ComponentModel;
-using System.Runtime.CompilerServices;
 
 namespace SpriteWave
 {
@@ -18,7 +18,7 @@ namespace SpriteWave
 		RGB, HSV, Invalid
 	};
 
-	public class ColourPicker
+	public class ColourPicker : Panel
 	{
 		public delegate void CursorHandler(int x, int y);
 		public delegate void ScrollHandler(int delta);
@@ -37,8 +37,6 @@ namespace SpriteWave
 		private Bitmap _slider;
 		private Bitmap _dot;
 		private Bitmap[] _modeImg;
-
-		private Control _owner;
 
 		private ColourBox _boxA;
 		private ColourBox _boxXY;
@@ -81,9 +79,8 @@ namespace SpriteWave
 			);
 		}
 
-		public ColourPicker(Control owner, int boxSize)
+		public ColourPicker(int boxSize)
 		{
-			_owner = owner;
 			_mode = ColourMode.RGB;
 
 			_chn = new[] {
@@ -102,6 +99,10 @@ namespace SpriteWave
 			_labels[(int)BGRA.Green] = "G";
 			_labels[(int)BGRA.Blue] = "B";
 			_labels[(int)BGRA.Alpha] = "A";
+
+			this.Name = "colourPicker";
+			this.Location = new Point(0, 0);
+			this.Size = new Size(200 + boxSize, 40 + boxSize);
 
 			var resources = new ComponentResourceManager(typeof(ColourPicker));
 			_slider = (Bitmap)(resources.GetObject("slider"));
@@ -155,7 +156,7 @@ namespace SpriteWave
 				_chnLabel[i].Name = "chnLabel" + i;
 				_chnLabel[i].Location = new Point(114 + boxSize, 67 + i * 32);
 				_chnLabel[i].Size = new Size(10, 20);
-				_owner.Controls.Add(_chnLabel[i]);
+				this.Controls.Add(_chnLabel[i]);
 			}
 
 			_chnBox = new TextBox[nChans];
@@ -166,18 +167,18 @@ namespace SpriteWave
 				_chnBox[i].Location = new Point(132 + boxSize, 64 + i * 32);
 				_chnBox[i].Size = new Size(52, 20);
 				_chnBox[i].TextChanged += this.updateField;
-				_owner.Controls.Add(_chnBox[i]);
+				this.Controls.Add(_chnBox[i]);
 			}
 
 			RefreshInputFields();
 
-			_owner.Controls.Add(_boxA);
-			_owner.Controls.Add(_boxXY);
-			_owner.Controls.Add(_boxZ);
-			_owner.Controls.Add(_boxSample);
+			this.Controls.Add(_boxA);
+			this.Controls.Add(_boxXY);
+			this.Controls.Add(_boxZ);
+			this.Controls.Add(_boxSample);
 
-			_owner.Controls.Add(_cycle);
-			_owner.Controls.Add(_switchMode);
+			this.Controls.Add(_cycle);
+			this.Controls.Add(_switchMode);
 		}
 
 		public void RefreshInputFields()
@@ -267,7 +268,7 @@ namespace SpriteWave
 			RenderMainBox();
 			RenderRightBar();
 			RenderSampleBox();
-			_owner.Invalidate();
+			this.Invalidate();
 		}
 
 		private struct AlphaPixel
@@ -438,7 +439,7 @@ namespace SpriteWave
 			RefreshInputFields();
 
 			_boxA.Invalidate();
-			_owner.Invalidate();
+			this.Invalidate();
 		}
 		private void RefreshDot()
 		{
@@ -449,7 +450,7 @@ namespace SpriteWave
 			RefreshInputFields();
 
 			_boxXY.Invalidate();
-			_owner.Invalidate();
+			this.Invalidate();
 		}
 		private void RefreshRightSlider()
 		{
@@ -460,7 +461,7 @@ namespace SpriteWave
 			RefreshInputFields();
 
 			_boxZ.Invalidate();
-			_owner.Invalidate();
+			this.Invalidate();
 		}
 
 		private void moveLeftSlider(int x, int y)
@@ -519,6 +520,12 @@ namespace SpriteWave
 			g.DrawImage(_slider, addLoc(_boxA, SliderRect(_boxA, 0)));
 			g.DrawImage(_dot, addLoc(_boxXY, DotRect));
 			g.DrawImage(_slider, addLoc(_boxZ, SliderRect(_boxZ, 3)));
+		}
+
+		protected override void OnPaint(PaintEventArgs e)
+		{
+			base.OnPaint(e);
+			PaintUnderUI(e.Graphics);
 		}
 	}
 
