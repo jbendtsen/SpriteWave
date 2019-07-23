@@ -30,12 +30,14 @@ namespace SpriteWave
 
 		public void AdjustContents()
 		{
-			_scroll.Location = new Point(this.Size.Width - scrollW - 1, 0);
-			_scroll.Size = new Size(scrollW, this.Size.Height);
+			_scroll.Location = new Point(this.Width - scrollW - 1, 0);
+			_scroll.Size = new Size(scrollW, this.Height);
 
 			_box.Location = new Point(0, 0);
-			_box.Size = new Size(this.Size.Width - scrollW, this.Size.Height);
-			_box.Image = new Bitmap(_box.Size.Width, _box.Size.Height);
+			_box.Size = new Size(this.Width - scrollW, this.Height);
+
+			if (_box.Width > 0 && _box.Height > 0)
+				_box.Image = new Bitmap(_box.Width, _box.Height);
 		}
 
 		public void Draw()

@@ -6,12 +6,16 @@ using System.ComponentModel;
 
 namespace SpriteWave
 {
-	public class SpriteControlsTab : TabPage, ITab
+	public class SpriteControlsTab : ITab
 	{
 		private readonly Color infoColour = Color.FromArgb(255, 48, 48, 48);
 
 		private Rectangle _divider = new Rectangle(120, 5, 0, 172);
 		private readonly Pen _dividerPen = new Pen(Color.Silver);
+
+		private string _name;
+		private Panel _panel;
+		private readonly SpriteWindow _wnd;
 
 		private Label _tileLabel;
 		private Label _outputLabel;
@@ -38,15 +42,24 @@ namespace SpriteWave
 		private FolderBrowserDialog _folderBrowser;
 		private bool _pathSelected = false;
 
-		private readonly SpriteWindow _wnd;
+		public string Name { get { return _name; } }
+
+		public Panel Panel { get { return _panel; } }
+
 		public TileWindow Window { get { return _wnd; } set {} }
 
 		public Size Minimum { get { return new Size(320, 192); } }
 
+		public int X { set { _panel.Location = new Point(value, _panel.Location.Y); } }
+
 		public SpriteControlsTab(SpriteWindow wnd)
 		{
 			_wnd = wnd;
-			this.SetupTab("Controls");
+			_name = "Controls";
+
+			_panel = new Panel();
+			_panel.Name = "controlsTab";
+			_panel.Paint += this.drawDivider;
 
 			_folderBrowser = new FolderBrowserDialog();
 			var resources = new ComponentResourceManager(typeof(SpriteControlsTab));
@@ -190,32 +203,34 @@ namespace SpriteWave
 			_saveMsg.Size = new Size(100, 13);
 			_saveMsg.Location = new Point(142, 162);
 
-			this.Controls.Add(_tileLabel);
-			this.Controls.Add(_outputLabel);
+			_panel.Controls.Add(_tileLabel);
+			_panel.Controls.Add(_outputLabel);
 
-			this.Controls.Add(_rotateRightBtn);
-			this.Controls.Add(_rotateLeftBtn);
-			this.Controls.Add(_mirrorHoriBtn);
-			this.Controls.Add(_mirrorVertBtn);
-			this.Controls.Add(_eraseBtn);
+			_panel.Controls.Add(_rotateRightBtn);
+			_panel.Controls.Add(_rotateLeftBtn);
+			_panel.Controls.Add(_mirrorHoriBtn);
+			_panel.Controls.Add(_mirrorVertBtn);
+			_panel.Controls.Add(_eraseBtn);
 
-			this.Controls.Add(_scaleLabel);
-			this.Controls.Add(_scaleBox);
-			this.Controls.Add(_folderLabel);
-			this.Controls.Add(_folderBtn);
-			this.Controls.Add(_folderText);
-			this.Controls.Add(_nameLabel);
-			this.Controls.Add(_nameBox);
-			this.Controls.Add(_overwriteBtn);
-			this.Controls.Add(_appendBtn);
-			this.Controls.Add(_appendBox);
-			this.Controls.Add(_saveButton);
-			this.Controls.Add(_saveMsg);
+			_panel.Controls.Add(_scaleLabel);
+			_panel.Controls.Add(_scaleBox);
+			_panel.Controls.Add(_folderLabel);
+			_panel.Controls.Add(_folderBtn);
+			_panel.Controls.Add(_folderText);
+			_panel.Controls.Add(_nameLabel);
+			_panel.Controls.Add(_nameBox);
+			_panel.Controls.Add(_overwriteBtn);
+			_panel.Controls.Add(_appendBtn);
+			_panel.Controls.Add(_appendBox);
+			_panel.Controls.Add(_saveButton);
+			_panel.Controls.Add(_saveMsg);
 		}
 
-		public void AdjustContents()
+		public void AdjustContents(Size size)
 		{
-			Action<Control> stretch = (ctrl) => ctrl.Size = new Size(this.Size.Width - ctrl.Location.X - 5, ctrl.Size.Height);
+			_panel.Size = size;
+
+			Action<Control> stretch = (ctrl) => ctrl.Size = new Size(size.Width - ctrl.Location.X - 5, ctrl.Height);
 
 			stretch(_folderText);
 			stretch(_saveMsg);
@@ -294,9 +309,8 @@ namespace SpriteWave
 			_saveMsg.Text = "Saved " + abrvName;
 		}
 
-		protected override void OnPaint(PaintEventArgs e)
+		protected void drawDivider(object sender, PaintEventArgs e)
 		{
-			base.OnPaint(e);
 			e.Graphics.DrawLine(
 				_dividerPen,
 				_divider.X,

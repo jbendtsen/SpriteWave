@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -12,7 +13,6 @@ namespace SpriteWave
 		protected HScrollBar _scrollX;
 		protected VScrollBar _scrollY;
 		protected ContextMenuStrip _menu;
-		protected TabPage _controlsTab;
 
 		protected Label _prompt;
 		public string Prompt
@@ -23,20 +23,24 @@ namespace SpriteWave
 				_prompt.Text = value;
 				_prompt.Enabled = state;
 				_prompt.Visible = state;
+				AdjustPrompt();
 			}
 		}
 
-		public TabPage ControlsTab { get { return _controlsTab; } }
+		protected List<ITab> _tabs;
+		public List<ITab> Tabs { get { return _tabs; } }
 
 		public Point CanvasPos { get { return _window.Location; } }
 		public Size CanvasSize { get { return _window.Size; } }
 
-		public int ScrollYWidth { get { return _scrollY.Size.Width; } }
-		public int ScrollXHeight { get { return _scrollX.Size.Height; } }
+		public int ScrollYWidth { get { return _scrollY.Width; } }
+		public int ScrollXHeight { get { return _scrollX.Height; } }
 
 		protected abstract void SetupWindowUI();
 		protected abstract void InitialiseRightClickMenu(MainForm.TileAction copyTile, MainForm.TileAction pasteTile = null);
-		protected abstract void InitialiseControlsTab();
+		protected abstract void InitialiseTabs();
+
+		protected virtual void DisposeTabs() {}
 
 		public void Dispose()
 		{
@@ -44,12 +48,12 @@ namespace SpriteWave
 			_scrollX.Dispose();
 			_scrollY.Dispose();
 			_menu.Dispose();
-			_controlsTab.Dispose();
+			DisposeTabs();
 		}
 
 		protected void InitialiseUI(MainForm main)
 		{
-			InitialiseControlsTab();
+			InitialiseTabs();
 
 			_window = new PictureBox();
 			_scrollX = new HScrollBar();
@@ -99,13 +103,13 @@ namespace SpriteWave
 			_scrollY.Visible = true;
 
 			ToggleMenu(true);
-			ToggleContainer(_controlsTab, true);
+			ToggleTabsContents(true);
 		}
 
 		public virtual void Close()
 		{
 			ToggleMenu(false);
-			ToggleContainer(_controlsTab, false);
+			ToggleTabsContents(false);
 
 			_cl = null;
 			DeleteFrame();
@@ -118,35 +122,40 @@ namespace SpriteWave
 
 		public void UpdateLayout(int x, int w, int totalH, int menuH)
 		{
-			w -= _scrollY.Size.Width;
+			w -= _scrollY.Width;
 
 			//_window.SuspendLayout();
 			_window.Location = new Point(x, menuH);
-			_window.Size = new Size(w, totalH - (menuH + _scrollX.Size.Height));
+			_window.Size = new Size(w, totalH - (menuH + _scrollX.Height));
 			//_window.ResumeLayout();
 
-			_scrollX.Location = new Point(x, menuH + _window.Size.Height);
-			_scrollX.Size = new Size(w, _scrollX.Size.Height);
+			_scrollX.Location = new Point(x, menuH + _window.Height);
+			_scrollX.Size = new Size(w, _scrollX.Height);
 
 			_scrollY.Location = new Point(x + w, menuH);
-			_scrollY.Size = new Size(_scrollY.Size.Width, _window.Size.Height);
+			_scrollY.Size = new Size(_scrollY.Width, _window.Height);
 
-			if (_prompt.Visible)
-			{
-				_prompt.Location = new Point(
-					(_window.Size.Width - _prompt.Size.Width) / 2,
-					(_window.Size.Height - _prompt.Size.Height) / 2
-				);
-			}
+			AdjustPrompt();
+		}
+
+		private void AdjustPrompt()
+		{
+			if (!_prompt.Visible)
+				return;
+
+			_prompt.Location = new Point(
+				(_window.Width - _prompt.Width) / 2,
+				(_window.Height - _prompt.Height) / 2
+			);
 		}
 
 		public void ReduceWindowTo(int maxH)
 		{
-			if (_window.Size.Height <= maxH)
+			if (_window.Height <= maxH)
 				return;
 
 			_window.Size = new Size(
-				_window.Size.Width,
+				_window.Width,
 				maxH
 			);
 			_scrollX.Location = new Point(
@@ -154,15 +163,29 @@ namespace SpriteWave
 				_window.Location.Y + maxH
 			);
 			_scrollY.Size = new Size(
-				_scrollY.Size.Width,
+				_scrollY.Width,
 				maxH
 			);
 		}
 
-		public void ToggleContainer(Control cont, bool state)
+		public int TabIndex(string name)
 		{
-			foreach (Control c in cont.Controls)
-				c.Visible = state;
+			for (int i = 0; i < _tabs.Count; i++)
+			{
+				if (_tabs[i].Name == name)
+					return i;
+			}
+
+			return -1;
+		}
+
+		public void ToggleTabsContents(bool state)
+		{
+			foreach (ITab t in _tabs)
+			{
+				foreach (Control c in t.Panel.Controls)
+					c.Visible = state;
+			}
 		}
 
 		public void ToggleMenu(bool state)

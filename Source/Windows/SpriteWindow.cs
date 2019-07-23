@@ -19,7 +19,7 @@ namespace SpriteWave
 
 		private const float scrollFactor = 5f;
 		private const float zoomFactor = 5f;
-		private const float zoomMin = 0.001f;
+		private const float zoomMin = 0.01f;
 		private const float zoomMax = 1000f;
 
 		private const int initialTopGap = 4;
@@ -29,7 +29,7 @@ namespace SpriteWave
 		public float InitialZoom
 		{
 			get {
-				return _window.Size.Height / (float)((initialTopGap * 2 + _cl.Rows) * _cl.TileH);
+				return _window.Height / (float)((initialTopGap * 2 + _cl.Rows) * _cl.TileH);
 			}
 		}
 
@@ -64,8 +64,8 @@ namespace SpriteWave
 				var canvas = new Rectangle(
 					(int)_xOff,
 					(int)_yOff,
-					(int)((float)_window.Size.Width / _zoom) + 1,
-					(int)((float)_window.Size.Height / _zoom) + 1
+					(int)((float)_window.Width / _zoom) + 1,
+					(int)((float)_window.Height / _zoom) + 1
 				);
 
 				if (_cl == null || _cl.Bitmap == null)
@@ -279,8 +279,8 @@ namespace SpriteWave
 			if (_cl == null)
 				return;
 
-			float wndW = (float)_window.Size.Width / _zoom;
-			float wndH = (float)_window.Size.Height / _zoom;
+			float wndW = (float)_window.Width / _zoom;
+			float wndH = (float)_window.Height / _zoom;
 
 			ScrollTo(
 				(_cl.Width / 2f) - (wndW / 2f),
@@ -344,7 +344,7 @@ namespace SpriteWave
 		}
 		public void ZoomIn(int delta)
 		{
-			ZoomOver(delta, _window.Size.Width / 2, _window.Size.Height / 2);
+			ZoomOver(delta, _window.Width / 2, _window.Height / 2);
 		}
 
 		public void ZoomByTiles(float delta, bool useWidth = true)
@@ -357,7 +357,7 @@ namespace SpriteWave
 			if (delta < 0)
 				amount = 1 / amount;
 
-			Zoom(amount, _window.Size.Width / 2, _window.Size.Height / 2);
+			Zoom(amount, _window.Width / 2, _window.Height / 2);
 		}
 
 		public override void UpdateBars()
@@ -365,8 +365,8 @@ namespace SpriteWave
 			if (_cl == null || _window == null)
 				return;
 
-			int wndW = _window.Size.Width;
-			int wndH = _window.Size.Height;
+			int wndW = _window.Width;
+			int wndH = _window.Height;
 
 			// When the MainForm (window) gets minimised, the width and height of (at least) the _spriteBox window get set to 0
 			if (wndW <= 0 || wndH <= 0)
@@ -489,8 +489,8 @@ namespace SpriteWave
 		}
 		public override void DrawGrid(Graphics g)
 		{
-			float wndW = _window.Size.Width;
-			float wndH = _window.Size.Height;
+			float wndW = _window.Width;
+			float wndH = _window.Height;
 			SizeF tileSc = TileDimensions;
 
 			float xLn = PadOffset(_xOff * _zoom, tileSc.Width);

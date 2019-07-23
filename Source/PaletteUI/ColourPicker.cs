@@ -53,29 +53,29 @@ namespace SpriteWave
 		public Rectangle DotRect
 		{
 			get {
-				int dotX = (int)((1f - _chn[_order[1]]) * (float)_boxXY.Size.Width);
-				int dotY = (int)((1f - _chn[_order[2]]) * (float)_boxXY.Size.Height);
-				int off = _dot.Size.Width / -2;
+				int dotX = (int)((1f - _chn[_order[1]]) * (float)_boxXY.Width);
+				int dotY = (int)((1f - _chn[_order[2]]) * (float)_boxXY.Height);
+				int off = _dot.Width / -2;
 
 				return new Rectangle(
 					dotX + off,
 					dotY + off,
-					_dot.Size.Width,
-					_dot.Size.Height
+					_dot.Width,
+					_dot.Height
 				);
 			}
 		}
 
 		public Rectangle SliderRect(PictureBox ctrl, int idx)
 		{
-			int h = (int)((1f - _chn[_order[idx]]) * (float)ctrl.Size.Height);
-			int off = (ctrl.Size.Width - _slider.Size.Width) / 2;
+			int h = (int)((1f - _chn[_order[idx]]) * (float)ctrl.Height);
+			int off = (ctrl.Width - _slider.Width) / 2;
 
 			return new Rectangle(
 				off,
 				h + off,
-				_slider.Size.Width,
-				_slider.Size.Height
+				_slider.Width,
+				_slider.Height
 			);
 		}
 
@@ -341,8 +341,8 @@ namespace SpriteWave
 			_boxSample.Lock();
 
 			var buf = _boxSample.Buffer;
-			int w = _boxSample.Size.Width;
-			int h = _boxSample.Size.Height;
+			int w = _boxSample.Width;
+			int h = _boxSample.Height;
 
 			var info = new AlphaPixel(
 				w / 8,
@@ -364,8 +364,8 @@ namespace SpriteWave
 			_boxA.Lock();
 
 			var buf = _boxA.Buffer;
-			int w = _boxA.Size.Width;
-			int h = _boxA.Size.Height;
+			int w = _boxA.Width;
+			int h = _boxA.Height;
 
 			var info = new AlphaPixel(
 				(w + 1) / 2,
@@ -391,8 +391,8 @@ namespace SpriteWave
 			_boxXY.Lock();
 
 			var buf = _boxXY.Buffer;
-			int w = _boxXY.Size.Width;
-			int h = _boxXY.Size.Height;
+			int w = _boxXY.Width;
+			int h = _boxXY.Height;
 
 			float[] axes = new float[3];
 			int a1 = _order[1];
@@ -415,8 +415,8 @@ namespace SpriteWave
 			_boxZ.Lock();
 
 			var buf = _boxZ.Buffer;
-			int w = _boxZ.Size.Width;
-			int h = _boxZ.Size.Height;
+			int w = _boxZ.Width;
+			int h = _boxZ.Height;
 
 			float[] axes = new float[3];
 			axes[_order[1]] = _chn[_order[1]];
@@ -466,18 +466,18 @@ namespace SpriteWave
 
 		private void moveLeftSlider(int x, int y)
 		{
-			SetAxis(0, y, _boxA.Size.Height);
+			SetAxis(0, y, _boxA.Height);
 			RefreshLeftSlider();
 		}
 		private void moveDot(int x, int y)
 		{
-			SetAxis(1, x, _boxXY.Size.Height);
-			SetAxis(2, y, _boxXY.Size.Width);
+			SetAxis(1, x, _boxXY.Height);
+			SetAxis(2, y, _boxXY.Width);
 			RefreshDot();
 		}
 		private void moveRightSlider(int x, int y)
 		{
-			SetAxis(3, y, _boxZ.Size.Height);
+			SetAxis(3, y, _boxZ.Height);
 			RefreshRightSlider();
 		}
 
@@ -556,8 +556,8 @@ namespace SpriteWave
 		{
 			if (_oldSize != this.Size || this.Image == null)
 			{
-				this.Image = new Bitmap(this.Size.Width, this.Size.Height);
-				Buffer = new byte[this.Size.Width * this.Size.Height * 4];
+				this.Image = new Bitmap(this.Width, this.Height);
+				Buffer = new byte[this.Width * this.Height * 4];
 			}
 
 			_data = (this.Image as Bitmap).LockBits(

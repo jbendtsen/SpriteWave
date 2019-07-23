@@ -1,6 +1,6 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -104,15 +104,6 @@ namespace SpriteWave
 				bar.Value = value;
 		}
 
-		public static void SetupTab(this TabPage tab, string name)
-		{
-			tab.Location = new Point(4, 22);
-			tab.Padding = new Padding(3);
-			tab.Text = name;
-			tab.Name = tab.Text.ToLower() + "Tab";
-			tab.UseVisualStyleBackColor = true;
-		}
-
 		public static void ToggleSmoothing(this Graphics g, bool smooth)
 		{
 			if (smooth)
@@ -191,7 +182,7 @@ namespace SpriteWave
 			);
 
 			uint *fb = (uint*)data.Scan0.ToPointer();
-			int size = box.Size.Width * box.Size.Height;
+			int size = box.Width * box.Height;
 
 			for (int i = 0; i < size; i++)
 				*fb++ = pix;

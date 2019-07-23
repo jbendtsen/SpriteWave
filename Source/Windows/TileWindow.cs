@@ -18,8 +18,6 @@ namespace SpriteWave
 		protected Position _selPos;
 		protected bool _isSel = false;
 
-		//public virtual string Prompt { set {} }
-
 		protected Rectangle _bounds;
 		protected Pen _gridPen;
 

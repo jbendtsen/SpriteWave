@@ -46,14 +46,16 @@ namespace SpriteWave
 			filter = filter.Remove(filter.Length-1);
 			this.openFileDialog1.Filter = filter;
 
-			_inputWnd = new InputWindow(this);
-			var inputTab = _inputWnd.ControlsTab as InputControlsTab;
-			inputTab.SendTileAction = (s, e) => {CopyTile(_inputWnd); PasteTile(_spriteWnd);};
+			EventHandler sendTileAction = (s, e) => {CopyTile(_inputWnd); PasteTile(_spriteWnd);};
+			_inputWnd = new InputWindow(this, sendTileAction);
 
 			_spriteWnd = new SpriteWindow(this);
 
-			_toolBox = new ToolBox(this.toolBoxTabs, _inputWnd, this.toolBoxSwitchWindow, this.toolBoxMinimise, this.PerformLayout);
-			_toolBox.SwitchWindowAction = this.switchToolBoxWindow;
+			_toolBox = new ToolBox(this, _inputWnd);
+
+			ToolBox.ConfigureTabs(_inputWnd.Tabs, this.ConfigureControls);
+			ToolBox.ConfigureTabs(_spriteWnd.Tabs, this.ConfigureControls);
+			//_toolBox.Configure(this.ConfigureControls);
 
 			// Setup MainForm events
 			this.KeyPreview = true;
@@ -83,6 +85,10 @@ namespace SpriteWave
 			wnd.Selected = true;
 			Transfer.Dest = wnd.CurrentSelection();
 			Transfer.Paste();
+
+			if (wnd == _spriteWnd && Transfer.Completed)
+				_toolBox.Switch = true;
+
 			Draw();
 		}
 		private void SwapTile(TileWindow wnd)
@@ -265,6 +271,8 @@ namespace SpriteWave
 
 					if (!Transfer.Completed)
 						SetSample(null);
+					else if (Transfer.Dest.Window == _spriteWnd)
+						_toolBox.Switch = true;
 
 					ClearSelection();
 				}
@@ -300,7 +308,8 @@ namespace SpriteWave
 			{
 				if (!(active is TextBox))
 				{
-					if (Transfer.Source != null || Transfer.Dest != null || _inputWnd.IsTileSampleVisible)
+					// TODO: Employ ITab.HandleEscapeKey()
+					if (Transfer.Source != null || Transfer.Dest != null/* || _inputWnd.IsTileSampleVisible*/)
 					{
 						ClearSelection();
 						SetSample(null);
@@ -332,6 +341,7 @@ namespace SpriteWave
 				CopyTile(_inputWnd);
 				PasteTile(_spriteWnd);
 				_spriteWnd.MoveSelection(1, 0);
+				_spriteWnd.Draw();
 			}
 
 			Keys mod = Control.ModifierKeys;
@@ -341,7 +351,7 @@ namespace SpriteWave
 				if (e.KeyCode == Keys.G && _inputWnd.IsActive)
 				{
 					_toolBox.CurrentWindow = _inputWnd;
-					_toolBox.CurrentTab = "controlsTab";
+					_toolBox.Select("Controls");
 					if (!_toolBox.IsOpen)
 						_toolBox.Minimise();
 
@@ -401,10 +411,8 @@ namespace SpriteWave
 
 				if (e.KeyCode == Keys.Tab)
 				{
-					if (!_toolBox.IsOpen)
+					if (SwitchToolBoxWindow() && !_toolBox.IsOpen)
 						_toolBox.Minimise();
-
-					switchToolBoxWindow(null, null);
 				}
 			}
 			else
@@ -466,7 +474,7 @@ namespace SpriteWave
 		private void layoutHandler(object sender, LayoutEventArgs e)
 		{
 			int totalH = this.ClientSize.Height;
-			int menuH = this.menuStrip1.Size.Height;
+			int menuH = this.menuStrip1.Height;
 			int tileBoxW = this.ClientSize.Width / 2;
 
 			var tbLayout = ToolBoxOrientation.None;
@@ -484,7 +492,7 @@ namespace SpriteWave
 			if (_toolBox.IsActive && tbWnd != null)
 			{
 				int wndMaxH = totalH - (menuH + tbWnd.ScrollXHeight);
-				tbWnd.ReduceWindowTo(wndMaxH - _toolBox.Height);
+				tbWnd.ReduceWindowTo(wndMaxH - _toolBox.Minimum.Height);
 			}
 
 			UpdateMinimumSize();
@@ -494,15 +502,22 @@ namespace SpriteWave
 			Draw();
 		}
 
-		private void switchToolBoxWindow(object sender, EventArgs e)
+		public bool SwitchToolBoxWindow()
 		{
+			TileWindow wnd;
 			if (_toolBox.CurrentWindow == _inputWnd)
-				_toolBox.CurrentWindow = _spriteWnd;
+				wnd = _spriteWnd;
 			else if (_toolBox.CurrentWindow == _spriteWnd)
-				_toolBox.CurrentWindow = _inputWnd;
+				wnd = _inputWnd;
+			else
+				return false;
 
-			_toolBox.ConfigureTabs(this.ConfigureControls);
+			if (!wnd.IsActive)
+				return false;
+
+			_toolBox.CurrentWindow = wnd;
 			this.PerformLayout();
+			return true;
 		}
 
 		private void openBinary(object sender, EventArgs e)
@@ -526,6 +541,7 @@ namespace SpriteWave
 			_inputWnd.Close();
 			_spriteWnd.Close();
 			_toolBox.IsActive = false;
+			this.PerformLayout();
 		}
 
 		private void quit(object sender, EventArgs e)
@@ -558,9 +574,10 @@ namespace SpriteWave
 
 			_inputWnd.ToggleMenu(true);
 			_spriteWnd.EnablePaste();
-			_toolBox.IsActive = true;
 
-			Draw();
+			_toolBox.Activate(_inputWnd);
+
+			this.PerformLayout();
 		}
 	}
 }

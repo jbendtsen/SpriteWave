@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Windows.Forms;
 
 namespace SpriteWave
@@ -29,9 +30,10 @@ namespace SpriteWave
 			_scrollX.Enabled = false;
 		}
 
-		protected override void InitialiseControlsTab()
+		protected override void InitialiseTabs()
 		{
-			_controlsTab = new InputControlsTab(this);
+			_tabs = new List<ITab>();
+			_tabs.Add(new InputControlsTab(this));
 		}
 
 		protected override void InitialiseRightClickMenu(MainForm.TileAction copyTile, MainForm.TileAction pasteTile = null)

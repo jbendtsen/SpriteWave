@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
 namespace SpriteWave
@@ -13,20 +15,21 @@ namespace SpriteWave
 	{
 		private const int MaxHeight = 300;
 		private const int MinMinWidth = 100;
-		private const float HeightFraction = 0.4f;
+
+		private readonly Color TabColour = Color.FromArgb(250, 250, 250);
 
 		private bool _isActive;
 		private bool _isOpen;
+		private bool _canSwitch;
 
 		private TileWindow _wnd;
 
-		private TabControl _tabs;
+		private List<ITab> _generalTabs;
+		private int _curTab;
 
-		private Button _switch;
-		private Button _minimise;
-
-		private Bitmap _imgMinimise;
-		private Bitmap _imgMaximise;
+		private Panel _ui;
+		private ToolBoxButton _switch;
+		private ToolBoxButton _minimise;
 
 		private Action _refresh;
 
@@ -39,9 +42,21 @@ namespace SpriteWave
 			}
 			set {
 				_isActive = value;
-				_tabs.Visible = value;
-				_switch.Visible = value;
 				_minimise.Visible = value;
+
+				if (!value)
+					_switch.Visible = false;
+
+				_canSwitch = false;
+			}
+		}
+
+		public bool Switch
+		{
+			set {
+				_canSwitch = value;
+				UpdateSwitch();
+				Refresh();
 			}
 		}
 
@@ -51,26 +66,16 @@ namespace SpriteWave
 				return _wnd;
 			}
 			set {
-				_tabs.SelectedTab.Visible = false;
-
-				bool ctrlTabOpen = _tabs.SelectedTab == _wnd.ControlsTab;
-				_tabs.TabPages.Remove(_wnd.ControlsTab);
-
 				_wnd = value;
-				_tabs.TabPages.Add(_wnd.ControlsTab);
-
-				if (ctrlTabOpen)
-					_tabs.SelectedTab = _wnd.ControlsTab;
-
-				(_tabs.SelectedTab as ITab).Window = _wnd;
+				Select(_curTab);
 				Refresh();
 			}
 		}
 
-		public string CurrentTab
+		public ITab CurrentTab
 		{
-			set {
-				_tabs.SelectTab(value);
+			get {
+				return TabAt(_curTab);
 			}
 		}
 
@@ -79,73 +84,48 @@ namespace SpriteWave
 			get {
 				Size s = new Size(MinMinWidth, 0);
 
-				ITab t = _tabs.SelectedTab as ITab;
+				ITab t = CurrentTab;
 				if (this.IsOpen && t != null)
 					s = t.Minimum;
 
-				s.Width += _switch.Size.Width;
-				s.Height += _tabs.ItemSize.Height + _tabs.Padding.Y - 1;
+				s.Width += _switch.Width;
+				s.Height += _minimise.Height;
 				return s;
 			}
 		}
 
-		public int Height { get { return _tabs.Size.Height; } }
-
-		public EventHandler SwitchWindowAction { set { _switch.Click += value; } }
-
-		public ToolBox(TabControl box, TileWindow initialWnd, Button switchWindow, Button minimiseTb, Action refresh)
+		public static void ConfigureTabs(List<ITab> tabs, Utils.ControlAction method)
 		{
-			_tabs = box;
+			foreach (ITab t in tabs)
+				Utils.ApplyRecursiveControlAction(t.Panel, method);
+		}
+
+		public ToolBox(MainForm main, TileWindow initialWnd)
+		{
 			_wnd = initialWnd;
-			_switch = switchWindow;
-			_minimise = minimiseTb;
-			_refresh = refresh;
+			_refresh = main.PerformLayout;
 
-			_tabs.Controls.Add(_wnd.ControlsTab);
-			_tabs.Controls.Add(new PaletteTab(_wnd));
+			_generalTabs = new List<ITab>();
+			_generalTabs.Add(new PaletteTab(_wnd));
 
-			_tabs.Deselected += (s, e) => TogglePage(e.TabPageIndex, false);
-			_tabs.Selected += (s, e) => TogglePage(e.TabPageIndex, true);
+			_switch = new ToolBoxButton(_switchShapes, new Size(20, 140));
+			_switch.Name = "toolBoxSwitchWindow";
+			_switch.Click += (s, e) => main.SwitchToolBoxWindow();
+
+			_minimise = new ToolBoxButton(_minimiseShapes, new Size(40, 21), 1);
+			_minimise.Name = "toolBoxMinimise";
 			_minimise.Click += (s, e) => { Minimise(); Refresh(); };
 
-			_imgMinimise = new Bitmap(10, 16);
-			_imgMaximise = new Bitmap(10, 16);
+			_ui = new Panel();
+			_ui.Controls.Add(_switch);
+			_ui.Controls.Add(_minimise);
 
-			using (var pen = new Pen(Color.Black))
-			{
-				// single line for the minimise icon
-				using (var g = Graphics.FromImage(_imgMinimise))
-					g.DrawLine(pen, 0, 7, 10, 7);
+			main.Controls.Add(_ui);
 
-				// four lines make a box for the maximise icon
-				using (var g = Graphics.FromImage(_imgMaximise))
-				{
-					g.DrawLine(pen, 0, 2, 9, 2);   // top
-					g.DrawLine(pen, 0, 11, 9, 11); // bottom
-					g.DrawLine(pen, 0, 2, 0, 11);  // left
-					g.DrawLine(pen, 9, 2, 9, 11);  // right
-				}
-			}
-
-			_minimise.Image = _imgMinimise;
+			_switch.Visible = false;
 
 			IsActive = false;
 			_isOpen = true;
-		}
-
-		public void ConfigureTabs(Utils.ControlAction method)
-		{
-			Utils.ApplyRecursiveControlAction(_tabs, method);
-		}
-
-		public void TogglePage(int idx, bool state)
-		{
-			if (idx < 0 || idx >= _tabs.TabCount)
-				return;
-
-			_tabs.Controls[idx].Visible = state;
-			if (state)
-				(_tabs.Controls[idx] as ITab).Window = _wnd;
 		}
 
 		public void Refresh()
@@ -154,22 +134,103 @@ namespace SpriteWave
 				_refresh();
 		}
 
+		public void Activate(TileWindow wnd)
+		{
+			this.IsActive = true;
+			_wnd = wnd;
+			Select(0);
+			if (!_isOpen)
+				Minimise();
+
+			Refresh();
+		}
+
+		public ITab TabAt(int idx)
+		{
+			if (idx < 0)
+				return null;
+
+			int gLen = _generalTabs.Count;
+			if (idx < gLen)
+				return _generalTabs[idx];
+
+			idx -= gLen;
+			if (_wnd == null || idx >= _wnd.Tabs.Count)
+				return null;
+
+			return _wnd.Tabs[idx];
+		}
+
+		public int TabIndex(string name)
+		{
+			int i;
+			for (i = 0; i < _generalTabs.Count; i++)
+			{
+				if (_generalTabs[i].Name == name)
+					return i;
+			}
+
+			int idx = _wnd.TabIndex(name);
+			if (idx >= 0)
+				idx += _generalTabs.Count;
+
+			return idx;
+		}
+
+		public void Select(int idx)
+		{
+			if (idx < 0)
+				return;
+
+			CurrentTab.Panel.Visible = false;
+
+			_curTab = idx;
+			var t = CurrentTab;
+			t.Window = _wnd;
+			t.Panel.BackColor = TabColour;
+			t.Panel.Visible = true;
+
+			foreach (Control c in _ui.Controls)
+			{
+				if (c is Panel)
+					_ui.Controls.Remove(c);
+			}
+
+			_ui.Controls.Add(t.Panel);
+		}
+		public void Select(string name)
+		{
+			Select(TabIndex(name));
+		}
+
 		public Control GetControl(string name)
 		{
 			if (!this.IsOpen)
 				return null;
 
-			Control c = Utils.FindControl(_tabs.SelectedTab, name);
+			Control c = Utils.FindControl(CurrentTab.Panel, name);
 			if (c != null)
 				c.Visible = true;
 
 			return c;
 		}
 
+		private void UpdateSwitch()
+		{
+			if (_canSwitch)
+				_switch.Visible = _isOpen;
+			else
+				_switch.Visible = false;
+		}
+
 		public void Minimise()
 		{
 			_isOpen = !_isOpen;
-			_minimise.Image = _isOpen ? _imgMinimise : _imgMaximise;
+			_minimise.State = _isOpen ? 1 : 0;
+
+			CurrentTab.Panel.Visible = _isOpen;
+
+			UpdateSwitch();
 		}
 
 		public void UpdateLayout(ToolBoxOrientation layout, Size clientSize)
@@ -177,52 +238,40 @@ namespace SpriteWave
 			if (!IsActive)
 				return;
 
-			int tileWndWidth = _wnd.CanvasSize.Width;
 			int tileWndX = _wnd.CanvasPos.X;
 
-			int tbW = tileWndWidth - _switch.Size.Width;
-			int tbH = this.Minimum.Height;
+			_ui.Size = new Size(_wnd.CanvasSize.Width, this.Minimum.Height);
+			_ui.Location = new Point(_wnd.CanvasPos.X, clientSize.Height - _ui.Height);
 
-			int tbX = tileWndX;
-			int tbY = clientSize.Height - tbH;
-
-			int swX, minX;
+			int swX = 0;
+			int minX = 0;
+			int tabX = 0;
 			if (layout == ToolBoxOrientation.Left)
 			{
-				swX = tbX + tbW;
-				minX = tbX;
-
-				_tabs.RightToLeft = RightToLeft.Yes;
-				_tabs.RightToLeftLayout = true;
-				foreach (Control c in _tabs.Controls)
-					c.RightToLeft = RightToLeft.No;
-
-				_switch.Text = ">";
+				swX = _ui.Width - _switch.Width;
+				_switch.State = 0;
 			}
 			else
 			{
-				swX = tbX;
-				tbX += _switch.Size.Width;
-				minX = tbX + tbW - _minimise.Size.Width;
-
-				_tabs.RightToLeft = RightToLeft.No;
-				_tabs.RightToLeftLayout = false;
-
-				_switch.Text = "<";
+				minX = _ui.Width - _minimise.Width;
+				tabX = _switch.Width;
+				_switch.State = 1;
 			}
 
-			int tbTabH = _tabs.Padding.Y + _tabs.ItemSize.Height;
-			_minimise.Location = new Point(minX, tbY + tbH - tbTabH);
+			_minimise.Location = new Point(minX, _ui.Height - _minimise.Height);
 
-			_tabs.Location = new Point(tbX, tbY);
-			_switch.Location = new Point(swX, tbY);
+			_switch.Location = new Point(swX, 0);
+			_switch.Size = new Size(20, _ui.Height - 1);
 
-			_tabs.Size = new Size(tbW, tbH);
-			_switch.Size = new Size(20, tbH - 1);
+			var tab = this.CurrentTab;
+			tab.X = tabX;
 
-			ITab tab = _tabs.SelectedTab as ITab;
-			if (tab != null)
-				tab.AdjustContents();
+			tab.AdjustContents(
+				new Size(
+					_ui.Width - _switch.Width,
+					_ui.Height - _minimise.Height
+				)
+			);
 		}
 
 		public void HandleTabClick()
@@ -235,7 +284,146 @@ namespace SpriteWave
 
 		public void Cycle(int dir)
 		{
-			_tabs.SelectedIndex = (_tabs.SelectedIndex + _tabs.TabCount + dir) % _tabs.TabCount;
+			var tabs = _wnd.Tabs;
+			_curTab = (_curTab + tabs.Count + dir) % tabs.Count;
+		}
+
+		Point[][] _minimiseShapes = {
+			new[] {
+				new Point(12, 2),
+				new Point(22, 2),
+				new Point(22, 11),
+				new Point(12, 11),
+				new Point(12, 2)
+			},
+			new[] {
+				new Point(12, 7),
+				new Point(22, 7)
+			}
+		};
+
+		PointF[][] _switchShapes = {
+			new[] {
+				new PointF(0.05f, 0.25f),
+				new PointF(0.85f, 0.50f),
+				new PointF(0.05f, 0.75f)
+			},
+			new[] {
+				new PointF(0.85f, 0.25f),
+				new PointF(0.05f, 0.50f),
+				new PointF(0.85f, 0.75f)
+			}
+		};
+	}
+
+	public class ToolBoxButton : Button
+	{
+		private readonly Pen _pen = new Pen(Color.Black);
+
+		private PointF[][] _shapes;
+		private Bitmap[] _imgs;
+
+		private int _idx;
+		public int State
+		{
+			set {
+				_idx = value;
+				this.Image = _imgs[_idx];
+			}
+		}
+
+		public ToolBoxButton(PointF[][] fracPoints, Size size, int startIdx = 0)
+		{
+			_shapes = fracPoints;
+			Initialise(size, startIdx);
+		}
+
+		public ToolBoxButton(Point[][] pixPoints, Size size, int startIdx = 0)
+		{
+			_shapes = new PointF[pixPoints.Length][];
+			Size client = Interior(size);
+
+			int i = 0, j = 0;
+			foreach (Point[] shp in pixPoints)
+			{
+				_shapes[i] = new PointF[shp.Length];
+				foreach (Point p in shp)
+					_shapes[i][j++] = new PointF(
+						(float)p.X / (float)client.Width,
+						(float)p.Y / (float)client.Height
+					);
+
+				j = 0;
+				i++;
+			}
+
+			Initialise(size, startIdx);
+		}
+
+		private void Initialise(Size size, int startIdx)
+		{
+			this.BackColor = SystemColors.ControlLight;
+			this.FlatAppearance.BorderSize = 0;
+			this.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+			this.UseVisualStyleBackColor = false;
+			this.SetStyle(ControlStyles.Selectable, false);
+
+			_imgs = new Bitmap[_shapes.Length];
+			_idx = startIdx;
+			this.Size = size; // Calls Render()
+		}
+
+		public void Render()
+		{
+			if (_shapes == null)
+				return;
+
+			Size client = Interior(this.Size);
+
+			if (client.Width < 1 || client.Height < 1)
+				return;
+
+			for (int i = 0; i < _shapes.Length; i++)
+				_imgs[i] = CreateShape(_shapes[i], client);
+
+			this.Image = _imgs[_idx];
+		}
+
+		private static Size Interior(Size s)
+		{
+			return new Size(
+				s.Width - 4,
+				s.Height - 5
+			);
+		}
+
+		private Bitmap CreateShape(PointF[] poly, Size area)
+		{
+			int w = area.Width;
+			int h = area.Height;
+
+			Point[] scaled = new Point[poly.Length];
+			int i = 0;
+			foreach (PointF p in poly)
+				scaled[i++] = new Point(
+					(int)(p.X * (float)w),
+					(int)(p.Y * (float)h)
+				);
+
+			Bitmap canvas = new Bitmap(area.Width, area.Height);
+			using (var g = Graphics.FromImage(canvas))
+			{
+				g.SmoothingMode = SmoothingMode.AntiAlias;
+				g.DrawLines(_pen, scaled);
+			}
+
+			return canvas;
+		}
+
+		protected override void OnLayout(LayoutEventArgs e)
+		{
+			base.OnLayout(e);
+			Render();
 		}
 	}
 }

@@ -35,13 +35,15 @@ namespace SpriteWave
 			}
 		}
 
-		public Tile TileSample { set { ((InputControlsTab)_controlsTab).Sample = TileBitmap(value); } }
+		public InputControlsTab ControlsTab { get { return Tabs[TabIndex("Controls")] as InputControlsTab; } }
 
-		public bool IsTileSampleVisible { get { return ((InputControlsTab)_controlsTab).IsSampleVisible; } }
+		public Tile TileSample { set { ControlsTab.Sample = TileBitmap(value); } }
 
-		public InputWindow(MainForm main)
+		public InputWindow(MainForm main, EventHandler sendTileAction)
 			: base(main)
 		{
+			ControlsTab.SendTileAction = sendTileAction;
+
 			_row = 0;
 			_vis = new Position(0, 0);
 			DeleteFrame();
@@ -58,7 +60,7 @@ namespace SpriteWave
 			_cl.LoadTiles(_contents, offset);
 			Render();
 
-			((InputControlsTab)_controlsTab).SizeText = file.Length;
+			ControlsTab.SizeText = file.Length;
 
 			Activate();
 			ResetScroll();
@@ -160,8 +162,8 @@ namespace SpriteWave
 			if (_cl == null || _window == null)
 				return;
 
-			int wndW = width > 0 ? width : _window.Size.Width;
-			int wndH = height > 0 ? height : _window.Size.Height;
+			int wndW = width > 0 ? width : _window.Width;
+			int wndH = height > 0 ? height : _window.Height;
 
 			if (wndW <= 0 || wndH <= 0)
 				return;
@@ -182,6 +184,9 @@ namespace SpriteWave
 				_vis.row = rows;
 				wndH = (int)((float)_vis.row * thF * scaleX);
 			}
+
+			if (_row + _vis.row > rows)
+				_row = Math.Max(rows - _vis.row, 0);
 
 			_window.Width = wndW;
 			if (wndH <= _window.Height)

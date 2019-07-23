@@ -4,8 +4,12 @@ using System.Windows.Forms;
 
 namespace SpriteWave
 {
-	public class InputControlsTab : TabPage, ITab
+	public class InputControlsTab : ITab
 	{
+		private string _name;
+		private Panel _panel;
+		private readonly InputWindow _wnd;
+
 		private Label _offsetLabel;
 		private TextBox _offsetBox;
 		private Label _sizeLabel;
@@ -14,19 +18,24 @@ namespace SpriteWave
 
 		private Bitmap _sampleBmp;
 
-		private readonly InputWindow _wnd;
+		public string Name { get { return _name; } }
+
+		public Panel Panel { get { return _panel; } }
+
 		public TileWindow Window { get { return _wnd as TileWindow; } set {} }
 
 		public Size Minimum
 		{
 			get {
 				int h = 70;
-				if (this.Visible && _sendTile.Location.X <= _sizeLabel.Location.X + _sizeLabel.Size.Width)
+				if (_panel.Visible && _sendTile.Location.X <= _sizeLabel.Location.X + _sizeLabel.Width)
 					h += 50;
 
 				return new Size(200, h);
 			}
 		}
+
+		public int X { set { _panel.Location = new Point(value, _panel.Location.Y); } }
 
 		public Bitmap Sample
 		{
@@ -37,11 +46,11 @@ namespace SpriteWave
 				_sendTile.Enabled = state;
 				_tileSample.Enabled = state;
 
-				AdjustContents();
+				//AdjustContents();
 			}
 		}
 
-		public bool IsSampleVisible { get { return this.Visible && _sampleBmp != null; } }
+		public bool IsSampleVisible { get { return this.Panel.Visible && _sampleBmp != null; } }
 
 		public EventHandler SendTileAction { set { _sendTile.Click += value; } }
 
@@ -50,7 +59,11 @@ namespace SpriteWave
 		public InputControlsTab(InputWindow wnd)
 		{
 			_wnd = wnd;
-			this.SetupTab("Controls");
+			_name = "Controls";
+
+			_panel = new Panel();
+			_panel.Name = "controlsTab";
+			//_panel.UseVisualStyleBackColor = true;
 
 			_offsetLabel = new Label();
 			_offsetLabel.Location = new System.Drawing.Point(5, 18);
@@ -87,25 +100,19 @@ namespace SpriteWave
 			_tileSample.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
 			_tileSample.Paint += this.paintSample;
 
-			this.Controls.Add(_offsetLabel);
-			this.Controls.Add(_offsetBox);
-			this.Controls.Add(_sizeLabel);
-			this.Controls.Add(_sendTile);
-			this.Controls.Add(_tileSample);
+			_panel.Controls.Add(_offsetLabel);
+			_panel.Controls.Add(_offsetBox);
+			_panel.Controls.Add(_sizeLabel);
+			_panel.Controls.Add(_sendTile);
+			_panel.Controls.Add(_tileSample);
 		}
 
-		public void AdjustContents()
+		public void AdjustContents(Size size)
 		{
-			Func<int, int, int, int> centre = (off, cont, obj) => off + (cont - obj) / 2;
-
-			Action<Control, int, int> position = (ctrl, x, gap) =>
-			{
-				int y = this.Size.Height - gap;
-				ctrl.Location = new Point(x, y);
-			};
-
-			int w = this.Size.Width;
+			int w = size.Width;
 			int h = this.Minimum.Height;
+
+			_panel.Size = new Size(w, h);
 
 			_offsetLabel.Location = new Point(_offsetLabel.Location.X, h - 45);
 			_offsetBox.Location = new Point(_offsetBox.Location.X, h - 48);
