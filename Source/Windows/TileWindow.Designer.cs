@@ -28,7 +28,30 @@ namespace SpriteWave
 		}
 
 		protected List<ITab> _tabs;
-		public List<ITab> Tabs { get { return _tabs; } }
+
+		public int TabCount { get { return _tabs.Count; } }
+
+		public ITab this[int idx]
+		{
+			get {
+				if (idx < 0 || idx >= _tabs.Count)
+					return null;
+
+				return _tabs[idx];
+			}
+		}
+		public ITab this[string name]
+		{
+			get {
+				foreach (ITab t in _tabs)
+				{
+					if (t.Name == name)
+						return t;
+				}
+
+				return null;
+			}
+		}
 
 		public Point CanvasPos { get { return _window.Location; } }
 		public Size CanvasSize { get { return _window.Size; } }
@@ -168,15 +191,10 @@ namespace SpriteWave
 			);
 		}
 
-		public int TabIndex(string name)
+		// Implements ITabCollection.ConfigureTabs
+		public int TabIndex(ITab t)
 		{
-			for (int i = 0; i < _tabs.Count; i++)
-			{
-				if (_tabs[i].Name == name)
-					return i;
-			}
-
-			return -1;
+			return _tabs.IndexOf(t);
 		}
 
 		public void ToggleTabsContents(bool state)
@@ -221,6 +239,18 @@ namespace SpriteWave
 		public bool WindowIs(Control c)
 		{
 			return c == _window || c == _prompt;
+		}
+
+		public void ProvideTabButtons(ToolBox box)
+		{
+			foreach (ITab t in _tabs)
+				box.AddTabButton(t.TabButton);
+		}
+
+		public void RescindTabButtons(ToolBox box)
+		{
+			foreach (ITab t in _tabs)
+				box.RemoveTabButton(t.TabButton);
 		}
 	}
 }

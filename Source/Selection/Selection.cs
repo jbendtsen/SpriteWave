@@ -29,7 +29,7 @@ namespace SpriteWave
 		{
 			var sel = obj as Selection;
 			if (sel == null)
-				return true;
+				return false;
 
 			return
 				sel.Window == _wnd &&

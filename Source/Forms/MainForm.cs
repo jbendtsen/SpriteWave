@@ -16,6 +16,7 @@ namespace SpriteWave
 		private Dictionary<FormatKind, FileFormat> _formatList;
 
 		private DragObject _drag;
+		private bool _tempSpriteSel = false;
 
 		public delegate void TileAction(TileWindow tw);
 
@@ -46,23 +47,27 @@ namespace SpriteWave
 			filter = filter.Remove(filter.Length-1);
 			this.openFileDialog1.Filter = filter;
 
-			EventHandler sendTileAction = (s, e) => {CopyTile(_inputWnd); PasteTile(_spriteWnd);};
-			_inputWnd = new InputWindow(this, sendTileAction);
-
+			_inputWnd = new InputWindow(this);
 			_spriteWnd = new SpriteWindow(this);
-
 			_toolBox = new ToolBox(this, _inputWnd);
 
-			ToolBox.ConfigureTabs(_inputWnd.Tabs, this.ConfigureControls);
-			ToolBox.ConfigureTabs(_spriteWnd.Tabs, this.ConfigureControls);
-			//_toolBox.Configure(this.ConfigureControls);
+			EventPair[] sendTileEvents =
+			{
+				new EventPair("Click", (s, e) => { CopyTile(_inputWnd); PasteTile(_spriteWnd); _tempSpriteSel = true; }),
+				new EventPair("MouseEnter", (s, e) => { _tempSpriteSel = _spriteWnd.Selected; _spriteWnd.Selected = true; _spriteWnd.Draw(); }),
+				new EventPair("MouseLeave", (s, e) => { _spriteWnd.Selected = _tempSpriteSel; _spriteWnd.Draw(); })
+			};
+
+			Control c = Utils.FindControl(_inputWnd["Controls"].Panel, "inputSend");
+			Utils.ApplyEvents(c, sendTileEvents);
 
 			// Setup MainForm events
 			this.KeyPreview = true;
 			this.KeyUp += this.keyUpHandler;
 			this.KeyDown += this.keysHandler;
+			this.Resize += this.catchWindowState;
 			this.Layout += this.layoutHandler;
-			Utils.ApplyRecursiveControlAction(this, this.ConfigureControls);
+			Utils.ApplyRecursiveControlFunc(this, this.ConfigureControls);
 
 			UpdateMinimumSize();
 			_inputWnd.Focus(this);
@@ -112,12 +117,12 @@ namespace SpriteWave
 			this.PerformLayout();
 		}
 
-		private object ConfigureControls(Control ctrl, object args)
+		public object ConfigureControls(Control ctrl, object args)
 		{
 			ctrl.TabStop = false;
-			ctrl.MouseDown += new MouseEventHandler(this.mouseDownHandler);
-			ctrl.MouseMove += new MouseEventHandler(this.mouseMoveHandler);
-			ctrl.MouseUp   += new MouseEventHandler(this.mouseUpHandler);
+			ctrl.MouseDown += this.mouseDownHandler;
+			ctrl.MouseMove += this.mouseMoveHandler;
+			ctrl.MouseUp   += this.mouseUpHandler;
 			return null;
 		}
 
@@ -144,19 +149,20 @@ namespace SpriteWave
 
 		private void ShowMenuAt(TileWindow wnd, int x, int y)
 		{
-			try {
-				wnd.Position = wnd.GetPosition(x, y);
-				if (wnd == _inputWnd)
-					SetSample(_inputWnd.PieceAt(_inputWnd.Position) as Tile);
-
-				Transfer.Source = wnd.CurrentSelection();
-				if (wnd.EdgeOf(wnd.Position) == EdgeKind.None)
-					wnd.ShowMenu(x, y);
-			}
-			catch (ArgumentOutOfRangeException) {
+			bool wasOob;
+			wnd.Position = wnd.GetPosition(x, y, out wasOob);
+			if (wasOob) {
 				ClearSelection();
 				SetSample(null);
+				return;
 			}
+
+			if (wnd == _inputWnd)
+				SetSample(_inputWnd.PieceAt(_inputWnd.Position) as Tile);
+
+			Transfer.Source = wnd.CurrentSelection();
+			if (wnd.EdgeOf(wnd.Position) == EdgeKind.None)
+				wnd.ShowMenu(x, y);
 		}
 
 		private object FindControlWithMouse(Control c, object args)
@@ -170,7 +176,7 @@ namespace SpriteWave
 		private void mouseMoveHandler(object sender, MouseEventArgs e)
 		{
 			var startCtrl = sender as Control;
-			var curCtrl = Utils.ApplyRecursiveControlAction(this, FindControlWithMouse) as Control;
+			var curCtrl = Utils.ApplyRecursiveControlFunc(this, FindControlWithMouse) as Control;
 
 			TileWindow wnd = null;
 			if (_inputWnd.WindowIs(curCtrl))
@@ -229,7 +235,7 @@ namespace SpriteWave
 			var ctrl = sender as Control;
 			if (ctrl is TabControl)
 			{
-				_toolBox.HandleTabClick();
+				_toolBox.RefreshTab();
 				this.PerformLayout();
 			}
 			else if (_drag == null)
@@ -355,6 +361,7 @@ namespace SpriteWave
 					if (!_toolBox.IsOpen)
 						_toolBox.Minimise();
 
+					_spriteWnd.Centre();
 					this.PerformLayout();
 					this.ActiveControl = _toolBox.GetControl("inputOffset");
 				}
@@ -411,14 +418,16 @@ namespace SpriteWave
 
 				if (e.KeyCode == Keys.Tab)
 				{
-					if (SwitchToolBoxWindow() && !_toolBox.IsOpen)
+					if (!_toolBox.IsOpen)
 						_toolBox.Minimise();
+
+					SwitchToolBoxWindow();
 				}
 			}
 			else
 			{
 				bool move = true;
-	
+
 				if (e.KeyCode == Keys.W)
 					_inputWnd.MoveSelection(0, -1);
 				else if (e.KeyCode == Keys.S)
@@ -427,7 +436,7 @@ namespace SpriteWave
 					_inputWnd.MoveSelection(-1, 0);
 				else if (e.KeyCode == Keys.D)
 					_inputWnd.MoveSelection(1, 0);
-	
+
 				else if (e.KeyCode == Keys.I)
 					_spriteWnd.MoveSelection(0, -1);
 				else if (e.KeyCode == Keys.K)
@@ -436,10 +445,10 @@ namespace SpriteWave
 					_spriteWnd.MoveSelection(-1, 0);
 				else if (e.KeyCode == Keys.L)
 					_spriteWnd.MoveSelection(1, 0);
-	
+
 				else
 					move = false;
-				
+
 				if (move)
 				{
 					Transfer.Source = _inputWnd.CurrentSelection();
@@ -454,7 +463,8 @@ namespace SpriteWave
 					else
 					{
 						_toolBox.Cycle(1);
-						_toolBox.HandleTabClick();
+						_toolBox.RefreshTab();
+						_spriteWnd.Centre();
 					}
 
 					this.PerformLayout();
@@ -462,6 +472,21 @@ namespace SpriteWave
 			}
 
 			_keyHeld = true;
+		}
+
+		/*
+			Thank you StackOverflow!
+			https://stackoverflow.com/a/16626928
+		*/
+		FormWindowState _prevState = FormWindowState.Minimized;
+		private void catchWindowState(object sender, EventArgs e)
+		{
+			if (this.WindowState != _prevState)
+			{
+				_prevState = this.WindowState;
+				_spriteWnd.Centre();
+				_spriteWnd.Draw();
+			}
 		}
 
 		private void UpdateMinimumSize()
@@ -517,6 +542,10 @@ namespace SpriteWave
 
 			_toolBox.CurrentWindow = wnd;
 			this.PerformLayout();
+
+			_spriteWnd.Centre();
+			_spriteWnd.Draw();
+
 			return true;
 		}
 

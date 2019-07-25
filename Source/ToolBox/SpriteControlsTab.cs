@@ -14,6 +14,8 @@ namespace SpriteWave
 		private readonly Pen _dividerPen = new Pen(Color.Silver);
 
 		private string _name;
+		private string _id;
+		private Button _tabButton;
 		private Panel _panel;
 		private readonly SpriteWindow _wnd;
 
@@ -43,9 +45,9 @@ namespace SpriteWave
 		private bool _pathSelected = false;
 
 		public string Name { get { return _name; } }
-
+		public string ID { get { return _id; } }
+		public Button TabButton { get { return _tabButton; } }
 		public Panel Panel { get { return _panel; } }
-
 		public TileWindow Window { get { return _wnd; } set {} }
 
 		public Size Minimum { get { return new Size(320, 192); } }
@@ -55,10 +57,14 @@ namespace SpriteWave
 		public SpriteControlsTab(SpriteWindow wnd)
 		{
 			_wnd = wnd;
+			_id = "spriteControlsTab";
 			_name = "Controls";
 
+			_tabButton = new ToolBoxButton(_name);
+			_tabButton.Tag = this;
+
 			_panel = new Panel();
-			_panel.Name = "controlsTab";
+			_panel.Name = "spriteControlsPanel";
 			_panel.Paint += this.drawDivider;
 
 			_folderBrowser = new FolderBrowserDialog();

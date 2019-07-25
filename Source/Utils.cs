@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using System.Reflection;
 using System.IO;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -19,6 +19,18 @@ namespace SpriteWave
 		}
 	}
 
+	public struct EventPair
+	{
+		public string name;
+		public EventHandler handler;
+
+		public EventPair(string n, EventHandler h)
+		{
+			name = n;
+			handler = h;
+		}
+	}
+
 	public static class Utils
 	{
 		public const int cLen = 4;
@@ -26,12 +38,6 @@ namespace SpriteWave
 		public static Type TileType(string name)
 		{
 			return Type.GetType("SpriteWave." + name);
-		}
-		
-		public static void Reset(this ScrollBar bar)
-		{
-			bar.Minimum = 0;
-			bar.Value = 0;
 		}
 		
 		public static Control FindControl(Control container, string name)
@@ -59,17 +65,37 @@ namespace SpriteWave
 			return c;
 		}
 		
-		public delegate object ControlAction(Control ctrl, object obj);
+		public delegate object ControlFunc(Control ctrl, object result);
 
 		// Sounds (at least) 10x scarier than it really is
-		public static object ApplyRecursiveControlAction(Control ctrl, ControlAction ctrlAction, object obj = null)
+		public static object ApplyRecursiveControlFunc(Control ctrl, ControlFunc ctrlFunc, object result = null)
 		{
-			obj = ctrlAction(ctrl, obj);
+			result = ctrlFunc(ctrl, result);
 
 			foreach (Control c in ctrl.Controls)
-				obj = ApplyRecursiveControlAction(c, ctrlAction, obj);
+				result = ApplyRecursiveControlFunc(c, ctrlFunc, result);
 
-			return obj;
+			return result;
+		}
+
+		public static void ApplyEvents(Control ctrl, EventPair[] events)
+		{
+			var list = ctrl.GetType().GetEvents();
+			int count = 0;
+			foreach (EventInfo ev in list)
+			{
+				foreach (EventPair pair in events)
+				{
+					if (ev.Name == pair.name)
+					{
+						ev.AddEventHandler(ctrl, pair.handler);
+						count++;
+						break;
+					}
+				}
+				if (count == events.Length)
+					return;
+			}
 		}
 
 		/*
@@ -94,7 +120,13 @@ namespace SpriteWave
 
 			return c == null && val != null;
 		}
-		
+
+		public static void Reset(this ScrollBar bar)
+		{
+			bar.Minimum = 0;
+			bar.Value = 0;
+		}
+
 		public static void Inform(this ScrollBar bar, int value, int large, int min, int max)
 		{
 			bar.LargeChange = large;

@@ -150,14 +150,9 @@ namespace SpriteWave
 
 		public bool HighlightEdgeAt(int x, int y)
 		{
-			var kind = EdgeKind.None;
-			try {
-				kind = EdgeOf(GetPosition(x, y));
-			}
-			catch (Exception ex) {
-				if (!(ex is ArgumentOutOfRangeException))
-					throw;
-			}
+			bool wasOob;
+			Position pos = GetPosition(x, y, out wasOob);
+			EdgeKind kind = wasOob ? EdgeKind.None : EdgeOf(pos);
 
 			Edge e = _edges[(int)kind];
 			bool changed = _hlEdge != e;
@@ -388,8 +383,10 @@ namespace SpriteWave
 			);
 		}
 
-		public override Position GetPosition(int x, int y, bool allowOob = false)
+		public override Position GetPosition(int x, int y, out bool wasOob)
 		{
+			wasOob = false;
+
 			if (_cl == null)
 				return new Position(0, 0);
 
@@ -402,12 +399,7 @@ namespace SpriteWave
 			col -= xPos < 0 ? 1 : 0;
 			row -= yPos < 0 ? 1 : 0;
 
-			if (!allowOob &&
-				(col < -1 || col > _cl.Columns ||
-				 row < -1 || row > _cl.Rows)
-			) {
-				throw new ArgumentOutOfRangeException();
-			}
+			wasOob = (col < -1 || col > _cl.Columns || row < -1 || row > _cl.Rows);
 
 			return new Position(col, row);
 		}

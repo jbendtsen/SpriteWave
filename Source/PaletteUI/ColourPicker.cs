@@ -224,8 +224,8 @@ namespace SpriteWave
 			}
 			catch (Exception ex) {
 				if (ex is FormatException ||
-				    ex is OverflowException ||
-				    ex is InvalidOperationException
+					ex is OverflowException ||
+					ex is InvalidOperationException
 				)
 					return;
 
@@ -293,7 +293,7 @@ namespace SpriteWave
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		//[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static void RenderAlphaPixel(AlphaPixel info, byte[] buf, int w, int h, int idx)
 		{
 			const int frame = ColourBox.Border;
@@ -315,7 +315,7 @@ namespace SpriteWave
 			buf[i + (int)BGRA.Alpha] = 255;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		//[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private static void RenderOpaquePixel(float b, float g, float r, byte[] buf, int w, int h, int idx)
 		{
 			const int frame = ColourBox.Border;

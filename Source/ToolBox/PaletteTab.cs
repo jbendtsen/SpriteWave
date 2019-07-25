@@ -7,13 +7,16 @@ namespace SpriteWave
 	public class PaletteTab : ITab
 	{
 		private string _name;
+		private string _id;
+		private Button _tabButton;
 		private Panel _panel;
 		private TileWindow _wnd;
 
 		private PaletteBox _primary;
 
 		public string Name { get { return _name; } }
-
+		public string ID { get { return _id; } }
+		public Button TabButton { get { return _tabButton; } }
 		public Panel Panel { get { return _panel; } }
 
 		public TileWindow Window
@@ -32,10 +35,14 @@ namespace SpriteWave
 		public PaletteTab(TileWindow wnd)
 		{
 			_wnd = wnd;
+			_id = "paletteTab";
 			_name = "Palette";
 
+			_tabButton = new ToolBoxButton(_name);
+			_tabButton.Tag = this;
+
 			_panel = new Panel();
-			_panel.Name = "paletteTab";
+			_panel.Name = "palettePanel";
 
 			Point org = new Point(20, 10);
 			//Size s = new Size(this.ClientSize.Width - org.X * 2, this.ClientSize.Height - org.Y * 2);

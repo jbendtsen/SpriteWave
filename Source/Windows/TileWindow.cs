@@ -4,7 +4,7 @@ using System.Windows.Forms;
 
 namespace SpriteWave
 {
-	public abstract partial class TileWindow
+	public abstract partial class TileWindow : ITabCollection
 	{
 		protected Collage _cl;
 
@@ -23,15 +23,7 @@ namespace SpriteWave
 
 		public bool IsActive { get { return _cl != null; } }
 
-		public virtual bool Selected
-		{
-			get {
-				return _isSel;
-			}
-			set {
-				_isSel = value;
-			}
-		}
+		public virtual bool Selected { get { return _isSel; } set { _isSel = value; } }
 
 		public Position Position
 		{
@@ -94,7 +86,13 @@ namespace SpriteWave
 
 		public abstract void UpdateBars();
 		
-		public abstract Position GetPosition(int x, int y, bool allowOob = false);
+		public abstract Position GetPosition(int x, int y, out bool wasOob);
+		public virtual Position GetPosition(int x, int y)
+		{
+			bool _;
+			return GetPosition(x, y, out _);
+		}
+
 		public abstract RectangleF PieceHitbox(Position p);
 
 		public abstract void DrawGrid(Graphics g);

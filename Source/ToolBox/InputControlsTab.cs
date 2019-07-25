@@ -7,6 +7,8 @@ namespace SpriteWave
 	public class InputControlsTab : ITab
 	{
 		private string _name;
+		private string _id;
+		private Button _tabButton;
 		private Panel _panel;
 		private readonly InputWindow _wnd;
 
@@ -19,9 +21,9 @@ namespace SpriteWave
 		private Bitmap _sampleBmp;
 
 		public string Name { get { return _name; } }
-
+		public string ID { get { return _id; } }
+		public Button TabButton { get { return _tabButton; } }
 		public Panel Panel { get { return _panel; } }
-
 		public TileWindow Window { get { return _wnd as TileWindow; } set {} }
 
 		public Size Minimum
@@ -59,10 +61,14 @@ namespace SpriteWave
 		public InputControlsTab(InputWindow wnd)
 		{
 			_wnd = wnd;
+			_id = "inputControlsTab";
 			_name = "Controls";
 
+			_tabButton = new ToolBoxButton(_name);
+			_tabButton.Tag = this;
+
 			_panel = new Panel();
-			_panel.Name = "controlsTab";
+			_panel.Name = "inputControlsPanel";
 			//_panel.UseVisualStyleBackColor = true;
 
 			_offsetLabel = new Label();

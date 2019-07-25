@@ -35,15 +35,13 @@ namespace SpriteWave
 			}
 		}
 
-		public InputControlsTab ControlsTab { get { return Tabs[TabIndex("Controls")] as InputControlsTab; } }
+		public InputControlsTab ControlsTab { get { return this["Controls"] as InputControlsTab; } }
 
 		public Tile TileSample { set { ControlsTab.Sample = TileBitmap(value); } }
 
-		public InputWindow(MainForm main, EventHandler sendTileAction)
+		public InputWindow(MainForm main)
 			: base(main)
 		{
-			ControlsTab.SendTileAction = sendTileAction;
-
 			_row = 0;
 			_vis = new Position(0, 0);
 			DeleteFrame();
@@ -114,8 +112,10 @@ namespace SpriteWave
 				_scrollY.Inform(_row, _vis.row, 0, _cl.Rows);
 		}
 
-		public override Position GetPosition(int x, int y, bool allowOob = false)
+		public override Position GetPosition(int x, int y, out bool wasOob)
 		{
+			wasOob = false;
+
 			SizeF tileSc = TileDimensions;
 
 			var pos = new Position(

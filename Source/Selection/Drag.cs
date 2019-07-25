@@ -28,30 +28,25 @@ namespace SpriteWave
 			if (_lastWnd == null)
 				return null;
 
-			Position p;
-			try {
-				bool allowOob = _selObj is Edge;
-				p = _lastWnd.GetPosition(_lastX, _lastY, allowOob);
-				_lastWnd.Selected = true;
-			}
-			catch {
-				_lastWnd.Selected = false;
-				return null;
-			}
+			bool wasOob;
+			Position pos = _lastWnd.GetPosition(_lastX, _lastY, out wasOob);
 
-			Edge e = _selObj as Edge;
-			if (e != null)
+			Edge edge = _selObj as Edge;
+			if (edge == null)
 			{
-				if (_lastWnd == _orgWnd)
-					e.Distance = new Position(
-						p.col - _orgPos.col,
-						p.row - _orgPos.row
-					);
-				else
-					e.Distance = new Position(0, 0);
+				_lastWnd.Selected = !wasOob;
+				return wasOob ? null : new Selection(_selObj, _lastWnd, pos);
 			}
 
-			return new Selection(_selObj, _lastWnd, p);
+			if (_lastWnd == _orgWnd)
+				edge.Distance = new Position(
+					pos.col - _orgPos.col,
+					pos.row - _orgPos.row
+				);
+			else
+				edge.Distance = new Position(0, 0);
+
+			return new Selection(_selObj, _lastWnd, pos);
 		}
 
 		public DragObject(TileWindow wnd, int x, int y)
@@ -62,7 +57,10 @@ namespace SpriteWave
 			_lastWnd = wnd;
 			_orgWnd = wnd;
 
-			_orgPos = _orgWnd.GetPosition(x, y);
+			bool wasOob;
+			_orgPos = _orgWnd.GetPosition(x, y, out wasOob);
+			if (wasOob)
+				throw new ArgumentOutOfRangeException();
 
 			_selObj = _orgWnd.PieceAt(_orgPos);
 			if (_selObj is Tile)
@@ -114,13 +112,9 @@ namespace SpriteWave
 				return (dist.col != 0 || dist.row != 0);
 			}
 
-			try {
-				Position loc = wnd.GetPosition(_lastX, _lastY);
-				return (loc.col != _orgPos.col || loc.row != _orgPos.row);
-			}
-			catch (ArgumentOutOfRangeException) {}
-
-			return false;
+			bool wasOob;
+			Position loc = wnd.GetPosition(_lastX, _lastY, out wasOob);
+			return !wasOob && (loc.col != _orgPos.col || loc.row != _orgPos.row);
 		}
 
 		public Selection Update(TileWindow wnd, int x, int y)
@@ -138,6 +132,7 @@ namespace SpriteWave
 			{
 				_lastWnd.Cursor = null;
 				_lastWnd.Selected = false;
+				_lastWnd.Draw();
 			}
 
 			_lastWnd = wnd;
