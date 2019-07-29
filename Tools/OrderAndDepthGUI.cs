@@ -120,7 +120,7 @@ namespace SpriteWave
 
 	class OrderAndDepthGUI : Form
 	{
-		ColourTable _table;
+		ColorTable _table;
 		InputModule _spec, _rgba, _native;
 
 		public OrderAndDepthGUI()
@@ -133,15 +133,15 @@ namespace SpriteWave
 			_spec.Visible = true;
 
 			_rgba = new InputModule(this, "RGBA", 30, 145);
-			_rgba.SetText("RGBA Colour Field", null, "--->");
+			_rgba.SetText("RGBA Color Field", null, "--->");
 			_rgba.OnSubmit = RGBAToNative;
 
 			_native = new InputModule(this, "Native", 160, 145);
-			_native.SetText("Native Colour Field", null, "<---");
+			_native.SetText("Native Color Field", null, "<---");
 			_native.OnSubmit = NativeToRGBA;
 		}
 
-		public void SetColour(uint rgba)
+		public void SetColor(uint rgba)
 		{
 			int rgb = (int)(rgba >> 8);
 			this.BackColor = Color.FromArgb(255, Color.FromArgb(rgb));
@@ -150,7 +150,7 @@ namespace SpriteWave
 		public void NewSpec(InputModule mod)
 		{
 			uint seed = mod.Input;
-			_table = new ColourTable(seed, null);
+			_table = new ColorTable(seed, null);
 
 			mod.Value = seed;
 
@@ -169,7 +169,7 @@ namespace SpriteWave
 			_rgba.Value = rgba;
 			_native.Value = nat;
 
-			SetColour(rgba);
+			SetColor(rgba);
 		}
 
 		public void NativeToRGBA(InputModule mod)
@@ -180,7 +180,7 @@ namespace SpriteWave
 			_native.Value = nat;
 			_rgba.Value = rgba;
 
-			SetColour(rgba);
+			SetColor(rgba);
 		}
 	}
 

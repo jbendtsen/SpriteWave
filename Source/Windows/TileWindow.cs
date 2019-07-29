@@ -158,7 +158,7 @@ namespace SpriteWave
 
 		public void ResetGridPen()
 		{
-			uint marginClr = Utils.InvertRGB(_cl.MeanColour);
+			uint marginClr = Utils.InvertRGB(_cl.MeanColor);
 			_gridPen = new Pen(Utils.FromRGB(marginClr), 1.0f);
 		}
 

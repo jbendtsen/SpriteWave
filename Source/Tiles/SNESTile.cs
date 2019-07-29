@@ -54,7 +54,7 @@ namespace SpriteWave
 			int idx = row * W;
 			for (int i = 0, s = 0; i < W; i++, s += cLen)
 			{
-				// Copies a colour from inside 'palBGRA', indexed by 'palIdx', to 'line' at 'offset + s'
+				// Copies a color from inside 'palBGRA', indexed by 'palIdx', to 'line' at 'offset + s'
 				int palIdx = _data[idx] * cLen;
 				Buffer.BlockCopy(palBGRA, palIdx, line, offset + s, cLen);
 				idx++;

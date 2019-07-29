@@ -3,26 +3,26 @@
 namespace SpriteWave
 {
 	/*
-		ColourTable: A way of keeping track of which colours the system (NES, SNES, etc.) has access to.
-		There are two different ways a ColourTable is created: with a pre-defined set of colours, or with an RGBA pattern.
+		ColorTable: A way of keeping track of which colors the system (NES, SNES, etc.) has access to.
+		There are two different ways a ColorTable is created: with a pre-defined set of colors, or with an RGBA pattern.
 		The RGBA pattern is interpreted as a RGBA Order And Depth formula. More detail on that one is provided below.
 	*/
-	public class ColourTable
+	public class ColorTable
 	{
-		// Predetermined colour list
+		// Predetermined color list
 		private uint[] _clrList;
 	
 		// RGBA pattern
 		private byte[] _rgbaOrder, _rgbaOrderInv;
 		private byte[] _rgbaDepth;
 	
-		// Default selection of colours, in the native format. Useful if a palette has not yet been decided.
+		// Default selection of colors, in the native format. Useful if a palette has not yet been decided.
 		private uint[] _defSel;
 
 		public bool IsList { get { return _clrList != null; } }
 		public uint[] Defaults { get { return _defSel; } }
 
-		public ColourTable(uint[] clrList, uint[] defSel)
+		public ColorTable(uint[] clrList, uint[] defSel)
 		{
 			_rgbaOrder = null;
 			_rgbaDepth = null;
@@ -43,7 +43,7 @@ namespace SpriteWave
 				A = depth for the alpha channel (0-8)
 			Each digit takes up 4 bits in the input parameter.
 		*/
-		public ColourTable(uint rgbaOrderAndDepth, uint[] defSel)
+		public ColorTable(uint rgbaOrderAndDepth, uint[] defSel)
 		{
 			_rgbaOrder = new byte[4];
 			_rgbaOrderInv = new byte[4];
@@ -95,7 +95,7 @@ namespace SpriteWave
 	
 		public uint NativeToRGBA(uint idx)
 		{
-			// If there is a pre-determined list of colours, then 'idx' refers to an index in the table. Return that entry.
+			// If there is a pre-determined list of colors, then 'idx' refers to an index in the table. Return that entry.
 			if (_clrList != null)
 			{
 				uint clr = 0;
@@ -106,9 +106,9 @@ namespace SpriteWave
 			}
 	
 			/*
-				Else, we turn our 'index' into an RGBA colour using our 'rgbaOrderAndDepth' formula descriptor.
+				Else, we turn our 'index' into an RGBA color using our 'rgbaOrderAndDepth' formula descriptor.
 				This is something I came up with, so a bit of explanation is always nice.
-				I've noticed there are two common attributes of RGBA colour that are
+				I've noticed there are two common attributes of RGBA color that are
 				often tailored to particular pixel formats: order of channels and bits per channel.
 				'_rgbaOrder' tells us the order of channels as they appear in 'idx', and
 				'_rgbaDepth' tells us how many bits are used for the R, G, B and A channels respectively.
@@ -176,23 +176,23 @@ namespace SpriteWave
 		}
 		
 		// Only checks red, green and blue
-		public static int ClosestColourIndex(uint[] list, uint rgba)
+		public static int ClosestColorIndex(uint[] list, uint rgba)
 		{
 			if (list == null || list.Length < 1)
 				return 0;
 
-			double inRed = Utils.ColourAtF(rgba, 24);
-			double inGreen = Utils.ColourAtF(rgba, 16);
-			double inBlue = Utils.ColourAtF(rgba, 8);
+			double inRed = Utils.ColorAtF(rgba, 24);
+			double inGreen = Utils.ColorAtF(rgba, 16);
+			double inBlue = Utils.ColorAtF(rgba, 8);
 
 			double lowest = Double.PositiveInfinity;
 			int idx = 0;
 			for (int i = 0; i < list.Length; i++)
 			{
 				uint clr = list[idx];
-				double clrRed = Utils.ColourAtF(clr, 24);
-				double clrGreen = Utils.ColourAtF(clr, 16);
-				double clrBlue = Utils.ColourAtF(clr, 8);
+				double clrRed = Utils.ColorAtF(clr, 24);
+				double clrGreen = Utils.ColorAtF(clr, 16);
+				double clrBlue = Utils.ColorAtF(clr, 8);
 
 				// Fun fact: this is the formula for working out the distance between two points in 3D space
 				double delta = Math.Sqrt(
@@ -214,7 +214,7 @@ namespace SpriteWave
 		public uint RGBAToNative(uint rgba)
 		{
 			if (_clrList != null)
-				return (uint)ClosestColourIndex(_clrList, rgba);
+				return (uint)ClosestColorIndex(_clrList, rgba);
 
 			uint native = 0;
 			for (int i = 0; i < 4; i++)
@@ -223,7 +223,7 @@ namespace SpriteWave
 				int depth = _rgbaDepth[which];
 				//Console.WriteLine("i = " + i + ", which = " + which + ", depth = " + depth);
 
-				uint channel = Utils.ColourAt(rgba, _rgbaOrder[3 - i] * 8);
+				uint channel = Utils.ColorAt(rgba, _rgbaOrder[3 - i] * 8);
 				uint val = channel >> (8 - depth);
 
 				native <<= depth;

@@ -7,7 +7,7 @@ namespace SpriteWave
 {
 	abstract partial class TileWindow
 	{
-		protected readonly Color _emptyBackColour = Color.FromArgb(200, 200, 200);
+		protected readonly Color _emptyBackColor = Color.FromArgb(200, 200, 200);
 
 		protected PictureBox _window;
 		protected HScrollBar _scrollX;
@@ -140,7 +140,7 @@ namespace SpriteWave
 			_scrollX.Visible = false;
 			_scrollY.Visible = false;
 
-			_window.BackColor = _emptyBackColour;
+			_window.BackColor = _emptyBackColor;
 		}
 
 		public void UpdateLayout(int x, int w, int totalH, int menuH)

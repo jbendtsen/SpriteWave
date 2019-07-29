@@ -41,7 +41,7 @@ namespace SpriteWave
 		public int Height { get { return Rows * TileH; } }
 
 		private Palette _palette;
-		public uint MeanColour { get { return _palette.Mean; } }
+		public uint MeanColor { get { return _palette.Mean; } }
 
 		private Bitmap _canvas;
 		public Bitmap Bitmap { get { return _canvas; } }
@@ -57,9 +57,9 @@ namespace SpriteWave
 			_readOnly = readOnly;
 		}
 
-		public void SetColour(int idx, uint tblClr)
+		public void SetColor(int idx, uint tblClr)
 		{
-			_palette.SetColour(idx, tblClr);
+			_palette.SetColor(idx, tblClr);
 		}
 
 		public void AddTile(Tile t)

@@ -14,7 +14,7 @@ namespace SpriteWave
 		private Edge _hlEdge;
 
 		private readonly SolidBrush mouseOverBrush;
-		private readonly Color outlineColour = Utils.FromRGB(0x303030);
+		private readonly Color outlineColor = Utils.FromRGB(0x303030);
 		private const float outlineFactor = 4f;
 
 		private const float scrollFactor = 5f;
@@ -458,7 +458,7 @@ namespace SpriteWave
 		public override void DrawEdges(Graphics g)
 		{
 			g.SmoothingMode = SmoothingMode.AntiAlias;
-			Pen outline = new Pen(outlineColour, _zoom / outlineFactor);
+			Pen outline = new Pen(outlineColor, _zoom / outlineFactor);
 
 			foreach (Edge e in _edges)
 			{

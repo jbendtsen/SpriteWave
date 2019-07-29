@@ -28,14 +28,14 @@ namespace SpriteWave
 				"NES",
 				Utils.TileType("NESTile"),
 				new string[] { "nes", "fds", "chr", "bin" },
-				new ColourTable(Utils.NESPalette, Utils.NESDefSel)
+				new ColorTable(Utils.NESPalette, Utils.NESDefSel)
 			);
 
 			_formatList[FormatKind.SNES] = new FileFormat(
 				"SNES",
 				Utils.TileType("SNESTile"),
 				new string[] { "smc", "sfc", "chr", "bin" },
-				new ColourTable(Utils.SNESRGBAOrderAndDepth, Utils.SNESDefSel)
+				new ColorTable(Utils.SNESRGBAOrderAndDepth, Utils.SNESDefSel)
 			);
 
 			InitializeComponent();
@@ -578,9 +578,9 @@ namespace SpriteWave
 			Application.Exit();
 		}
 
-		private void editColourTable(object sender, EventArgs e)
+		private void editColorTable(object sender, EventArgs e)
 		{
-			var ctForm = new EditColourTable();
+			var ctForm = new EditColorTable();
 			ctForm.Show(this);
 		}
 
@@ -594,7 +594,7 @@ namespace SpriteWave
 
 			closeWorkspace(null, null);
 
-			this.colourTableToolStripMenuItem.Enabled = fmt.ColourTable.IsList;
+			this.colorTableToolStripMenuItem.Enabled = fmt.ColorTable.IsList;
 
 			_inputWnd.Load(fmt, data);
 

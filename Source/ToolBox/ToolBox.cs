@@ -15,8 +15,8 @@ namespace SpriteWave
 		private const int MaxHeight = 300;
 		private const int MinMinWidth = 100;
 
-		private readonly Color TabPanelColour = Color.FromArgb(250, 250, 250);
-		private readonly Color TabButtonColour = Color.FromArgb(210, 210, 210);
+		private readonly Color TabPanelColor = Color.FromArgb(250, 250, 250);
+		private readonly Color TabButtonColor = Color.FromArgb(210, 210, 210);
 
 		private bool _isActive;
 		private bool _isOpen;
@@ -240,7 +240,7 @@ namespace SpriteWave
 			_curTab = t;
 
 			t.Panel.Visible = true;
-			t.TabButton.BackColor = TabButtonColour;
+			t.TabButton.BackColor = TabButtonColor;
 
 			foreach (Control c in _ui.Controls)
 			{
@@ -248,7 +248,7 @@ namespace SpriteWave
 					_ui.Controls.Remove(c);
 			}
 
-			t.Panel.BackColor = TabPanelColour;
+			t.Panel.BackColor = TabPanelColor;
 			_ui.Controls.Add(t.Panel);
 
 			if (reconfig)
@@ -305,7 +305,13 @@ namespace SpriteWave
 			ITab old = _curTab;
 			Select((sender as ToolBoxButton).Tag as ITab);
 
-			if (_curTab != old)
+			bool needsRefresh = _curTab != old;
+			if (!this.IsOpen)
+			{
+				Minimise();
+				needsRefresh = true;
+			}
+			if (needsRefresh)
 			{
 				Refresh();
 				Refresh(); // just a tad

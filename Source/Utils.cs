@@ -202,24 +202,28 @@ namespace SpriteWave
 			return faded;
 		}
 
-		public unsafe static void Clear(this PictureBox box)
+		public unsafe static void ClearBitmap(Bitmap img, Color clr, Rectangle area)
 		{
-			Color clr = box.BackColor;
 			uint pix = 0xff000000 | (uint)clr.R << 16 | (uint)clr.G << 8 | (uint)clr.B;
 
-			var data = (box.Image as Bitmap).LockBits(
-				box.DisplayRectangle,
+			var data = img.LockBits(
+				area,
 				ImageLockMode.ReadWrite,
 				PixelFormat.Format32bppArgb
 			);
 
 			uint *fb = (uint*)data.Scan0.ToPointer();
-			int size = box.Width * box.Height;
+			int size = area.Width * area.Height;
 
 			for (int i = 0; i < size; i++)
 				*fb++ = pix;
 
-			(box.Image as Bitmap).UnlockBits(data);
+			img.UnlockBits(data);
+		}
+
+		public static void Clear(this PictureBox box)
+		{
+			ClearBitmap(box.Image as Bitmap, box.BackColor, box.DisplayRectangle);
 			box.Invalidate();
 		}
 
@@ -234,11 +238,11 @@ namespace SpriteWave
 			return (val & (mask << shift)) >> shift;
 		}
 
-		public static uint ColourAt(uint clr, int rshift)
+		public static uint ColorAt(uint clr, int rshift)
 		{
 			return (clr >> rshift) & 0xff;
 		}
-		public static double ColourAtF(uint clr, int rshift)
+		public static double ColorAtF(uint clr, int rshift)
 		{
 			return (double)((clr >> rshift) & 0xff) / 255.0;
 		}
@@ -264,7 +268,7 @@ namespace SpriteWave
 
 		// This is one MEAN method hey?
 		// omg am i the funniest programmer alive or what
-		public static uint MeanColour(uint[] list)
+		public static uint MeanColor(uint[] list)
 		{
 			double red = 0, green = 0, blue = 0, alpha = 0;
 			foreach (uint clr in list)
@@ -281,7 +285,7 @@ namespace SpriteWave
 		// bet you were wondering if i MEANt to repeat this method, eh?
 		// Expected format for list: every 4 bytes makes a pixel,
 		//  with the 4 bytes being stored as blue, green, red, alpha.
-		public static uint MeanColour(byte[] list)
+		public static uint MeanColor(byte[] list)
 		{
 			double red = 0, green = 0, blue = 0, alpha = 0;
 			int len = list.Length / cLen;
@@ -427,7 +431,7 @@ namespace SpriteWave
 
 		public const uint SNESRGBAOrderAndDepth = 0x12305551;
 		
-		// A hand-picked selection of SNES-compatible RGB colours
+		// A hand-picked selection of SNES-compatible RGB colors
 		public static readonly uint[] SNESDefSel =
 		{
 			0x8000, 0x8008, 0x804C, 0x808E, // black -> dark blue

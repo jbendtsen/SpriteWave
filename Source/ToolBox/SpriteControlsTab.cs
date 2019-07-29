@@ -8,9 +8,9 @@ namespace SpriteWave
 {
 	public class SpriteControlsTab : ITab
 	{
-		private readonly Color infoColour = Color.FromArgb(255, 48, 48, 48);
+		private readonly Color infoColor = Color.FromArgb(255, 48, 48, 48);
 
-		private Rectangle _divider = new Rectangle(120, 5, 0, 172);
+		private Rectangle _divider = new Rectangle(120, 5, 0, 174);
 		private readonly Pen _dividerPen = new Pen(Color.Silver);
 
 		private string _name;
@@ -50,7 +50,7 @@ namespace SpriteWave
 		public Panel Panel { get { return _panel; } }
 		public TileWindow Window { get { return _wnd; } set {} }
 
-		public Size Minimum { get { return new Size(320, 192); } }
+		public Size Minimum { get { return new Size(320, 185); } }
 
 		public int X { set { _panel.Location = new Point(value, _panel.Location.Y); } }
 
@@ -88,6 +88,7 @@ namespace SpriteWave
 			_rotateLeftBtn.Name = "rotateLeftBtn";
 			_rotateLeftBtn.Size = new Size(32, 32);
 			_rotateLeftBtn.Location = new Point(26, 30);
+			_rotateLeftBtn.BackColor = Color.Transparent;
 			_rotateLeftBtn.Image = (Image)(resources.GetObject("rotateLeftImg"));
 			_rotateLeftBtn.Click += (s, e) => _wnd.FlipTile(Translation.Left);
 
@@ -95,6 +96,7 @@ namespace SpriteWave
 			_rotateRightBtn.Name = "rotateRightBtn";
 			_rotateRightBtn.Size = new Size(32, 32);
 			_rotateRightBtn.Location = new Point(66, 30);
+			_rotateRightBtn.BackColor = Color.Transparent;
 			_rotateRightBtn.Image = (Image)(resources.GetObject("rotateRightImg"));
 			_rotateRightBtn.Click += (s, e) => _wnd.FlipTile(Translation.Right);
 
@@ -102,6 +104,7 @@ namespace SpriteWave
 			_mirrorHoriBtn.Name = "mirrorHoriBtn";
 			_mirrorHoriBtn.Size = new Size(32, 32);
 			_mirrorHoriBtn.Location = new Point(26, 70);
+			_mirrorHoriBtn.BackColor = Color.Transparent;
 			_mirrorHoriBtn.Image = (Image)(resources.GetObject("mirrorHoriImg"));
 			_mirrorHoriBtn.Click += (s, e) => _wnd.FlipTile(Translation.Horizontal);
 
@@ -109,6 +112,7 @@ namespace SpriteWave
 			_mirrorVertBtn.Name = "mirrorVertBtn";
 			_mirrorVertBtn.Size = new Size(32, 32);
 			_mirrorVertBtn.Location = new Point(66, 70);
+			_mirrorVertBtn.BackColor = Color.Transparent;
 			_mirrorVertBtn.Image = (Image)(resources.GetObject("mirrorVertImg"));
 			_mirrorVertBtn.Click += (s, e) => _wnd.FlipTile(Translation.Vertical);
 
@@ -117,6 +121,7 @@ namespace SpriteWave
 			_eraseBtn.Text = "Erase";
 			_eraseBtn.AutoSize = true;
 			_eraseBtn.Location = new Point(25, 110);
+			_eraseBtn.BackColor = Color.Transparent;
 			_eraseBtn.Click += (s, e) => _wnd.EraseTile();
 
 			_scaleLabel = new Label();
@@ -145,13 +150,14 @@ namespace SpriteWave
 			_folderBtn.Text = "...";
 			_folderBtn.Size = new Size(30, 20);
 			_folderBtn.Location = new Point(189, 55);
+			_folderBtn.BackColor = Color.Transparent;
 			_folderBtn.Click += this.browseFolderHandler;
 
 			_folderText = new Label();
 			_folderText.Name = "folderText";
 			_folderText.Text = "No path set";
 			_folderText.Font = new Font(Label.DefaultFont, FontStyle.Italic);
-			_folderText.ForeColor = infoColour;
+			_folderText.ForeColor = infoColor;
 			_folderText.AutoEllipsis = true;
 			_folderText.Size = new Size(70, 13);
 			_folderText.Location = new Point(226, 58);
@@ -179,7 +185,7 @@ namespace SpriteWave
 
 			_appendBtn = new RadioButton();
 			_appendBtn.Name = "appendBtn";
-			_appendBtn.Text = "Append";
+			_appendBtn.Text = "Append:";
 			_appendBtn.AutoSize = true;
 			_appendBtn.Location = new Point(186, 134);
 			_appendBtn.CheckedChanged += this.writeModeCheck;
@@ -188,7 +194,7 @@ namespace SpriteWave
 			_appendBox.Name = "appendBox";
 			_appendBox.Text = "_{d2}";
 			_appendBox.Size = new Size(50, 20);
-			_appendBox.Location = new Point(250, 133);
+			_appendBox.Location = new Point(254, 133);
 			_appendBox.Enabled = false;
 			_appendBox.Leave += (s, e) => UpdateUI();
 
@@ -196,6 +202,7 @@ namespace SpriteWave
 			_saveButton.Name = "saveButton";
 			_saveButton.Size = new Size(32, 32);
 			_saveButton.Location = new Point(140, 117);
+			_saveButton.BackColor = Color.Transparent;
 			_saveButton.Image = (Image)(resources.GetObject("saveImg"));
 			_saveButton.Click += this.saveButtonHandler;
 			_saveButton.Enabled = false;
@@ -204,7 +211,7 @@ namespace SpriteWave
 			_saveMsg.Name = "saveMsg";
 			_saveMsg.Text = "";
 			_saveMsg.Font = new Font(Label.DefaultFont, FontStyle.Italic);
-			_saveMsg.ForeColor = infoColour;
+			_saveMsg.ForeColor = infoColor;
 			_saveMsg.AutoEllipsis = true;
 			_saveMsg.Size = new Size(100, 13);
 			_saveMsg.Location = new Point(142, 162);

@@ -10,13 +10,13 @@ namespace SpriteWave
 	public class FileFormat
 	{
 		private Type _type;
-		private ColourTable _table;
+		private ColorTable _table;
 		private string _name;
 		private string[] _exts;
 		
 		public string Name { get { return _name; } }
 
-		public FileFormat(string n, Type t, string[] e, ColourTable c)
+		public FileFormat(string n, Type t, string[] e, ColorTable c)
 		{
 			_type = t;
 			_table = c;
@@ -24,7 +24,7 @@ namespace SpriteWave
 			_exts = e;
 		}
 
-		public ColourTable ColourTable { get { return _table; } }
+		public ColorTable ColorTable { get { return _table; } }
 
 		public string Filter
 		{

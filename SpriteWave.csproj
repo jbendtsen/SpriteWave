@@ -63,13 +63,13 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Source\Format.cs" />
-    <Compile Include="Source\Forms\EditColourTable.cs" />
+    <Compile Include="Source\Forms\EditColorTable.cs" />
     <Compile Include="Source\Forms\MainForm.cs" />
     <Compile Include="Source\Forms\MainForm.Designer.cs">
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Source\GFX\Palette.cs" />
-    <Compile Include="Source\PaletteUI\ColourPicker.cs" />
+    <Compile Include="Source\PaletteUI\ColorPicker.cs" />
     <Compile Include="Source\PaletteUI\PaletteBox.cs" />
     <Compile Include="Source\Suffix.cs" />
     <Compile Include="Source\ToolBox\ITabCollection.cs" />
@@ -91,7 +91,7 @@
     <Compile Include="Source\Tiles\MDTile.cs" />
     <Compile Include="Source\Tiles\NESTile.cs" />
     <Compile Include="Source\GFX\Collage.cs" />
-    <Compile Include="Source\GFX\ColourTable.cs" />
+    <Compile Include="Source\GFX\ColorTable.cs" />
     <Compile Include="Source\GFX\Tile.cs" />
     <Compile Include="Source\Program.cs" />
     <Compile Include="Source\Tiles\SNESTile.cs" />
@@ -121,8 +121,8 @@
     <EmbeddedResource Include="Source\Forms\MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Source\PaletteUI\ColourPicker.resx">
-      <DependentUpon>ColourPicker.cs</DependentUpon>
+    <EmbeddedResource Include="Source\PaletteUI\ColorPicker.resx">
+      <DependentUpon>ColorPicker.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Source\ToolBox\SpriteControlsTab.resx">
       <DependentUpon>SpriteControlsTab.cs</DependentUpon>
