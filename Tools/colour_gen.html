@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<style>
+
+h1 {
+	text-align: center;
+}
+
+#c1 {
+	display: flex;
+	justify-content: center;
+}
+
+#input, #process {
+	width: 400px;
+	border: 1px solid black;
+}
+
+#manual_row {
+	display: none;
+}
+
+#mode_row, #manual_row, #btn_row {
+	text-align: center;
+}
+#btn_row td {
+	border-bottom: 1px solid black;
+}
+
+#sample_table {
+	width: 100%;
+}
+
+#process {
+	display: none;
+}
+#process td {
+	width: 100px;
+	height: 60px;
+}
+#input td {
+	width: 50%;
+	height: 50px;
+}
+
+.left_text {
+	padding: 4px;
+	text-align: right;
+}
+.right_text {
+	padding: 4px;
+	text-align: left;
+}
+
+		</style>
+		<script>
+
+function randByte() {
+	return Math.floor(Math.random() * 256);
+}
+
+function hexChar(n) {
+	return n < 10 ? n+48 : n+87;
+}
+function hexStr(rgb) {
+	return String.fromCharCode(
+		35,
+		hexChar(rgb[0] >> 4),
+		hexChar(rgb[0] & 15),
+		hexChar(rgb[1] >> 4),
+		hexChar(rgb[1] & 15),
+		hexChar(rgb[2] >> 4),
+		hexChar(rgb[2] & 15)
+	);
+}
+
+function orderOf(rgb) {
+	var array = [[rgb[0], 0], [rgb[1], 1], [rgb[2], 2]];
+	array.sort((a, b) => a[0] - b[0]);
+	return [array[0][1], array[1][1], array[2][1]];
+}
+
+function writeTo(id, str) {
+	document.getElementById(id).innerHTML = str;
+}
+
+function textColorOver(rgbStr) {
+	// skip past the first character (a '#')
+	var r = parseInt(rgbStr[1], 16);
+	var g = parseInt(rgbStr[3], 16);
+	var b = parseInt(rgbStr[5], 16);
+
+	var lum = Math.sqrt(r*r + g*g + b*b); // max value ~= 26
+	return lum >= 13 ? "black" : "white";
+}
+
+const NoText = 0;
+const HexText = 1;
+const PCText = 2;
+
+function setSample(id, str, textMode) {
+	var cell = document.getElementById(id);
+	cell.style.border = "1px solid black";
+	cell.style.backgroundColor = str;
+
+	if (textMode > 0) {
+		cell.style.color = textColorOver(str);
+		cell.style.textAlign = "center";
+
+		if (textMode == PCText) {
+			var val = parseInt(str[1], 16) * 16 + parseInt(str[2], 16);
+			val = Math.floor(val * 100 / 256);
+			cell.innerHTML = val + "%";
+		}
+		else
+			cell.innerHTML = str;
+	}
+}
+
+function stripNonNumeric(str) {
+	var out = str.split("");
+	for (var i = out.length-1; i >= 0; i--) {
+		var ch = out[i].charCodeAt(0);
+		if ((ch < 0x30 || ch > 0x39) && (ch < 0x41 || ch > 0x5a) && (ch < 0x61 || ch > 0x7a))
+			out.splice(i, 1);
+	}
+	return out.join("");
+}
+
+var isRand = true;
+
+function generate() {
+	var input = document.getElementById("manual").value;
+	var rgb;
+	if (input.length > 0 && !isRand) {
+		input = stripNonNumeric(input);
+		var num = parseInt(input, 16);
+
+		rgb = new Array(3);
+		for (var i = 2; i >= 0; i--) {
+			rgb[i] = Math.floor(num) % 256;
+			num /= 256;
+		}
+	}
+	else
+		rgb = [randByte(), randByte(), randByte()];
+	
+	var hex = hexStr(rgb);
+	document.getElementById("sample_table").style.color = textColorOver(hex);
+
+	writeTo("red", rgb[0]);
+	writeTo("green", rgb[1]);
+	writeTo("blue", rgb[2]);
+	writeTo("hex", hex);
+	setSample("sample", hex, NoText);
+
+	document.getElementById("process").style.display = "table";
+	setSample("colour", hex, HexText);
+
+	var order = orderOf(rgb);
+	var hueRgb = rgb.slice();
+
+	var hueMid = 0;
+	if (rgb[order[2]] != rgb[order[0]])
+		hueMid = Math.floor(255 * (rgb[order[1]] - rgb[order[0]]) / (rgb[order[2]] - rgb[order[0]]));
+
+	hueRgb[order[0]] = 0;
+	hueRgb[order[1]] = hueMid
+	hueRgb[order[2]] = 255;
+
+	var hexHue = hexStr(hueRgb);
+	setSample("hue", hexHue, HexText);
+
+	var sat = 255 - Math.floor(255 * rgb[order[0]] / rgb[order[2]]);
+	var hexSat = hexStr([sat, sat, sat]);
+	setSample("sat", hexSat, PCText);
+
+	var lum = rgb[order[2]];
+	var hexLum = hexStr([lum, lum, lum]);
+	setSample("lum", hexLum, PCText);
+}
+
+function changeMode(elem) {
+	isRand = elem.checked;
+	document.getElementById("manual_row").style.display = isRand ? "none" : "table-row";
+}
+
+		</script>
+	</head>
+	<body>
+		<h1>Colour Generator</h1>
+		<div id="c1">
+		<div id="c2">
+		<table id="input">
+			<tr id="mode_row">
+				<td>
+					<label>
+						<input type="checkbox" onchange="changeMode(this);" checked="checked"/>
+						&nbsp;Random
+					</label>
+				</td>
+			</tr>
+			<tr id="manual_row">
+				<td>
+					<input type="text" id="manual" placeholder="RGB (eg. 9f34a2)"/>
+				</td>
+			</tr>
+			<tr id="btn_row">
+				<td>
+					<button onclick="generate();">Generate</button>
+				</td>
+			</tr>
+			<tr>
+				<td id="sample" rowspan="4">
+					<table id="sample_table">
+						<tr>
+							<td class="left_text">R: </td>
+							<td class="right_text" id="red"></td>
+						</tr>
+						<tr>
+							<td class="left_text">G: </td>
+							<td class="right_text" id="green"></td>
+						</tr>
+						<tr>
+							<td class="left_text">B: </td>
+							<td class="right_text" id="blue"></td>
+						</tr>
+						<tr>
+							<td class="left_text">Hex: </td>
+							<td class="right_text" id="hex"></td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+		</table>
+		<p />
+		<table id="process">
+			<tr>
+				<td rowspan="3" class="left_text">Input</td>
+				<td rowspan="3" id="colour"></td>
+				<td id="hue"></td>
+				<td class="right_text">Hue</td>
+			</tr>
+			<tr>
+				<td id="sat"></td>
+				<td class="right_text">Saturation</td>
+			</tr>
+			<tr>
+				<td id="lum"></td>
+				<td class="right_text">Lightness</td>
+			</tr>
+		</table>
+		</div>
+		</div>
+	</body>
+</html>

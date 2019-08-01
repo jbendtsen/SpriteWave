@@ -171,9 +171,9 @@ namespace SpriteWave
 				this.Controls.Add(_axisLabel[i]);
 			}
 
-			int midY = 14 + (boxSize / 2);
+			int midY = 13 + (boxSize / 2);
 			_axisLabel[0].Location = new Point(4, midY);
-			_axisLabel[1].Location = new Point(53 + (boxSize / 2), 24 + boxSize);
+			_axisLabel[1].Location = new Point(52 + (boxSize / 2), 24 + boxSize);
 			_axisLabel[2].Location = new Point(44, midY);
 			_axisLabel[3].Location = new Point(64 + boxSize, midY);
 

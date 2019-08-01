@@ -3,19 +3,19 @@
 namespace SpriteWave
 {
 	/*
-		ColorTable: A way of keeping track of which colors the system (NES, SNES, etc.) has access to.
-		There are two different ways a ColorTable is created: with a pre-defined set of colors, or with an RGBA pattern.
+		ColorTable: A way of keeping track of which colours the system (NES, SNES, etc.) has access to.
+		There are two different ways a ColorTable is created: with a pre-defined set of colours, or with an RGBA pattern.
 		The RGBA pattern is interpreted as a RGBA Order And Depth formula. More detail on that one is provided below.
 	*/
 	public class ColorTable
 	{
 		// Predetermined color list
 		private uint[] _clrList;
-	
+
 		// RGBA pattern
 		private byte[] _rgbaOrder, _rgbaOrderInv;
 		private byte[] _rgbaDepth;
-	
+
 		// Default selection of colors, in the native format. Useful if a palette has not yet been decided.
 		private uint[] _defSel;
 
@@ -29,7 +29,7 @@ namespace SpriteWave
 			_clrList = clrList;
 			_defSel = defSel;
 		}
-	
+
 		/*
 			RGBA Order And Depth: A formula descriptor for how to arrange different formats of RGBA.
 			The input parameter as passed as the integer 0xrgbaRGBA where:
@@ -48,7 +48,7 @@ namespace SpriteWave
 			_rgbaOrder = new byte[4];
 			_rgbaOrderInv = new byte[4];
 			_rgbaDepth = new byte[4];
-	
+
 			uint cCfg = rgbaOrderAndDepth;
 
 			// Here we take each of the 8 hex digits inside 'cCfg' and place them in their appropriate elements
@@ -66,7 +66,7 @@ namespace SpriteWave
 				_rgbaOrder[i] = (byte)order;
 				_rgbaDepth[i] = (byte)depth;
 			}
-	
+
 			// We make sure that _rgbaOrder is bijective (1:1 correspondence) to the set {0, 1, 2, 3}
 			// This means _rgbaOrder will be bijective with its inverted set (_rgbaOrderInv), a fact we will rely upon later
 			for (int i = 0; i < 4; i++)
@@ -88,11 +88,11 @@ namespace SpriteWave
 
 				_rgbaOrderInv[i] = (byte)chn;
 			}
-	
+
 			_clrList = null;
 			_defSel = defSel;
 		}
-	
+
 		public uint NativeToRGBA(uint idx)
 		{
 			// If there is a pre-determined list of colors, then 'idx' refers to an index in the table. Return that entry.
@@ -104,7 +104,7 @@ namespace SpriteWave
 
 				return clr;
 			}
-	
+
 			/*
 				Else, we turn our 'index' into an RGBA color using our 'rgbaOrderAndDepth' formula descriptor.
 				This is something I came up with, so a bit of explanation is always nice.
@@ -113,7 +113,7 @@ namespace SpriteWave
 				'_rgbaOrder' tells us the order of channels as they appear in 'idx', and
 				'_rgbaDepth' tells us how many bits are used for the R, G, B and A channels respectively.
 			*/
-	
+
 			// This for loop takes the channel values out of 'idx' and places them in RGBA order in the process
 			int[] chVals = new int[4];
 			for (int i = 3; i >= 0; i--)
@@ -123,7 +123,7 @@ namespace SpriteWave
 				chVals[which] = (int)idx & ((1 << depth) - 1);
 				idx >>= depth;
 			}
-	
+
 			/*
 				This loop takes each channel value from above and pads it out as evenly as possible,
 				while placing it in the final RGBA value we return.
@@ -136,10 +136,10 @@ namespace SpriteWave
 				{
 					if (i != 3)
 						rgba <<= 8;
-	
+
 					continue;
 				}
-	
+
 				/*
 					If we continuously pad the remaining bits with the existing bits, it produces the smoothest pattern.
 					Eg.
@@ -158,23 +158,23 @@ namespace SpriteWave
 						pad >>= (depth - left);
 						depth = left;
 					}
-	
+
 					val <<= depth;
 					val |= pad;
-	
+
 					left -= depth;
 				}
 				val &= 0xff;
-	
+
 				// Place the new channel value in the final output
 				rgba |= (uint)val;
 				if (i != 3)
 					rgba <<= 8;
 			}
-	
+
 			return rgba;
 		}
-		
+
 		// Only checks red, green and blue
 		public static int ClosestColorIndex(uint[] list, uint rgba)
 		{
