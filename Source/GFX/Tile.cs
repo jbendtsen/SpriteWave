@@ -36,7 +36,7 @@ namespace SpriteWave
 
 		public void ApplyTo(byte[] canvas, int offset, int width, Palette p)
 		{
-			byte[] palBGRA = p != null ? p.Data : null;
+			byte[] palBGRA = p != null ? p.ActiveColors : null;
 
 			// Iterates backwards as BMPs are backwards
 			for (int i = Height-1; i >= 0; i--)

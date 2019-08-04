@@ -12,7 +12,6 @@ namespace SpriteWave
 		private VScrollBar _scroll;
 
 		private Brush _br;
-		public Color Fill { set { _br = new SolidBrush(value); } }
 
 		public PaletteBox(Point loc, Size size)
 		{

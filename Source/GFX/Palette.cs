@@ -5,8 +5,8 @@ namespace SpriteWave
 {
 	public class Palette
 	{
-		private byte[] _data;
-		public byte[] Data { get { return _data; } }
+		private byte[] _activeColors;
+		public byte[] ActiveColors { get { return _activeColors; } }
 
 		private uint _mean;
 		public uint Mean { get { return _mean; } }
@@ -17,25 +17,25 @@ namespace SpriteWave
 		{
 			_tbl = tbl;
 			uint[] defs = _tbl.Defaults;
-			_data = new byte[defs.Length * Utils.cLen];
+			_activeColors = new byte[defs.Length * Utils.cLen];
 
 			for (int i = 0; i < defs.Length; i++)
-				SetColor(i, defs[i], false);
+				SetColor(i, defs[i], recalcMean: false);
 
-			_mean = Utils.MeanColor(_data);
+			_mean = Utils.MeanColor(_activeColors);
 		}
 
-		public void SetColor(int idx, uint tblClr, bool recalcMean = true)
+		public void SetColor(int idx, uint nativeClr, bool recalcMean = true)
 		{
 			int which = idx * Utils.cLen;
-			if (which < 0 || which > _data.Length - 4)
+			if (which < 0 || which > _activeColors.Length - 4)
 				return;
 
-			uint rgba = _tbl.NativeToRGBA(tblClr);
-			Utils.EmbedPixel(_data, rgba, which);
+			uint rgba = _tbl.NativeToRGBA(nativeClr);
+			Utils.EmbedPixel(_activeColors, rgba, which);
 
 			if (recalcMean)
-				_mean = Utils.MeanColor(_data);
+				_mean = Utils.MeanColor(_activeColors);
 		}
 	}
 }
