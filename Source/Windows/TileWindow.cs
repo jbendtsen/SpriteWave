@@ -21,6 +21,8 @@ namespace SpriteWave
 		protected Rectangle _bounds;
 		protected Pen _gridPen;
 
+		public Palette Palette { get { return _cl != null ? _cl.Palette : null; } }
+
 		public bool IsActive { get { return _cl != null; } }
 
 		public virtual bool Selected { get { return _isSel; } set { _isSel = value; } }

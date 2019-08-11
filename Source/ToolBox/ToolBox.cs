@@ -356,13 +356,14 @@ namespace SpriteWave
 			_tabButtons.Location = loc;
 		}
 
-		public void AdjustCurrentTab()
+		public void AdjustCurrentTab(ToolBoxOrientation layout)
 		{
 			_curTab.AdjustContents(
 				new Size(
 					_ui.Width - _switch.Width,
 					_ui.Height - _minimise.Height
-				)
+				),
+				layout
 			);
 		}
 
@@ -399,10 +400,12 @@ namespace SpriteWave
 			_switch.Location = new Point(swX, 0);
 			_switch.Size = new Size(20, _ui.Height - 1);
 
-			_curTab.X = tabX;
-			AdjustCurrentTab();
-
-			AdjustTabButtons(new Point(btnsX, _ui.Height - _minimise.Height));
+			if (_curTab != null)
+			{
+				_curTab.X = tabX;
+				AdjustCurrentTab(layout);
+				AdjustTabButtons(new Point(btnsX, _ui.Height - _minimise.Height));
+			}
 		}
 	}
 }

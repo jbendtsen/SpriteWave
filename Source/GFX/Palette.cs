@@ -5,13 +5,14 @@ namespace SpriteWave
 {
 	public class Palette
 	{
+		// Each pixel is stored as four bytes, ordered B, G, R, then A
 		private byte[] _activeColors;
 		public byte[] ActiveColors { get { return _activeColors; } }
 
 		private uint _mean;
 		public uint Mean { get { return _mean; } }
 
-		private ColorTable _tbl;
+		private readonly ColorTable _tbl;
 
 		public Palette(ColorTable tbl)
 		{

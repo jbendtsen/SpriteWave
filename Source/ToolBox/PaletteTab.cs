@@ -12,7 +12,7 @@ namespace SpriteWave
 		private Panel _panel;
 		private TileWindow _wnd;
 
-		private PaletteBox _primary;
+		private PalettePanel _primary;
 
 		public string Name { get { return _name; } }
 		public string ID { get { return _id; } }
@@ -24,11 +24,11 @@ namespace SpriteWave
 			get { return _wnd; }
 			set {
 				_wnd = value;
-				_primary.Fill = Utils.FromRGB((uint)_wnd.GetHashCode());
+				_primary.Palette = _wnd.Palette;
 			}
 		}
 
-		public Size Minimum { get { return new Size(100, 80); } }
+		public Size Minimum { get { return new Size(150, 80); } }
 
 		public int X { set { _panel.Location = new Point(value, _panel.Location.Y); } }
 
@@ -44,29 +44,22 @@ namespace SpriteWave
 			_panel = new Panel();
 			_panel.Name = "palettePanel";
 
-			Point org = new Point(20, 10);
+			//Point org = new Point(20, 10);
+            Point org = new Point(0, 0);
 			//Size s = new Size(this.ClientSize.Width - org.X * 2, this.ClientSize.Height - org.Y * 2);
 
-			_primary = new PaletteBox(org, new Size(80, 20));
+			_primary = new PalettePanel(_wnd.Palette, org, new Size(80, 20));
 			_primary.Name = "primaryBox";
-			_primary.Fill = Utils.FromRGB((uint)Math.Abs(_wnd.GetHashCode()));
 
 			_panel.Controls.Add(_primary);
 		}
 
-		public void AdjustContents(Size size)
+		public void AdjustContents(Size size, ToolBoxOrientation layout)
 		{
 			_panel.Size = size;
+			_primary.Size = size;
 
-			if (size.Height <= _primary.Location.Y * 2)
-				return;
-
-			Size s = size;
-			s.Width -= _primary.Location.X * 2;
-			s.Height -= _primary.Location.Y * 2;
-			_primary.Size = s;
-
-			_primary.AdjustContents();
+			_primary.AdjustContents(layout);
 			_primary.Draw();
 		}
 	}

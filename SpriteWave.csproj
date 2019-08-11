@@ -70,8 +70,9 @@
     </Compile>
     <Compile Include="Source\GFX\ColorSpace.cs" />
     <Compile Include="Source\GFX\Palette.cs" />
+    <Compile Include="Source\PaletteUI\ColorBox.cs" />
     <Compile Include="Source\PaletteUI\ColorPicker.cs" />
-    <Compile Include="Source\PaletteUI\PaletteBox.cs" />
+    <Compile Include="Source\PaletteUI\PalettePanel.cs" />
     <Compile Include="Source\Suffix.cs" />
     <Compile Include="Source\ToolBox\ITabCollection.cs" />
     <Compile Include="Source\ToolBox\SpriteControlsTab.cs" />
@@ -148,6 +149,7 @@
     <Content Include="ProfilingSessions\Session20190720_170741.sdps" />
     <Content Include="ProfilingSessions\Session20190720_170957.sdps" />
     <Content Include="ProfilingSessions\Session20190725_164818.sdps" />
+    <Content Include="ProfilingSessions\Session20190808_122849.sdps" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

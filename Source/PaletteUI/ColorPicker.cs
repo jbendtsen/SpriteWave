@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.Windows.Forms;
 using System.ComponentModel;
 
@@ -556,57 +554,6 @@ namespace SpriteWave
 		{
 			base.OnPaint(e);
 			PaintUnderUI(e.Graphics);
-		}
-	}
-
-	// If this class is situated above the ColorPicker class in this file,
-	//  the ColorPicker's resource manager fails to load the UI icons.
-	public class ColorBox : PictureBox
-	{
-		public const int Border = 2;
-		public byte[] Buffer;
-
-		private Size _oldSize;
-		private BitmapData _data;
-
-		public ColorBox(ColorPicker.CursorHandler moveCursor, ColorPicker.ScrollHandler scroll)
-		{
-			_oldSize = new Size(0, 0);
-
-			if (moveCursor != null)
-			{
-				this.MouseDown += (s, e) => moveCursor(e.X, e.Y);
-				this.MouseMove += (s, e) => { if (e.Button != MouseButtons.None && s == this) moveCursor(e.X, e.Y); };
-			}
-			if (scroll != null)
-				this.MouseWheel += (s, e) => scroll(e.Delta / 120);
-		}
-
-		public void Lock()
-		{
-			if (_oldSize != this.Size || this.Image == null)
-			{
-				this.Image = new Bitmap(this.Width, this.Height);
-				Buffer = new byte[this.Width * this.Height * 4];
-			}
-
-			_data = (this.Image as Bitmap).LockBits(
-				this.DisplayRectangle,
-				ImageLockMode.ReadWrite,
-				PixelFormat.Format32bppArgb
-			);
-		}
-
-		public void Unlock()
-		{
-			if (_data == null)
-				return;
-
-			Marshal.Copy(Buffer, 0, _data.Scan0, Buffer.Length);
-			(this.Image as Bitmap).UnlockBits(_data);
-			this.Invalidate();
-
-			_oldSize = this.Size;
 		}
 	}
 }

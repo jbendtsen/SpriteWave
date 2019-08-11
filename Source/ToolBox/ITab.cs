@@ -14,6 +14,6 @@ namespace SpriteWave
 		Size Minimum { get; }
 		int X { set; }
 
-		void AdjustContents(Size size);
+		void AdjustContents(Size size, ToolBoxOrientation layout);
 	}
 }

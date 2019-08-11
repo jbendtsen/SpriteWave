@@ -113,7 +113,7 @@ namespace SpriteWave
 			_panel.Controls.Add(_tileSample);
 		}
 
-		public void AdjustContents(Size size)
+		public void AdjustContents(Size size, ToolBoxOrientation layout)
 		{
 			int w = size.Width;
 			int h = this.Minimum.Height;

@@ -239,7 +239,7 @@ namespace SpriteWave
 			_panel.Controls.Add(_saveMsg);
 		}
 
-		public void AdjustContents(Size size)
+		public void AdjustContents(Size size, ToolBoxOrientation layout)
 		{
 			_panel.Size = size;
 

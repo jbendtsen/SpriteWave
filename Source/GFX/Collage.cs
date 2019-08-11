@@ -41,6 +41,7 @@ namespace SpriteWave
 		public int Height { get { return Rows * TileH; } }
 
 		private Palette _palette;
+		public Palette Palette { get { return _palette; } }
 		public uint MeanColor { get { return _palette.Mean; } }
 
 		private Bitmap _canvas;
