@@ -16,11 +16,22 @@ namespace SpriteWave
 		private byte[] _rgbaOrder, _rgbaOrderInv;
 		private byte[] _rgbaDepth;
 
-		// Default selection of colors, in the native format. Useful if a palette has not yet been decided.
+		// Default selection of colours, in the native format. Useful if a palette has not yet been decided.
 		private uint[] _defSel;
 
 		public bool IsList { get { return _clrList != null; } }
 		public uint[] Defaults { get { return _defSel; } }
+
+		public uint LastColor
+		{
+			get {
+				return _clrList != null
+				?
+					(uint)(_clrList.Length - 1)
+				:
+					(uint)(Math.Pow(2f, (double)(_rgbaDepth[0] + _rgbaDepth[1] + _rgbaDepth[2] + _rgbaDepth[3])) - 1);
+			}
+		}
 
 		public ColorTable(uint[] clrList, uint[] defSel)
 		{

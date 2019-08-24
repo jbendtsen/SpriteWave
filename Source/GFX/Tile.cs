@@ -34,9 +34,9 @@ namespace SpriteWave
 			return t;
 		}
 
-		public void ApplyTo(byte[] canvas, int offset, int width, Palette p)
+		public void ApplyTo(byte[] canvas, int offset, int width, Collage cl)
 		{
-			byte[] palBGRA = p != null ? p.ActiveColors : null;
+			byte[] palBGRA = cl != null ? cl.ActiveColors : null;
 
 			// Iterates backwards as BMPs are backwards
 			for (int i = Height-1; i >= 0; i--)
@@ -46,11 +46,11 @@ namespace SpriteWave
 			}
 		}
 
-		public Bitmap ToBitmap(Palette p)
+		public Bitmap ToBitmap(Collage cl)
 		{
 			byte[] pixels = new byte[Width * Height * Utils.cLen];
 
-			ApplyTo(pixels, 0, Width, p);
+			ApplyTo(pixels, 0, Width, cl);
 			return Utils.BitmapFrom(pixels, Width, Height);
 		}
 

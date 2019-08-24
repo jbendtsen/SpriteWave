@@ -3,4 +3,6 @@ An interactive tool to create game sprites from ROMs
 
 ----
 
-![Screenshot](images/screenshot1.png)
+![screenshot of controls tab](images/screenshot1.png)
+
+![screenshot of palette tab and colour picker](images/screenshot2.png)

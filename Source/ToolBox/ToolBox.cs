@@ -79,7 +79,10 @@ namespace SpriteWave
 					Select(this[idx + _generalTabs.Count], reconfig: false);
 				}
 				else
+				{
 					_wnd = value;
+					Select(_curTab); // updates current tab
+				}
 
 				_wnd.ProvideTabButtons(this);
 
@@ -101,7 +104,7 @@ namespace SpriteWave
 				idx -= gLen;
 				if (_wnd == null || idx >= _wnd.TabCount)
 					return null;
-	
+
 				return _wnd[idx];
 			}
 		}
@@ -152,7 +155,6 @@ namespace SpriteWave
 			_configure = main.ConfigureControls;
 
 			_generalTabs = new List<ITab>();
-			_generalTabs.Add(new PaletteTab(_wnd));
 
 			_switch = new ToolBoxButton(ToolBoxShapes.Switch, new Size(20, 140));
 			_switch.Name = "toolBoxSwitchWindow";
@@ -224,7 +226,7 @@ namespace SpriteWave
 		private void Select(ITab t, bool reconfig = true)
 		{
 			if (t == null)
-				return;
+				t = _wnd[0];
 
 			t.Window = _wnd;
 

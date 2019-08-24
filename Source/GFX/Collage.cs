@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Drawing;
 
-using System.Windows.Forms;
-
 namespace SpriteWave
 {
 	public class Collage
@@ -40,27 +38,49 @@ namespace SpriteWave
 		public int Width { get { return Columns * TileW; } }
 		public int Height { get { return Rows * TileH; } }
 
-		private Palette _palette;
-		public Palette Palette { get { return _palette; } }
-		public uint MeanColor { get { return _palette.Mean; } }
-
 		private Bitmap _canvas;
 		public Bitmap Bitmap { get { return _canvas; } }
+
+		// Each pixel is stored as four bytes, ordered B, G, R, then A
+		private byte[] _activeColors;
+		public byte[] ActiveColors { get { return _activeColors; } }
+
+		private uint _mean;
+		public uint MeanColor { get { return _mean; } }
+
+		private readonly ColorTable _tbl;
+		public uint HighestColor { get { return _tbl.LastColor; } }
 
 		public Collage(FileFormat fmt, int nCols = defCols, bool readOnly = true)
 		{
 			_fmt = fmt;
 			_templ = _fmt.NewTile();
-			_palette = _fmt.NewPalette();
 
 			_tiles = new List<Tile>();
 			_nCols = nCols;
 			_readOnly = readOnly;
+
+			_tbl = _fmt.ColorTable;
+			uint[] defs = _tbl.Defaults;
+			_activeColors = new byte[defs.Length * Utils.cLen];
+
+			for (int i = 0; i < defs.Length; i++)
+				SetColor(i, defs[i], recalcMean: false);
+
+			_mean = Utils.MeanColor(_activeColors);
 		}
 
-		public void SetColor(int idx, uint tblClr)
+		public void SetColor(int idx, uint nativeClr, bool recalcMean = true)
 		{
-			_palette.SetColor(idx, tblClr);
+			int which = idx * Utils.cLen;
+			if (which < 0 || which > _activeColors.Length - 4)
+				return;
+
+			uint rgba = _tbl.NativeToRGBA(nativeClr);
+			Utils.EmbedPixel(_activeColors, rgba, which);
+
+			if (recalcMean)
+				_mean = Utils.MeanColor(_activeColors);
 		}
 
 		public void AddTile(Tile t)
@@ -97,7 +117,7 @@ namespace SpriteWave
 
 		public Bitmap RenderTile(Tile t)
 		{
-			return t.ToBitmap(_palette);
+			return t.ToBitmap(this);
 		}
 
 		public bool LoadTiles(byte[] file, int offset)
@@ -150,7 +170,7 @@ namespace SpriteWave
 				int offset = (imgRow * _nCols * TileW) + imgCol;
 				offset *= cLen;
 
-				t.ApplyTo(collage, offset, width, _palette); 
+				t.ApplyTo(collage, offset, width, this); 
 				idx++;
 			}
 

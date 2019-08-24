@@ -21,7 +21,7 @@ namespace SpriteWave
 		protected Rectangle _bounds;
 		protected Pen _gridPen;
 
-		public Palette Palette { get { return _cl != null ? _cl.Palette : null; } }
+		public Collage Collage { get { return _cl; } }
 
 		public bool IsActive { get { return _cl != null; } }
 

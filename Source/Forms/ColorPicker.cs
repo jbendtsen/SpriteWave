@@ -16,7 +16,7 @@ namespace SpriteWave
 		RGB, HSV, Invalid
 	};
 
-	public class ColorPicker : Panel
+	public class ColorPicker : Form
 	{
 		public delegate void CursorHandler(int x, int y);
 		public delegate void ScrollHandler(int delta);
@@ -27,14 +27,17 @@ namespace SpriteWave
 
 		private float[] _chn; // ordered by BGRA
 		private int[] _order;
-		private ColorMode _mode;
+		//private ColorMode _mode;
 
 		private readonly string[] _labels;
 		private readonly float[] _alphaShades = {0.6f, 0.8f};
 
+		private Collage _refCl;
+		private int _refPalIdx;
+
 		private Bitmap _slider;
 		private Bitmap _dot;
-		private Bitmap[] _modeImg;
+		//private Bitmap[] _modeImg;
 
 		private ColorBox _boxA;
 		private ColorBox _boxXY;
@@ -48,7 +51,7 @@ namespace SpriteWave
 		private bool _allowTextEvent = true;
 
 		private Button _cycle;
-		private Button _switchMode;
+		//private Button _switchMode;
 
 		public Color Color
 		{
@@ -89,9 +92,13 @@ namespace SpriteWave
 			);
 		}
 
-		public ColorPicker(int boxSize)
+		private Bitmap _sample;
+		private Rectangle _sampleRect = new Rectangle(0, 0, 8, 8);
+
+		public ColorPicker(int boxSize, Collage refCl, int refPalIdx)
 		{
-			_mode = ColorMode.RGB;
+			_sample = new Bitmap(_sampleRect.Width, _sampleRect.Height);
+			//_mode = ColorMode.RGB;
 
 			_chn = new[] {
 				1f, 1f, 1f, 1f
@@ -111,36 +118,44 @@ namespace SpriteWave
 			_labels[(int)BGRA.Alpha] = "A";
 
 			this.Name = "colorPicker";
+			this.Text = "Color Picker";
+
+			// When setting the size of the client area inside the window (.ClientSize),
+			//  the overall window size (.Size) is also set, to a larger area.
+			// .MinimumSize makes use of .Size, so we set it after .Size has been calculated.
+			this.ClientSize = new Size(boxSize + 200, boxSize + 50);
+			this.MinimumSize = this.Size;
+
 			this.Location = new Point(0, 0);
-			this.Size = new Size(200 + boxSize, 40 + boxSize);
+			//this.Size = new Size(200 + boxSize, 40 + boxSize);
 
 			var resources = new ComponentResourceManager(typeof(ColorPicker));
 			_slider = (Bitmap)(resources.GetObject("slider"));
 			_dot = (Bitmap)(resources.GetObject("dot"));
-
+/*
 			_modeImg = new Bitmap[2];
 			_modeImg[(int)ColorMode.RGB] = (Bitmap)(resources.GetObject("rgb"));
 			_modeImg[(int)ColorMode.HSV] = (Bitmap)(resources.GetObject("hsv"));
-
-			_boxA = new ColorBox(this.moveLeftSlider, this.scrollLeftSlider);
+*/
+			_boxA = new ColorBox(this.moveLeftSlider, this.UpdateColorSource, this.scrollLeftSlider);
 			_boxA.Name = "alphaBox";
 			_boxA.Location = new Point(20, 20);
 			_boxA.Size = new Size(20, boxSize);
 			_boxA.Paint += this.paintLeftSlider;
 
-			_boxXY = new ColorBox(this.moveDot, null);
+			_boxXY = new ColorBox(this.moveDot, this.UpdateColorSource, null);
 			_boxXY.Name = "xyBox";
 			_boxXY.Location = new Point(60, 20);
 			_boxXY.Size = new Size(boxSize, boxSize);
 			_boxXY.Paint += this.paintDot;
 
-			_boxZ = new ColorBox(this.moveRightSlider, this.scrollRightSlider);
+			_boxZ = new ColorBox(this.moveRightSlider, this.UpdateColorSource, this.scrollRightSlider);
 			_boxZ.Name = "zBox";
 			_boxZ.Location = new Point(80 + boxSize, 20);
 			_boxZ.Size = new Size(20, boxSize);
 			_boxZ.Paint += this.paintRightSlider;
 
-			_boxSample = new ColorBox(null, null);
+			_boxSample = new ColorBox();
 			_boxSample.Name = "sampleBox";
 			_boxSample.Location = new Point(114 + boxSize, 20 + boxSize - 72);
 			_boxSample.Size = new Size(72, 72);
@@ -151,14 +166,14 @@ namespace SpriteWave
 			_cycle.Size = new Size(32, 32);
 			_cycle.Image = (Bitmap)resources.GetObject("cycle");
 			_cycle.Click += (s, e) => Cycle();
-
+/*
 			_switchMode = new Button();
 			_switchMode.Name = "switchMode";
 			_switchMode.Location = new Point(152 + boxSize, 20);
 			_switchMode.Size = new Size(32, 32);
 			_switchMode.Image = _modeImg[(int)ColorMode.HSV];
 			_switchMode.Click += (s, e) => SwitchMode();
-
+*/
 			_axisLabel = new Label[nChans];
 			for (int i = 0; i < nChans; i++)
 			{
@@ -205,7 +220,54 @@ namespace SpriteWave
 			this.Controls.Add(_boxSample);
 
 			this.Controls.Add(_cycle);
-			this.Controls.Add(_switchMode);
+			//this.Controls.Add(_switchMode);
+
+			this.KeyPreview = true;
+			this.KeyUp += (s, e) => ResetIcon();
+
+			Utils.ControlFunc updateFormIcon = (ctrl, args) => {ctrl.MouseUp += (s, e) => ResetIcon(); return null;};
+			Utils.ApplyRecursiveControlFunc(this, updateFormIcon);
+
+			SelectColorFrom(refCl, refPalIdx);
+			ResetIcon();
+		}
+
+		public void ResetIcon()
+		{
+			Utils.ClearBitmap(_sample, Color, _sampleRect);
+			this.Icon = Icon.FromHandle(_sample.GetHicon());
+		}
+
+		public void SelectColorFrom(Collage cl, int palIdx)
+		{
+			_refCl = cl;
+			_refPalIdx = palIdx;
+
+			byte[] pal = _refCl.ActiveColors;
+			int idx = _refPalIdx * Utils.cLen;
+
+			_chn[0] = (float)pal[idx] / 255f;
+			_chn[1] = (float)pal[idx+1] / 255f;
+			_chn[2] = (float)pal[idx+2] / 255f;
+			_chn[3] = (float)pal[idx+3] / 255f;
+
+			Render();
+		}
+
+		private void UpdateColorSource()
+		{
+			byte[] pal = _refCl.ActiveColors;
+			int idx = _refPalIdx * Utils.cLen;
+
+			pal[idx] = (byte)(_chn[0] * 255f);
+			pal[idx+1] = (byte)(_chn[1] * 255f);
+			pal[idx+2] = (byte)(_chn[2] * 255f);
+			pal[idx+3] = (byte)(_chn[3] * 255f);
+
+			_refCl.Render();
+
+			// Definitely not a hack /s
+			Utils.MainForm.PerformLayout();
 		}
 
 		public void RefreshInputFields()
@@ -274,7 +336,7 @@ namespace SpriteWave
 			RefreshInputFields();
 			Render();
 		}
-
+/*
 		public void SwitchMode()
 		{
 			Func<ColorMode, ColorMode> cycleMode = (m) =>
@@ -289,7 +351,7 @@ namespace SpriteWave
 			_mode = cycleMode(_mode);
 			_switchMode.Image = _modeImg[(int)cycleMode(_mode)];
 		}
-
+*/
 		public void Render()
 		{
 			RenderAlphaBar();
@@ -554,6 +616,23 @@ namespace SpriteWave
 		{
 			base.OnPaint(e);
 			PaintUnderUI(e.Graphics);
+		}
+
+		protected override void Dispose(bool disposing)
+		{
+			base.Dispose(disposing);
+
+			_slider.Dispose();
+			_dot.Dispose();
+	
+			_boxA.Dispose();
+			_boxXY.Dispose();
+			_boxZ.Dispose();
+			_boxSample.Dispose();
+			
+			_sample.Dispose();
+
+			Utils.ClearColorPicker();
 		}
 	}
 }

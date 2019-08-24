@@ -27,6 +27,7 @@ namespace SpriteWave
 		protected override void InitialiseTabs()
 		{
 			_tabs = new List<ITab>();
+			_tabs.Add(new PaletteTab(this));
 			_tabs.Add(new SpriteControlsTab(this));
 		}
 

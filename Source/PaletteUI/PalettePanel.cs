@@ -19,34 +19,44 @@ namespace SpriteWave
 		private int[] _palPolarLum = null;
 		private byte[] _palNumbers = null;
 
-		private Palette _pal;
-		public Palette Palette
+		private Collage _collage;
+		public Collage Collage
 		{
-			get { return _pal; }
 			set {
-				_pal = value;
-                if (_pal == null)
+				_collage = value;
+                if (_collage == null)
                     return;
 
-				int len = _pal.ActiveColors.Length / Utils.cLen;
+				int len = _collage.ActiveColors.Length / Utils.cLen;
 				if (_palLen != len)
 				{
 					_palLen = len;
-					_palNumbers = Utils.GenerateNumbersPixMap(_palLen);
-					CalcBrightness();
+					_palNumbers = DigitImages.Generate(_palLen);
 				}
+
+				//CalcBrightness();
 			}
 		}
 
-		public PalettePanel(Palette pal, Point loc, Size size)
+		private int FirstVisibleCell
 		{
-			this.Palette = pal;
+			get { return _scroll.Enabled ? _scroll.Value * _nCols : 0; }
+		}
+		private int VisibleRows
+		{
+			get { return _nRows <= 1 ? 1 : 2; }
+		}
+
+		public PalettePanel(Collage cl, Point loc, Size size)
+		{
+			this.Collage = cl;
 
 			this.Name = "paletteBox";
 			this.Size = size;
 			this.Location = loc;
 
-			_box = new ColorBox(null, null);
+			_box = new ColorBox();
+			_box.MouseDown += this.boxClickHandler;
 			_box.MouseWheel += this.boxScrollHandler;
 
 			_scroll = new VScrollBar();
@@ -69,9 +79,9 @@ namespace SpriteWave
 		{
 			_nCols = 1;
 			_nRows = 1;
-			if (_pal != null)
+			if (_collage != null)
 			{
-				int len = _pal.ActiveColors.Length / Utils.cLen;
+				int len = _collage.ActiveColors.Length / Utils.cLen;
 				_nCols = len;
 				if (_nCols >= 8)
 					_nCols = this.Width < 200 ? 4 : 8;
@@ -97,9 +107,9 @@ namespace SpriteWave
 			int boxX = layout == ToolBoxOrientation.Left ? scrollW : 0;
 			_box.Location = new Point(boxX, 0);
 
-			int visRows = _nRows <= 1 ? 1 : 2;
+			int visRows = VisibleRows;
 
-			if (this.Height > 0)
+			if (this.Width > scrollW && this.Height > 0)
 			{
 				Size s = new Size(this.Width - scrollW, this.Height);
 				_box.Image = new Bitmap(s.Width, s.Height);
@@ -107,10 +117,16 @@ namespace SpriteWave
 			}
 		}
 
-		private void CalcBrightness()
+		public void Draw()
 		{
-			var colors = _pal.ActiveColors;
+			if (_collage == null || this.Height <= 0)
+				return;
+
+			// Calculate the brightness of each color to determine its opposite luminance pole (black or white)
+			var colors = _collage.ActiveColors;
 			_palPolarLum = new int[_palLen];
+
+			const int white = 0, black = 1;
 			for (int i = 0; i < _palLen; i++)
 			{
 				double r = (double)colors[i*4+2];
@@ -118,24 +134,8 @@ namespace SpriteWave
 				double b = (double)colors[i*4];
 
 				double lum = 0.2126*r + 0.7152*g + 0.0722*b;
-				_palPolarLum[i] = lum >= 127.5f ? 1 : 0;
-
-				/*
-				double dist = Math.Sqrt(
-					Math.Pow((double)colors[i*4+1], 2f) +
-					Math.Pow((double)colors[i*4+2], 2f) +
-					Math.Pow((double)colors[i*4+3], 2f)
-				);
-				// 221 ~= halfway to largest value (195075^(1/2) ~= 442)
-				_palPolarLum[i] = dist >= 221 ? 1 : 0;
-				*/
+				_palPolarLum[i] = lum >= 127.5f ? black : white;
 			}
-		}
-
-		public void Draw()
-		{
-			if (_pal == null || this.Height <= 0)
-				return;
 
 			_box.Lock();
 
@@ -143,18 +143,17 @@ namespace SpriteWave
 			int width = _box.Image.Size.Width;
 			int height = _box.Image.Size.Height;
 
-			float visRowsF = _nRows <= 1 ? 1f : 2f;
+			float visRowsF = (float)VisibleRows;
 			float cellW = (float)width / (float)_nCols;
 			float cellH = (float)height / visRowsF;
 
-			byte[] colors = _pal.ActiveColors;
 			// Minus one because maximum value is the last index, not the size
 			int nDigits = Utils.DigitCount(_palLen - 1);
 
-			float numW = (float)(Utils.numberW * nDigits);
-			float numH = (float)Utils.numberH;
+			float numW = (float)(DigitImages.digitW * nDigits);
+			float numH = (float)DigitImages.digitH;
 
-			int firstCellIdx = _scroll.Enabled ? _scroll.Value * _nCols : 0;
+			int firstCellIdx = FirstVisibleCell;
 			int idx = 0;
 			for (int i = 0; i < height; i++)
 			{
@@ -194,6 +193,27 @@ namespace SpriteWave
 			}
 
 			_box.Unlock();
+		}
+
+		private void boxClickHandler(object sender, MouseEventArgs e)
+		{
+			float cellW = (float)_box.Image.Size.Width / (float)_nCols;
+			float cellH = (float)_box.Image.Size.Height / (float)VisibleRows;
+
+			int col = (int)((float)e.X / cellW);
+			int row = (int)((float)e.Y / cellH) + (FirstVisibleCell / _nCols);
+			int idx = row * _nCols + col;
+/*
+			double max = _collage.HighestColor;
+			uint clr = (uint)(new Random().NextDouble() * max);
+
+			_collage.SetColor(idx, clr);
+			CalcBrightness();
+
+			_collage.Render();
+			Draw();
+*/
+			Utils.OpenColorPicker(_collage, idx);
 		}
 
 		private void boxScrollHandler(object sender, MouseEventArgs e)

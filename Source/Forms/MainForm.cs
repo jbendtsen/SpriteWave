@@ -22,6 +22,8 @@ namespace SpriteWave
 
 		public MainForm()
 		{
+			Utils.MainForm = this;
+
 			_formatList = new Dictionary<FormatKind, FileFormat>();
 
 			_formatList[FormatKind.NES] = new FileFormat(
@@ -580,8 +582,8 @@ namespace SpriteWave
 
 		private void editColorTable(object sender, EventArgs e)
 		{
-			var ctForm = new EditColorTable();
-			ctForm.Show(this);
+			//var ctForm = new EditColorTable();
+			//ctForm.Show(this);
 		}
 
 		private void openFileDialog1FileOk(object sender, CancelEventArgs e)

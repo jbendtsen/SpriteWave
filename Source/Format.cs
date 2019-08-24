@@ -39,11 +39,6 @@ namespace SpriteWave
 			}
 		}
 
-		public Palette NewPalette()
-		{
-			return _table != null ? new Palette(_table) : null;
-		}
-
 		public Tile NewTile()
 		{
 			return Activator.CreateInstance(_type) as Tile;

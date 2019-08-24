@@ -19,20 +19,23 @@ namespace SpriteWave
 		public Button TabButton { get { return _tabButton; } }
 		public Panel Panel { get { return _panel; } }
 
+		public Size Minimum { get { return new Size(150, 80); } }
+
 		public TileWindow Window
 		{
 			get { return _wnd; }
 			set {
-				_wnd = value;
-				_primary.Palette = _wnd.Palette;
+				if (value is SpriteWindow)
+				{
+					_wnd = value;
+					_primary.Collage = _wnd.Collage;
+				}
 			}
 		}
 
-		public Size Minimum { get { return new Size(150, 80); } }
-
 		public int X { set { _panel.Location = new Point(value, _panel.Location.Y); } }
 
-		public PaletteTab(TileWindow wnd)
+		public PaletteTab(SpriteWindow wnd)
 		{
 			_wnd = wnd;
 			_id = "paletteTab";
@@ -48,7 +51,7 @@ namespace SpriteWave
             Point org = new Point(0, 0);
 			//Size s = new Size(this.ClientSize.Width - org.X * 2, this.ClientSize.Height - org.Y * 2);
 
-			_primary = new PalettePanel(_wnd.Palette, org, new Size(80, 20));
+			_primary = new PalettePanel(_wnd.Collage, org, new Size(80, 20));
 			_primary.Name = "primaryBox";
 
 			_panel.Controls.Add(_primary);
