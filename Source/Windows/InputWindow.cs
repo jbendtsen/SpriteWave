@@ -199,13 +199,14 @@ namespace SpriteWave
 		{
 			int wndW = _window.Width;
 			int wndH = _window.Height;
+			Pen p = _cl.GridPen;
 
 			// Draw vertical margins
 			float tlW = (float)wndW / (float)_vis.col;
 			for (int i = 0; i < _vis.col - 1; i++)
 			{
 				float x = (float)(i + 1) * tlW;
-				g.DrawLine(_gridPen, x, 0, x, wndH);
+				g.DrawLine(p, x, 0, x, wndH);
 			}
 
 			// Draw horizontal margins
@@ -213,7 +214,7 @@ namespace SpriteWave
 			for (int i = 0; i < _vis.row - 1; i++)
 			{
 				float y = (float)(i + 1) * tlH;
-				g.DrawLine(_gridPen, 0, y, wndW, y);
+				g.DrawLine(p, 0, y, wndW, y);
 			}
 		}
 		

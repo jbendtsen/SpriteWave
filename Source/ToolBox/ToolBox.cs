@@ -210,6 +210,14 @@ namespace SpriteWave
 				Refresh();
 		}
 
+		public bool HandleEscapeKey()
+		{
+			if (_curTab == null)
+				return false;
+
+			return _curTab.HandleEscapeKey();
+		}
+
 		// Implements ITabCollection.TabIndex
 		public int TabIndex(ITab t)
 		{

@@ -9,9 +9,9 @@ namespace SpriteWave
 {
 	public partial class MainForm : Form
 	{
-		private InputWindow _inputWnd;
-		private SpriteWindow _spriteWnd;
-		private ToolBox _toolBox;
+		public InputWindow inputWnd;
+		public SpriteWindow spriteWnd;
+		public ToolBox toolBox;
 
 		private Dictionary<FormatKind, FileFormat> _formatList;
 
@@ -22,7 +22,7 @@ namespace SpriteWave
 
 		public MainForm()
 		{
-			Utils.MainForm = this;
+			Utils.mainForm = this;
 
 			_formatList = new Dictionary<FormatKind, FileFormat>();
 
@@ -30,14 +30,14 @@ namespace SpriteWave
 				"NES",
 				Utils.TileType("NESTile"),
 				new string[] { "nes", "fds", "chr", "bin" },
-				new ColorTable(Utils.NESPalette, Utils.NESDefSel)
+				new ColorList(Utils.NESPalette, Utils.NESDefSel)
 			);
 
 			_formatList[FormatKind.SNES] = new FileFormat(
 				"SNES",
 				Utils.TileType("SNESTile"),
 				new string[] { "smc", "sfc", "chr", "bin" },
-				new ColorTable(Utils.SNESRGBAOrderAndDepth, Utils.SNESDefSel)
+				new ColorPattern(Utils.SNESRGBAOrderAndDepth, Utils.SNESDefSel)
 			);
 
 			InitializeComponent();
@@ -49,18 +49,18 @@ namespace SpriteWave
 			filter = filter.Remove(filter.Length-1);
 			this.openFileDialog1.Filter = filter;
 
-			_inputWnd = new InputWindow(this);
-			_spriteWnd = new SpriteWindow(this);
-			_toolBox = new ToolBox(this, _inputWnd);
+			inputWnd = new InputWindow(this);
+			spriteWnd = new SpriteWindow(this);
+			toolBox = new ToolBox(this, inputWnd);
 
 			EventPair[] sendTileEvents =
 			{
-				new EventPair("Click", (s, e) => { CopyTile(_inputWnd); PasteTile(_spriteWnd); _tempSpriteSel = true; }),
-				new EventPair("MouseEnter", (s, e) => { _tempSpriteSel = _spriteWnd.Selected; _spriteWnd.Selected = true; _spriteWnd.Draw(); }),
-				new EventPair("MouseLeave", (s, e) => { _spriteWnd.Selected = _tempSpriteSel; _spriteWnd.Draw(); })
+				new EventPair("Click", (s, e) => { CopyTile(inputWnd); PasteTile(spriteWnd); _tempSpriteSel = true; }),
+				new EventPair("MouseEnter", (s, e) => { _tempSpriteSel = spriteWnd.Selected; spriteWnd.Selected = true; spriteWnd.Draw(); }),
+				new EventPair("MouseLeave", (s, e) => { spriteWnd.Selected = _tempSpriteSel; spriteWnd.Draw(); })
 			};
 
-			Control c = Utils.FindControl(_inputWnd["Controls"].Panel, "inputSend");
+			Control c = Utils.FindControl(inputWnd["Controls"].Panel, "inputSend");
 			Utils.ApplyEvents(c, sendTileEvents);
 
 			// Setup MainForm events
@@ -72,13 +72,13 @@ namespace SpriteWave
 			Utils.ApplyRecursiveControlFunc(this, this.ConfigureControls);
 
 			UpdateMinimumSize();
-			_inputWnd.Focus(this);
+			inputWnd.Focus(this);
 		}
 
 		private void Draw()
 		{
-			_inputWnd.Draw();
-			_spriteWnd.Draw();
+			inputWnd.Draw();
+			spriteWnd.Draw();
 		}
 
 		public void CopyTile(TileWindow wnd)
@@ -93,8 +93,8 @@ namespace SpriteWave
 			Transfer.Dest = wnd.CurrentSelection();
 			Transfer.Paste();
 
-			if (wnd == _spriteWnd && Transfer.Completed)
-				_toolBox.Switch = true;
+			if (wnd == spriteWnd && Transfer.Completed)
+				toolBox.Switch = true;
 
 			Draw();
 		}
@@ -108,14 +108,14 @@ namespace SpriteWave
 
 		private void ClearSelection()
 		{
-			_inputWnd.Selected = false;
-			_spriteWnd.Selected = false;
+			inputWnd.Selected = false;
+			spriteWnd.Selected = false;
 			Transfer.Clear();
 		}
 
 		private void SetSample(Tile t)
 		{
-			_inputWnd.TileSample = t;
+			inputWnd.TileSample = t;
 			this.PerformLayout();
 		}
 
@@ -141,7 +141,7 @@ namespace SpriteWave
 				SetSample(null);
 			}
 
-			if (_drag != null && wnd == _inputWnd)
+			if (_drag != null && wnd == inputWnd)
 			{
 				Tile t = _drag.Current().Piece as Tile;
 				if (t != null)
@@ -159,8 +159,8 @@ namespace SpriteWave
 				return;
 			}
 
-			if (wnd == _inputWnd)
-				SetSample(_inputWnd.PieceAt(_inputWnd.Position) as Tile);
+			if (wnd == inputWnd)
+				SetSample(inputWnd.PieceAt(inputWnd.Position) as Tile);
 
 			Transfer.Source = wnd.CurrentSelection();
 			if (wnd.EdgeOf(wnd.Position) == EdgeKind.None)
@@ -181,10 +181,10 @@ namespace SpriteWave
 			var curCtrl = Utils.ApplyRecursiveControlFunc(this, FindControlWithMouse) as Control;
 
 			TileWindow wnd = null;
-			if (_inputWnd.WindowIs(curCtrl))
-				wnd = _inputWnd;
-			else if (_spriteWnd.WindowIs(curCtrl))
-				wnd = _spriteWnd;
+			if (inputWnd.WindowIs(curCtrl))
+				wnd = inputWnd;
+			else if (spriteWnd.WindowIs(curCtrl))
+				wnd = spriteWnd;
 
 			int x = 0, y = 0;
 			if (_drag != null && _drag.IsEdge)
@@ -207,10 +207,10 @@ namespace SpriteWave
 			bool changed;
 			if (_drag == null)
 			{
-				if (wnd == _spriteWnd)
-					changed = _spriteWnd.HighlightEdgeAt(x, y);
+				if (wnd == spriteWnd)
+					changed = spriteWnd.HighlightEdgeAt(x, y);
 				else
-					changed = _spriteWnd.ClearMousedEdge();
+					changed = spriteWnd.ClearMousedEdge();
 			}
 			else
 			{
@@ -237,7 +237,7 @@ namespace SpriteWave
 			var ctrl = sender as Control;
 			if (ctrl is TabControl)
 			{
-				_toolBox.RefreshTab();
+				toolBox.RefreshTab();
 				this.PerformLayout();
 			}
 			else if (_drag == null)
@@ -246,10 +246,10 @@ namespace SpriteWave
 					this.ActiveControl = ctrl;
 	
 				TileWindow wnd = null;
-				if (_inputWnd.WindowIs(ctrl))
-					wnd = _inputWnd;
-				else if (_spriteWnd.WindowIs(ctrl))
-					wnd = _spriteWnd;
+				if (inputWnd.WindowIs(ctrl))
+					wnd = inputWnd;
+				else if (spriteWnd.WindowIs(ctrl))
+					wnd = spriteWnd;
 	
 				if (wnd != null)
 				{
@@ -279,8 +279,8 @@ namespace SpriteWave
 
 					if (!Transfer.Completed)
 						SetSample(null);
-					else if (Transfer.Dest.Window == _spriteWnd)
-						_toolBox.Switch = true;
+					else if (Transfer.Dest.Window == spriteWnd)
+						toolBox.Switch = true;
 
 					ClearSelection();
 				}
@@ -316,20 +316,22 @@ namespace SpriteWave
 			{
 				if (!(active is TextBox))
 				{
-					// TODO: Employ ITab.HandleEscapeKey()
-					if (Transfer.Source != null || Transfer.Dest != null/* || _inputWnd.IsTileSampleVisible*/)
+					if (Transfer.Source != null || Transfer.Dest != null)
 					{
 						ClearSelection();
 						SetSample(null);
 					}
-					else if (_toolBox.IsOpen && e.KeyCode == Keys.Escape)
+					else if (toolBox.IsOpen && e.KeyCode == Keys.Escape)
 					{
-						_toolBox.Minimise();
-						this.PerformLayout();
+						if (!toolBox.HandleEscapeKey())
+						{
+							toolBox.Minimise();
+							this.PerformLayout();
+						}
 					}
 				}
 
-				_inputWnd.Focus(this);
+				inputWnd.Focus(this);
 			}
 
 			if (active is TextBox)
@@ -341,35 +343,35 @@ namespace SpriteWave
 
 			if (e.KeyCode == Keys.Delete)
 			{
-				_spriteWnd.EraseTile();
+				spriteWnd.EraseTile();
 			}
 
 			if (e.KeyCode == Keys.Enter)
 			{
-				CopyTile(_inputWnd);
-				PasteTile(_spriteWnd);
-				_spriteWnd.MoveSelection(1, 0);
-				_spriteWnd.Draw();
+				CopyTile(inputWnd);
+				PasteTile(spriteWnd);
+				spriteWnd.MoveSelection(1, 0);
+				spriteWnd.Draw();
 			}
 
 			Keys mod = Control.ModifierKeys;
 
 			if ((mod & Keys.Control) != 0)
 			{
-				if (e.KeyCode == Keys.G && _inputWnd.IsActive)
+				if (e.KeyCode == Keys.G && inputWnd.IsActive)
 				{
-					_toolBox.CurrentWindow = _inputWnd;
-					_toolBox.Select("Controls");
-					if (!_toolBox.IsOpen)
-						_toolBox.Minimise();
+					toolBox.CurrentWindow = inputWnd;
+					toolBox.Select("Controls");
+					if (!toolBox.IsOpen)
+						toolBox.Minimise();
 
-					_spriteWnd.Centre();
+					spriteWnd.Centre();
 					this.PerformLayout();
-					this.ActiveControl = _toolBox.GetControl("inputOffset");
+					this.ActiveControl = toolBox.GetControl("inputOffset");
 				}
 
 				if (e.KeyCode == Keys.D0)
-					_spriteWnd.Centre();
+					spriteWnd.Centre();
 
 				int zoom = 0;
 				if (e.KeyCode == Keys.OemMinus)
@@ -378,11 +380,11 @@ namespace SpriteWave
 					zoom = 1;
 
 				if (zoom != 0)
-					_spriteWnd.ZoomIn(zoom);
+					spriteWnd.ZoomIn(zoom);
 
-				Action<EdgeKind> moveEdge = _spriteWnd.InsertEdge;
+				Action<EdgeKind> moveEdge = spriteWnd.InsertEdge;
 				if ((mod & Keys.Shift) != 0)
-					moveEdge = _spriteWnd.DeleteEdge;
+					moveEdge = spriteWnd.DeleteEdge;
 
 				if (e.KeyCode == Keys.I)
 					moveEdge(EdgeKind.Top);
@@ -413,15 +415,15 @@ namespace SpriteWave
 
 				if (swap)
 				{
-					CopyTile(_spriteWnd);
-					_spriteWnd.MoveSelection(x, y);
-					SwapTile(_spriteWnd);
+					CopyTile(spriteWnd);
+					spriteWnd.MoveSelection(x, y);
+					SwapTile(spriteWnd);
 				}
 
 				if (e.KeyCode == Keys.Tab)
 				{
-					if (!_toolBox.IsOpen)
-						_toolBox.Minimise();
+					if (!toolBox.IsOpen)
+						toolBox.Minimise();
 
 					SwitchToolBoxWindow();
 				}
@@ -431,42 +433,42 @@ namespace SpriteWave
 				bool move = true;
 
 				if (e.KeyCode == Keys.W)
-					_inputWnd.MoveSelection(0, -1);
+					inputWnd.MoveSelection(0, -1);
 				else if (e.KeyCode == Keys.S)
-					_inputWnd.MoveSelection(0, 1);
+					inputWnd.MoveSelection(0, 1);
 				else if (e.KeyCode == Keys.A)
-					_inputWnd.MoveSelection(-1, 0);
+					inputWnd.MoveSelection(-1, 0);
 				else if (e.KeyCode == Keys.D)
-					_inputWnd.MoveSelection(1, 0);
+					inputWnd.MoveSelection(1, 0);
 
 				else if (e.KeyCode == Keys.I)
-					_spriteWnd.MoveSelection(0, -1);
+					spriteWnd.MoveSelection(0, -1);
 				else if (e.KeyCode == Keys.K)
-					_spriteWnd.MoveSelection(0, 1);
+					spriteWnd.MoveSelection(0, 1);
 				else if (e.KeyCode == Keys.J)
-					_spriteWnd.MoveSelection(-1, 0);
+					spriteWnd.MoveSelection(-1, 0);
 				else if (e.KeyCode == Keys.L)
-					_spriteWnd.MoveSelection(1, 0);
+					spriteWnd.MoveSelection(1, 0);
 
 				else
 					move = false;
 
 				if (move)
 				{
-					Transfer.Source = _inputWnd.CurrentSelection();
-					Transfer.Dest = _spriteWnd.CurrentSelection();
+					Transfer.Source = inputWnd.CurrentSelection();
+					Transfer.Dest = spriteWnd.CurrentSelection();
 					Draw();
 				}
 
 				if (e.KeyCode == Keys.Tab)
 				{
-					if (!_toolBox.IsOpen)
-						_toolBox.Minimise();
+					if (!toolBox.IsOpen)
+						toolBox.Minimise();
 					else
 					{
-						_toolBox.Cycle(1);
-						_toolBox.RefreshTab();
-						_spriteWnd.Centre();
+						toolBox.Cycle(1);
+						toolBox.RefreshTab();
+						spriteWnd.Centre();
 					}
 
 					this.PerformLayout();
@@ -486,14 +488,14 @@ namespace SpriteWave
 			if (this.WindowState != _prevState)
 			{
 				_prevState = this.WindowState;
-				_spriteWnd.Centre();
-				_spriteWnd.Draw();
+				spriteWnd.Centre();
+				spriteWnd.Draw();
 			}
 		}
 
 		private void UpdateMinimumSize()
 		{
-			int minW = _inputWnd.ScrollYWidth + _spriteWnd.ScrollYWidth + (_toolBox.Minimum.Width * 2);
+			int minW = inputWnd.ScrollYWidth + spriteWnd.ScrollYWidth + (toolBox.Minimum.Width * 2);
 
 			this.MinimumSize = new Size(minW, this.MinimumSize.Height);
 		}
@@ -506,47 +508,47 @@ namespace SpriteWave
 
 			var tbLayout = ToolBoxOrientation.None;
 
-			TileWindow tbWnd = _toolBox.CurrentWindow;
-			if (tbWnd == _inputWnd)
+			TileWindow tbWnd = toolBox.CurrentWindow;
+			if (tbWnd == inputWnd)
 				tbLayout = ToolBoxOrientation.Left;
-			else if (tbWnd == _spriteWnd)
+			else if (tbWnd == spriteWnd)
 				tbLayout = ToolBoxOrientation.Right;
 
-			_inputWnd.UpdateLayout(0, tileBoxW, totalH, menuH);
-			_spriteWnd.UpdateLayout(tileBoxW, tileBoxW, totalH, menuH);
+			inputWnd.UpdateLayout(0, tileBoxW, totalH, menuH);
+			spriteWnd.UpdateLayout(tileBoxW, tileBoxW, totalH, menuH);
 
-			_toolBox.UpdateLayout(tbLayout, this.ClientSize);
-			if (_toolBox.IsActive && tbWnd != null)
+			toolBox.UpdateLayout(tbLayout, this.ClientSize);
+			if (toolBox.IsActive && tbWnd != null)
 			{
 				int wndMaxH = totalH - (menuH + tbWnd.ScrollXHeight);
-				tbWnd.ReduceWindowTo(wndMaxH - _toolBox.Minimum.Height);
+				tbWnd.ReduceWindowTo(wndMaxH - toolBox.Minimum.Height);
 			}
 
 			UpdateMinimumSize();
 
-			_inputWnd.UpdateBars();
-			_spriteWnd.UpdateBars();
+			inputWnd.UpdateBars();
+			spriteWnd.UpdateBars();
 			Draw();
 		}
 
 		public bool SwitchToolBoxWindow()
 		{
 			TileWindow wnd;
-			if (_toolBox.CurrentWindow == _inputWnd)
-				wnd = _spriteWnd;
-			else if (_toolBox.CurrentWindow == _spriteWnd)
-				wnd = _inputWnd;
+			if (toolBox.CurrentWindow == inputWnd)
+				wnd = spriteWnd;
+			else if (toolBox.CurrentWindow == spriteWnd)
+				wnd = inputWnd;
 			else
 				return false;
 
 			if (!wnd.IsActive)
 				return false;
 
-			_toolBox.CurrentWindow = wnd;
+			toolBox.CurrentWindow = wnd;
 			this.PerformLayout();
 
-			_spriteWnd.Centre();
-			_spriteWnd.Draw();
+			spriteWnd.Centre();
+			spriteWnd.Draw();
 
 			return true;
 		}
@@ -569,9 +571,9 @@ namespace SpriteWave
 		private void closeWorkspace(object sender, EventArgs e)
 		{
 			Transfer.Clear();
-			_inputWnd.Close();
-			_spriteWnd.Close();
-			_toolBox.IsActive = false;
+			inputWnd.Close();
+			spriteWnd.Close();
+			toolBox.IsActive = false;
 			this.PerformLayout();
 		}
 
@@ -596,19 +598,42 @@ namespace SpriteWave
 
 			closeWorkspace(null, null);
 
-			this.colorTableToolStripMenuItem.Enabled = fmt.ColorTable.IsList;
+			this.colorTableToolStripMenuItem.Enabled = fmt.ColorTable is ColorList;
 
-			_inputWnd.Load(fmt, data);
+			inputWnd.Load(fmt, data);
 
-			_spriteWnd.FormatToLoad = fmt;
-			_spriteWnd.Prompt = "Drag or send a tile to begin!";
+			spriteWnd.FormatToLoad = fmt;
+			spriteWnd.Prompt = "Drag or send a tile to begin!";
 
-			_inputWnd.ToggleMenu(true);
-			_spriteWnd.EnablePaste();
+			inputWnd.ToggleMenu(true);
+			spriteWnd.EnablePaste();
 
-			_toolBox.Activate(_inputWnd);
+			toolBox.Activate(inputWnd);
 
 			this.PerformLayout();
+		}
+
+		private ColorPicker _picker;
+		public void OpenColorPicker(IPalette pal, int palIdx)
+		{
+			if (pal == null)
+				return;
+
+			if (_picker == null)
+			{
+				_picker = new ColorPicker(256, pal, palIdx);
+				_picker.Show(this);
+			}
+			else
+			{
+				_picker.SelectColorFrom(pal, palIdx);
+				if (_picker.WindowState == FormWindowState.Minimized)
+					_picker.WindowState = FormWindowState.Normal;
+			}
+		}
+		public void ClearColorPicker()
+		{
+			_picker = null;
 		}
 	}
 }

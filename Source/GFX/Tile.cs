@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Drawing;
 
-using System.Windows.Forms;
-
 namespace SpriteWave
 {
 	public enum Translation
@@ -25,19 +23,18 @@ namespace SpriteWave
 		// If the return value is less than or equal to the offset value, it means there was an error
 		public abstract int Import(byte[] input, int offset);
 
-		public abstract void ExtractRow(byte[] line, int offset, int y, byte[] palRGBA);
+		public abstract void ExtractRow(byte[] line, int offset, int y, byte[] palBGRA);
 
 		public Tile Clone()
 		{
+			// Uses funky business since 'Tile' is an abstract class (need the derived type, eg. NESTile)
 			Tile t = Activator.CreateInstance(this.GetType()) as Tile;
 			Buffer.BlockCopy(_data, 0, t.Data, 0, Width * Height * BytesPP);
 			return t;
 		}
 
-		public void ApplyTo(byte[] canvas, int offset, int width, Collage cl)
+		public void ApplyTo(byte[] canvas, int offset, int width, byte[] palBGRA)
 		{
-			byte[] palBGRA = cl != null ? cl.ActiveColors : null;
-
 			// Iterates backwards as BMPs are backwards
 			for (int i = Height-1; i >= 0; i--)
 			{
@@ -46,11 +43,11 @@ namespace SpriteWave
 			}
 		}
 
-		public Bitmap ToBitmap(Collage cl)
+		public Bitmap ToBitmap(byte[] activeColors)
 		{
 			byte[] pixels = new byte[Width * Height * Utils.cLen];
 
-			ApplyTo(pixels, 0, Width, cl);
+			ApplyTo(pixels, 0, Width, activeColors);
 			return Utils.BitmapFrom(pixels, Width, Height);
 		}
 

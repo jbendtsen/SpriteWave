@@ -9,25 +9,28 @@ namespace SpriteWave
 		private readonly int scrollW = SystemInformation.VerticalScrollBarWidth;
 		private const int pixPerScroll = 20;
 
+		private PaletteTab _uiTab;
+
 		private ColorBox _box;
 		private VScrollBar _scroll;
 
 		private int _nCols;
 		private int _nRows;
-		private int _palLen = 0;
+		private int _maxVisRows;
 
+		private int _palLen = 0;
 		private int[] _palPolarLum = null;
 		private byte[] _palNumbers = null;
 
-		private Collage _collage;
-		public Collage Collage
+		private IPalette _pal;
+		public IPalette Palette
 		{
 			set {
-				_collage = value;
-                if (_collage == null)
+				_pal = value;
+                if (_pal == null)
                     return;
 
-				int len = _collage.ActiveColors.Length / Utils.cLen;
+				int len = _pal.ColorCount;
 				if (_palLen != len)
 				{
 					_palLen = len;
@@ -35,6 +38,9 @@ namespace SpriteWave
 				}
 
 				//CalcBrightness();
+			}
+			get {
+				return _pal;
 			}
 		}
 
@@ -44,16 +50,19 @@ namespace SpriteWave
 		}
 		private int VisibleRows
 		{
-			get { return _nRows <= 1 ? 1 : 2; }
+			get { return Math.Min(_nRows, _maxVisRows); }
 		}
 
-		public PalettePanel(Collage cl, Point loc, Size size)
+		public PalettePanel(PaletteTab uiTab, IPalette pal, int maxVisRows = 2)
 		{
-			this.Collage = cl;
+			_uiTab = uiTab;
+			this.Palette = pal;
+			_maxVisRows = maxVisRows;
 
 			this.Name = "paletteBox";
+			this.Location = new Point(0, 0);
+			Size size = new Size(80, 20);
 			this.Size = size;
-			this.Location = loc;
 
 			_box = new ColorBox();
 			_box.MouseDown += this.boxClickHandler;
@@ -79,23 +88,26 @@ namespace SpriteWave
 		{
 			_nCols = 1;
 			_nRows = 1;
-			if (_collage != null)
+			if (_pal != null)
 			{
-				int len = _collage.ActiveColors.Length / Utils.cLen;
-				_nCols = len;
-				if (_nCols >= 8)
-					_nCols = this.Width < 200 ? 4 : 8;
+				if (this.Width >= 400)
+					_nCols = 16;
+				else if (this.Width >= 200)
+					_nCols = 8;
+				else
+					_nCols = 4;
 
-				_nRows = (int)Math.Ceiling((float)len / (float)_nCols);
+				_nCols = Math.Min(_nCols, _palLen);
+				_nRows = (int)Math.Ceiling((float)_palLen / (float)_nCols);
 			}
 
-			bool scVis = _nRows > 2;
+			bool scVis = _nRows > _maxVisRows;
 			if (scVis)
 			{
 				if (!_scroll.Enabled)
 					_scroll.Enabled = true;
 
-				_scroll.Maximum = _nRows - 2;
+				_scroll.Maximum = _nRows - _maxVisRows;
 			}
 			else if (_scroll.Enabled)
 				_scroll.Enabled = false;
@@ -119,19 +131,20 @@ namespace SpriteWave
 
 		public void Draw()
 		{
-			if (_collage == null || this.Height <= 0)
+			if (_pal == null || this.Height <= 0)
 				return;
 
 			// Calculate the brightness of each color to determine its opposite luminance pole (black or white)
-			var colors = _collage.ActiveColors;
+			uint[] colors = _pal.GetList();
 			_palPolarLum = new int[_palLen];
 
 			const int white = 0, black = 1;
 			for (int i = 0; i < _palLen; i++)
 			{
-				double r = (double)colors[i*4+2];
-				double g = (double)colors[i*4+1];
-				double b = (double)colors[i*4];
+				uint clr = colors[i];
+				double r = (double)((clr >> 8) & 0xff);
+				double g = (double)((clr >> 16) & 0xff);
+				double b = (double)(clr >> 24);
 
 				double lum = 0.2126*r + 0.7152*g + 0.0722*b;
 				_palPolarLum[i] = lum >= 127.5f ? black : white;
@@ -165,21 +178,20 @@ namespace SpriteWave
 				{
 					int x = (int)((float)j / cellW);
 					float subX = (float)j % cellW;
-					int cell = 4 * (cellY + x);
+					int cell = cellY + x;
 
-					buf[idx] = colors[cell++];
-					buf[idx + 1] = colors[cell++];
-					buf[idx + 2] = colors[cell++];
-					buf[idx + 3] = colors[cell++];
+					uint clr = colors[cell];
+					buf[idx] = (byte)(clr >> 24);
+					buf[idx + 1] = (byte)((clr >> 16) & 0xff);
+					buf[idx + 2] = (byte)((clr >> 8) & 0xff);
+					buf[idx + 3] = (byte)(clr & 0xff);
 
 					if (subY < numH && subX < numW)
 					{
-						// minus 4 because we already incremented the cell channel index to the next cell
-						int cellIdx = (cell-4) / 4;
 						// XOR 1 because we want the text colour to oppose the brightness level of the cell
-						int clrVersion = _palPolarLum[cellIdx] ^ 1;
+						int clrVersion = _palPolarLum[cell] ^ 1;
 
-						int numLine = (cellIdx * 2 + clrVersion) * (int)numH;
+						int numLine = (cell * 2 + clrVersion) * (int)numH;
 						int numPixIdx = ((numLine + (int)subY) * (int)numW + (int)subX) * Utils.cLen;
 
 						float alpha = (float)_palNumbers[numPixIdx + 3] / 255f;
@@ -203,17 +215,8 @@ namespace SpriteWave
 			int col = (int)((float)e.X / cellW);
 			int row = (int)((float)e.Y / cellH) + (FirstVisibleCell / _nCols);
 			int idx = row * _nCols + col;
-/*
-			double max = _collage.HighestColor;
-			uint clr = (uint)(new Random().NextDouble() * max);
 
-			_collage.SetColor(idx, clr);
-			CalcBrightness();
-
-			_collage.Render();
-			Draw();
-*/
-			Utils.OpenColorPicker(_collage, idx);
+			_uiTab.SelectFromTable(this, idx);
 		}
 
 		private void boxScrollHandler(object sender, MouseEventArgs e)

@@ -113,6 +113,15 @@ namespace SpriteWave
 			_panel.Controls.Add(_tileSample);
 		}
 
+		public bool HandleEscapeKey()
+		{
+			bool textFocus = Utils.mainForm.ActiveControl is TextBox;
+			if (textFocus)
+				_wnd.Focus(Utils.mainForm);
+
+			return textFocus;
+		}
+
 		public void AdjustContents(Size size, ToolBoxOrientation layout)
 		{
 			int w = size.Width;

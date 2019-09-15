@@ -32,7 +32,7 @@ namespace SpriteWave
 		private readonly string[] _labels;
 		private readonly float[] _alphaShades = {0.6f, 0.8f};
 
-		private Collage _refCl;
+		private IPalette _refPal;
 		private int _refPalIdx;
 
 		private Bitmap _slider;
@@ -95,7 +95,7 @@ namespace SpriteWave
 		private Bitmap _sample;
 		private Rectangle _sampleRect = new Rectangle(0, 0, 8, 8);
 
-		public ColorPicker(int boxSize, Collage refCl, int refPalIdx)
+		public ColorPicker(int boxSize, IPalette refPal, int refPalIdx)
 		{
 			_sample = new Bitmap(_sampleRect.Width, _sampleRect.Height);
 			//_mode = ColorMode.RGB;
@@ -228,7 +228,7 @@ namespace SpriteWave
 			Utils.ControlFunc updateFormIcon = (ctrl, args) => {ctrl.MouseUp += (s, e) => ResetIcon(); return null;};
 			Utils.ApplyRecursiveControlFunc(this, updateFormIcon);
 
-			SelectColorFrom(refCl, refPalIdx);
+			SelectColorFrom(refPal, refPalIdx);
 			ResetIcon();
 		}
 
@@ -238,36 +238,34 @@ namespace SpriteWave
 			this.Icon = Icon.FromHandle(_sample.GetHicon());
 		}
 
-		public void SelectColorFrom(Collage cl, int palIdx)
+		public void SelectColorFrom(IPalette pal, int palIdx)
 		{
-			_refCl = cl;
+			_refPal = pal;
 			_refPalIdx = palIdx;
 
-			byte[] pal = _refCl.ActiveColors;
-			int idx = _refPalIdx * Utils.cLen;
+			uint rgba = _refPal[_refPalIdx];
 
-			_chn[0] = (float)pal[idx] / 255f;
-			_chn[1] = (float)pal[idx+1] / 255f;
-			_chn[2] = (float)pal[idx+2] / 255f;
-			_chn[3] = (float)pal[idx+3] / 255f;
+			_chn[0] = (float)(rgba >> 24) / 255f;
+			_chn[1] = (float)((rgba >> 16) & 0xff) / 255f;
+			_chn[2] = (float)((rgba >> 8) & 0xff) / 255f;
+			_chn[3] = (float)(rgba & 0xff) / 255f;
 
+			RefreshInputFields();
 			Render();
 		}
 
 		private void UpdateColorSource()
 		{
-			byte[] pal = _refCl.ActiveColors;
-			int idx = _refPalIdx * Utils.cLen;
-
-			pal[idx] = (byte)(_chn[0] * 255f);
-			pal[idx+1] = (byte)(_chn[1] * 255f);
-			pal[idx+2] = (byte)(_chn[2] * 255f);
-			pal[idx+3] = (byte)(_chn[3] * 255f);
-
-			_refCl.Render();
+			_refPal[_refPalIdx] =
+				((uint)(_chn[0] * 255f) << 24) |
+				((uint)(_chn[1] * 255f) << 16) |
+				((uint)(_chn[2] * 255f) << 8) |
+				(uint)(_chn[3] * 255f)
+			;
 
 			// Definitely not a hack /s
-			Utils.MainForm.PerformLayout();
+			Utils.mainForm.spriteWnd.Collage.Render();
+			Utils.mainForm.PerformLayout();
 		}
 
 		public void RefreshInputFields()
@@ -323,6 +321,7 @@ namespace SpriteWave
 			}
 
 			_chn[_order[3 - idx]] = f;
+			UpdateColorSource();
 			Render();
 		}
 
@@ -632,7 +631,7 @@ namespace SpriteWave
 			
 			_sample.Dispose();
 
-			Utils.ClearColorPicker();
+			Utils.mainForm.ClearColorPicker();
 		}
 	}
 }

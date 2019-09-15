@@ -35,7 +35,7 @@ namespace SpriteWave
 	{
 		public const int cLen = 4;
 
-		public static MainForm MainForm;
+		public static MainForm mainForm;
 
 		public static Type TileType(string name)
 		{
@@ -255,57 +255,21 @@ namespace SpriteWave
 			return (double)((clr >> rshift) & 0xff) / 255.0;
 		}
 
+		// Used to convert RGBA to BGRA and back again
+		public static uint RedBlueSwap(uint rgba)
+		{
+			return
+				(rgba & 0x00FF00FF) |
+				((rgba & 0xFF000000) >> 16) |
+				((rgba & 0x0000FF00) << 16)
+			;
+		}
+
 		// Ignores alpha
 		public static Color FromRGB(uint clr)
 		{
 			int rgb = (int)(clr >> 8);
 			return Color.FromArgb(255, Color.FromArgb(rgb));
-		}
-
-		private static uint ReduceAggregateRGBA(int nComp, double red, double green, double blue, double alpha)
-		{
-			double n = (double)nComp;
-
-			uint rgba = ((uint)(red / n) & 0xff) << 24;
-			rgba |= ((uint)(green / n) & 0xff) << 16;
-			rgba |= ((uint)(blue / n) & 0xff) << 8;
-			rgba |= (uint)(alpha / n) & 0xff;
-
-			return rgba;
-		}
-
-		// This is one MEAN method hey?
-		// omg am i the funniest programmer alive or what
-		public static uint MeanColor(uint[] list)
-		{
-			double red = 0, green = 0, blue = 0, alpha = 0;
-			foreach (uint clr in list)
-			{
-				red += (double)((clr >> 24) & 0xff);
-				green += (double)((clr >> 16) & 0xff);
-				blue += (double)((clr >> 8) & 0xff);
-				alpha += (double)(clr & 0xff);
-			}
-
-			return ReduceAggregateRGBA(list.Length, red, green, blue, alpha);
-		}
-
-		// bet you were wondering if i MEANt to repeat this method, eh?
-		// Expected format for list: every 4 bytes makes a pixel,
-		//  with the 4 bytes being stored as blue, green, red, alpha.
-		public static uint MeanColor(byte[] list)
-		{
-			double red = 0, green = 0, blue = 0, alpha = 0;
-			int len = list.Length / cLen;
-			for (int i = 0; i < len; i++)
-			{
-				red += (double)list[i * cLen + 2];
-				green += (double)list[i * cLen + 1];
-				blue += (double)list[i * cLen];
-				alpha += (double)list[i * cLen + 3];
-			}
-
-			return ReduceAggregateRGBA(len, red, green, blue, alpha);
 		}
 
 		public static uint InvertRGB(uint clr)
@@ -324,6 +288,14 @@ namespace SpriteWave
 			output[offset+1] = (byte)((input >> 16) & 0xff); // green
 			output[offset+2] = (byte)((input >> 24) & 0xff); // red
 			output[offset+3] = (byte)(input & 0xff); // alpha
+		}
+		public static void EmbedPixel(uint[] output, uint input, int offset = 0)
+		{
+			output[offset] =
+				(((input >> 8) & 0xff) << 24)  |
+				(((input >> 16) & 0xff) << 16) |
+				(((input >> 24) & 0xff) << 8)  |
+				(input & 0xff);
 		}
 		/*
 		public static uint FromBA(byte[] input, int offset)
@@ -402,26 +374,6 @@ namespace SpriteWave
 			}
 
 			return bmp;
-		}
-
-		private static ColorPicker _picker;
-		public static void OpenColorPicker(Collage cl, int palIdx)
-		{
-			if (_picker == null)
-			{
-				_picker = new ColorPicker(256, cl, palIdx);
-				_picker.Show(MainForm);
-			}
-			else
-			{
-				_picker.SelectColorFrom(cl, palIdx);
-				if (_picker.WindowState == FormWindowState.Minimized)
-					_picker.WindowState = FormWindowState.Normal;
-			}
-		}
-		public static void ClearColorPicker()
-		{
-			_picker = null;
 		}
 
 		public static readonly string[] RGBANames =

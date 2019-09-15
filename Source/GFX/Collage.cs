@@ -4,7 +4,7 @@ using System.Drawing;
 
 namespace SpriteWave
 {
-	public class Collage
+	public class Collage : IPalette
 	{
 		private const int defCols = 16;
 
@@ -41,15 +41,34 @@ namespace SpriteWave
 		private Bitmap _canvas;
 		public Bitmap Bitmap { get { return _canvas; } }
 
-		// Each pixel is stored as four bytes, ordered B, G, R, then A
-		private byte[] _activeColors;
-		public byte[] ActiveColors { get { return _activeColors; } }
-
-		private uint _mean;
-		public uint MeanColor { get { return _mean; } }
+		private Pen _gridPen;
+		public Pen GridPen { get { return _gridPen; } }
 
 		private readonly ColorTable _tbl;
-		public uint HighestColor { get { return _tbl.LastColor; } }
+		//public uint HighestColor { get { return _tbl.LastColor; } }
+
+		private uint[] _nativeClrs;
+		public uint[] NativeColors { get { return _nativeClrs; } }
+		public int ColorCount { get { return _nativeClrs.Length; } }
+
+		public uint this[int idx]
+		{
+			get { return Utils.RedBlueSwap(_tbl.NativeToRGBA(_nativeClrs[idx])); }
+			set {
+				_nativeClrs[idx] = _tbl.RGBAToNative(Utils.RedBlueSwap(value));
+				UpdateGridPen();
+			}
+		}
+
+		public uint[] GetList()
+		{
+			int len = _nativeClrs.Length;
+			var clrs = new uint[len];
+			for (int i = 0; i < len; i++)
+				clrs[i] = this[i];
+
+			return clrs;
+		}
 
 		public Collage(FileFormat fmt, int nCols = defCols, bool readOnly = true)
 		{
@@ -62,25 +81,49 @@ namespace SpriteWave
 
 			_tbl = _fmt.ColorTable;
 			uint[] defs = _tbl.Defaults;
-			_activeColors = new byte[defs.Length * Utils.cLen];
+			_nativeClrs = new uint[defs.Length];
+			Buffer.BlockCopy(defs, 0, _nativeClrs, 0, defs.Length * Utils.cLen);
 
-			for (int i = 0; i < defs.Length; i++)
-				SetColor(i, defs[i], recalcMean: false);
-
-			_mean = Utils.MeanColor(_activeColors);
+			UpdateGridPen();
 		}
 
-		public void SetColor(int idx, uint nativeClr, bool recalcMean = true)
+		public byte[] BGRAPalette()
 		{
-			int which = idx * Utils.cLen;
-			if (which < 0 || which > _activeColors.Length - 4)
-				return;
+			var clrs = new byte[_nativeClrs.Length * Utils.cLen];
+			int idx = 0;
+			for (int i = 0; i < _nativeClrs.Length; i++)
+			{
+				uint c = this[i];
+				clrs[idx++] = (byte)(c >> 24);
+				clrs[idx++] = (byte)((c >> 16) & 0xff);
+				clrs[idx++] = (byte)((c >> 8) & 0xff);
+				clrs[idx++] = (byte)(c & 0xff);
+			}
 
-			uint rgba = _tbl.NativeToRGBA(nativeClr);
-			Utils.EmbedPixel(_activeColors, rgba, which);
+			return clrs;
+		}
 
-			if (recalcMean)
-				_mean = Utils.MeanColor(_activeColors);
+		public void UpdateGridPen()
+		{
+			double red = 0, green = 0, blue = 0, alpha = 0;
+			for (int i = 0; i < _nativeClrs.Length; i++)
+			{
+				uint clr = this[i];
+				blue += (double)((clr >> 24) & 0xff);
+				green += (double)((clr >> 16) & 0xff);
+				red += (double)((clr >> 8) & 0xff);
+				alpha += (double)(clr & 0xff);
+			}
+
+			double n = (double)_nativeClrs.Length;
+			uint rgba =
+				((uint)(red / n) & 0xff) << 24 |
+				((uint)(green / n) & 0xff) << 16 |
+				((uint)(blue / n) & 0xff) << 8 |
+				(uint)(alpha / n) & 0xff
+			;
+
+			_gridPen = new Pen(Utils.FromRGB(rgba ^ 0xFFFFFF00));
 		}
 
 		public void AddTile(Tile t)
@@ -115,9 +158,10 @@ namespace SpriteWave
 				_tiles.Add(_fmt.NewTile());
 		}
 
+		// Each pixel is stored as four bytes, ordered B, G, R, then A
 		public Bitmap RenderTile(Tile t)
 		{
-			return t.ToBitmap(this);
+			return t.ToBitmap(BGRAPalette());
 		}
 
 		public bool LoadTiles(byte[] file, int offset)
@@ -156,6 +200,7 @@ namespace SpriteWave
 			int width = _nCols * TileW;
 			byte[] collage = new byte[height * width * cLen];
 
+			byte[] palBGRA = BGRAPalette();
 			int idx = 0;
 			foreach (Tile t in _tiles)
 			{
@@ -170,7 +215,8 @@ namespace SpriteWave
 				int offset = (imgRow * _nCols * TileW) + imgCol;
 				offset *= cLen;
 
-				t.ApplyTo(collage, offset, width, this); 
+				// Each pixel is stored as four bytes, ordered B, G, R, then A
+				t.ApplyTo(collage, offset, width, palBGRA);
 				idx++;
 			}
 

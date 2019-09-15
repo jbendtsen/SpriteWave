@@ -8,7 +8,7 @@ if "%~1"=="" (
 	goto exit
 )
 
-call %CSC% -unsafe "%~1" ..\Source\Utils.cs ..\Source\GFX\ColorTable.cs ..\Source\Suffix.cs ..\Source\GFX\ColorSpace.cs
+call %CSC% -unsafe "%~1" ..\Source\Utils.cs ..\Source\Suffix.cs ..\Source\GFX\ColorSpace.cs
 
 :exit
 	echo.

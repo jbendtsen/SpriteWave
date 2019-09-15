@@ -19,7 +19,6 @@ namespace SpriteWave
 		protected bool _isSel = false;
 
 		protected Rectangle _bounds;
-		protected Pen _gridPen;
 
 		public Collage Collage { get { return _cl; } }
 
@@ -158,12 +157,6 @@ namespace SpriteWave
 		public virtual EdgeKind EdgeOf(Position p) { return EdgeKind.None; }
 		public virtual PointF[] ShapeEdge(Edge edge) { return null; }
 
-		public void ResetGridPen()
-		{
-			uint marginClr = Utils.InvertRGB(_cl.MeanColor);
-			_gridPen = new Pen(Utils.FromRGB(marginClr), 1.0f);
-		}
-
 		public virtual void DrawCanvas(Graphics g)
 		{
 			Rectangle clBounds = VisibleCollageBounds;
@@ -250,9 +243,6 @@ namespace SpriteWave
 				DrawEdges(g);
 
 				// In order to more easily discern between tiles on the screen, we draw margins around each tile.
-				if (_gridPen == null)
-					ResetGridPen();
-
 				DrawGrid(g);
 			}
 		}

@@ -6,6 +6,9 @@ namespace SpriteWave
 {
 	public class PaletteTab : ITab
 	{
+		private const int DividerH = 9;
+		private const int PrimaryH = 80;
+
 		private string _name;
 		private string _id;
 		private Button _tabButton;
@@ -13,13 +16,20 @@ namespace SpriteWave
 		private TileWindow _wnd;
 
 		private PalettePanel _primary;
+		private PalettePanel _second;
+		private int _pmIdx;
 
 		public string Name { get { return _name; } }
 		public string ID { get { return _id; } }
 		public Button TabButton { get { return _tabButton; } }
 		public Panel Panel { get { return _panel; } }
 
-		public Size Minimum { get { return new Size(150, 80); } }
+		public Size Minimum
+		{
+			get {
+				return new Size(150, _second != null ? 250 : PrimaryH);
+			}
+		}
 
 		public TileWindow Window
 		{
@@ -28,7 +38,7 @@ namespace SpriteWave
 				if (value is SpriteWindow)
 				{
 					_wnd = value;
-					_primary.Collage = _wnd.Collage;
+					_primary.Palette = _wnd.Collage;
 				}
 			}
 		}
@@ -47,23 +57,70 @@ namespace SpriteWave
 			_panel = new Panel();
 			_panel.Name = "palettePanel";
 
-			//Point org = new Point(20, 10);
-            Point org = new Point(0, 0);
-			//Size s = new Size(this.ClientSize.Width - org.X * 2, this.ClientSize.Height - org.Y * 2);
-
-			_primary = new PalettePanel(_wnd.Collage, org, new Size(80, 20));
+			_primary = new PalettePanel(this, _wnd.Collage);
 			_primary.Name = "primaryBox";
 
 			_panel.Controls.Add(_primary);
 		}
 
+		public void SelectFromTable(PalettePanel panel, int cellIdx)
+		{
+			var table = _wnd.Collage.Format.ColorTable;
+			if (!(table is ColorList) || (panel == _second && _second != null))
+			{
+				//Utils.mainForm.OpenColorPicker(panel.Palette, cellIdx);
+				var cl = _wnd.Collage;
+				cl.NativeColors[_pmIdx] = (uint)cellIdx;
+				cl.UpdateGridPen();
+				cl.Render();
+				Utils.mainForm.PerformLayout();
+				return;
+			}
+
+			_pmIdx = cellIdx;
+			if (_second == null)
+			{
+				_second = new PalettePanel(this, table as ColorList, maxVisRows: 4);
+				_second.Name = "secondaryBox";
+				_panel.Controls.Add(_second);
+				Utils.mainForm.PerformLayout();
+			}
+		}
+
+		public bool HandleEscapeKey()
+		{
+			bool shrink = _second != null;
+			if (shrink)
+			{
+				_panel.Controls.Remove(_second);
+				_second = null;
+				Utils.mainForm.PerformLayout();
+			}
+
+			return shrink;
+		}
+
 		public void AdjustContents(Size size, ToolBoxOrientation layout)
 		{
+			if (size.Height < Minimum.Height)
+				return;
+
 			_panel.Size = size;
-			_primary.Size = size;
+
+			_primary.Location = new Point(0, size.Height - PrimaryH);
+			_primary.Size = new Size(size.Width, PrimaryH);
+
+			if (_second != null)
+			{
+				_second.Size = new Size(size.Width, size.Height - (PrimaryH + DividerH));
+				_second.AdjustContents(layout);
+			}
 
 			_primary.AdjustContents(layout);
+
 			_primary.Draw();
+			if (_second != null)
+				_second.Draw();
 		}
 	}
 }

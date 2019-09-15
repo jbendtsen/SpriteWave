@@ -488,14 +488,15 @@ namespace SpriteWave
 			float xLn = PadOffset(_xOff * _zoom, tileSc.Width);
 			float yLn = PadOffset(_yOff * _zoom, tileSc.Height);
 
+			Pen p = _cl.GridPen;
 			while (xLn < wndW)
 			{
-				g.DrawLine(_gridPen, xLn, 0, xLn, wndH);
+				g.DrawLine(p, xLn, 0, xLn, wndH);
 				xLn += tileSc.Width;
 			}
 			while (yLn < wndH)
 			{
-				g.DrawLine(_gridPen, 0, yLn, wndW, yLn);
+				g.DrawLine(p, 0, yLn, wndW, yLn);
 				yLn += tileSc.Height;
 			}
 		}

@@ -44,8 +44,8 @@ namespace SpriteWave
 				if (components != null)
 					components.Dispose();
 
-				_inputWnd.Dispose();
-				_spriteWnd.Dispose();
+				inputWnd.Dispose();
+				spriteWnd.Dispose();
 			}
 
 			base.Dispose(disposing);

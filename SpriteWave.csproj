@@ -68,7 +68,9 @@
     <Compile Include="Source\Forms\MainForm.Designer.cs">
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Source\GFX\ColorSpace.cs" />
+    <Compile Include="Source\GFX\ColorList.cs" />
+    <Compile Include="Source\GFX\ColorPattern.cs" />
+    <Compile Include="Source\GFX\IPalette.cs" />
     <Compile Include="Source\PaletteUI\ColorBox.cs" />
     <Compile Include="Source\PaletteUI\DigitImages.cs" />
     <Compile Include="Source\PaletteUI\PalettePanel.cs" />
