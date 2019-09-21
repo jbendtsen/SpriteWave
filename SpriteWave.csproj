@@ -70,9 +70,9 @@
     </Compile>
     <Compile Include="Source\GFX\ColorList.cs" />
     <Compile Include="Source\GFX\ColorPattern.cs" />
-    <Compile Include="Source\GFX\IPalette.cs" />
     <Compile Include="Source\PaletteUI\ColorBox.cs" />
     <Compile Include="Source\PaletteUI\DigitImages.cs" />
+    <Compile Include="Source\PaletteUI\IPalette.cs" />
     <Compile Include="Source\PaletteUI\PalettePanel.cs" />
     <Compile Include="Source\Suffix.cs" />
     <Compile Include="Source\ToolBox\ITabCollection.cs" />

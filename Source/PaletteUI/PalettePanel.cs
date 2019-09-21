@@ -9,7 +9,7 @@ namespace SpriteWave
 		private readonly int scrollW = SystemInformation.VerticalScrollBarWidth;
 		private const int pixPerScroll = 20;
 
-		private PaletteTab _uiTab;
+		private IPalettePicker _uiParent;
 
 		private ColorBox _box;
 		private VScrollBar _scroll;
@@ -17,6 +17,8 @@ namespace SpriteWave
 		private int _nCols;
 		private int _nRows;
 		private int _maxVisRows;
+
+		public int CurrentCell = -1;
 
 		private int _palLen = 0;
 		private int[] _palPolarLum = null;
@@ -53,9 +55,9 @@ namespace SpriteWave
 			get { return Math.Min(_nRows, _maxVisRows); }
 		}
 
-		public PalettePanel(PaletteTab uiTab, IPalette pal, int maxVisRows = 2)
+		public PalettePanel(IPalettePicker uiParent, IPalette pal, int maxVisRows = 2)
 		{
-			_uiTab = uiTab;
+			_uiParent = uiParent;
 			this.Palette = pal;
 			_maxVisRows = maxVisRows;
 
@@ -142,12 +144,20 @@ namespace SpriteWave
 			for (int i = 0; i < _palLen; i++)
 			{
 				uint clr = colors[i];
-				double r = (double)((clr >> 8) & 0xff);
-				double g = (double)((clr >> 16) & 0xff);
-				double b = (double)(clr >> 24);
+				double r = (double)((clr >> 8) & 0xff) / 255f;
+				double g = (double)((clr >> 16) & 0xff) / 255f;
+				double b = (double)(clr >> 24) / 255f;
+
+				if (CurrentCell >= 0 && i != CurrentCell)
+				{
+					r = 1 - ((1 - r) / 2);
+					g = 1 - ((1 - g) / 2);
+					b = 1 - ((1 - b) / 2);
+					colors[i] = Utils.ComposeBGRA(b, g, r, 1f);
+				}
 
 				double lum = 0.2126*r + 0.7152*g + 0.0722*b;
-				_palPolarLum[i] = lum >= 127.5f ? black : white;
+				_palPolarLum[i] = lum >= 0.5f ? black : white;
 			}
 
 			_box.Lock();
@@ -181,6 +191,7 @@ namespace SpriteWave
 					int cell = cellY + x;
 
 					uint clr = colors[cell];
+					
 					buf[idx] = (byte)(clr >> 24);
 					buf[idx + 1] = (byte)((clr >> 16) & 0xff);
 					buf[idx + 2] = (byte)((clr >> 8) & 0xff);
@@ -216,7 +227,7 @@ namespace SpriteWave
 			int row = (int)((float)e.Y / cellH) + (FirstVisibleCell / _nCols);
 			int idx = row * _nCols + col;
 
-			_uiTab.SelectFromTable(this, idx);
+			_uiParent.SelectFromTable(this, idx);
 		}
 
 		private void boxScrollHandler(object sender, MouseEventArgs e)

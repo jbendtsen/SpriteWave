@@ -257,6 +257,8 @@ namespace SpriteWave
 			stretch(_folderText);
 			stretch(_saveMsg);
 		}
+		
+		public void Destruct() {}
 
 		public void UpdateUI()
 		{

@@ -4,7 +4,7 @@ using System.Windows.Forms;
 
 namespace SpriteWave
 {
-	public class PaletteTab : ITab
+	public class PaletteTab : ITab, IPalettePicker
 	{
 		private const int DividerH = 9;
 		private const int PrimaryH = 80;
@@ -65,10 +65,21 @@ namespace SpriteWave
 
 		public void SelectFromTable(PalettePanel panel, int cellIdx)
 		{
-			var table = _wnd.Collage.Format.ColorTable;
-			if (!(table is ColorList) || (panel == _second && _second != null))
+			if (panel == _primary)
 			{
-				//Utils.mainForm.OpenColorPicker(panel.Palette, cellIdx);
+				panel.CurrentCell = cellIdx;
+				panel.Draw();
+			}
+
+			var table = _wnd.Collage.Format.ColorTable;
+			if (!(table is ColorList))
+			{
+				Utils.mainForm.OpenColorPicker(panel.Palette, cellIdx);
+				return;
+			}
+
+			if (panel == _second && _second != null)
+			{
 				var cl = _wnd.Collage;
 				cl.NativeColors[_pmIdx] = (uint)cellIdx;
 				cl.UpdateGridPen();
@@ -89,6 +100,8 @@ namespace SpriteWave
 
 		public bool HandleEscapeKey()
 		{
+			_primary.CurrentCell = -1;
+
 			bool shrink = _second != null;
 			if (shrink)
 			{
@@ -96,6 +109,8 @@ namespace SpriteWave
 				_second = null;
 				Utils.mainForm.PerformLayout();
 			}
+			else
+				_primary.Draw();
 
 			return shrink;
 		}
@@ -122,5 +137,7 @@ namespace SpriteWave
 			if (_second != null)
 				_second.Draw();
 		}
+
+		public void Destruct() {}
 	}
 }

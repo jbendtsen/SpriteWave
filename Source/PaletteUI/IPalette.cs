@@ -8,4 +8,9 @@ namespace SpriteWave
 		int ColorCount { get; }
 		uint[] GetList();
 	}
+
+	public interface IPalettePicker
+	{
+		void SelectFromTable(PalettePanel panel, int cellIdx);
+	}
 }

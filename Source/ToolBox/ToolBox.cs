@@ -202,6 +202,16 @@ namespace SpriteWave
 			Refresh();
 		}
 
+		public void CloseGeneralTabs()
+		{
+			int i;
+			for (i = 0; i < _generalTabs.Count; i++)
+			{
+				_ui.Controls.Remove(_generalTabs[i].Panel);
+				_generalTabs[i] = null;
+			}
+		}
+
 		public void RefreshTab()
 		{
 			if (!_isOpen)

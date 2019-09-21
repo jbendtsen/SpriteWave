@@ -574,6 +574,7 @@ namespace SpriteWave
 			inputWnd.Close();
 			spriteWnd.Close();
 			toolBox.IsActive = false;
+			toolBox.CloseGeneralTabs();
 			this.PerformLayout();
 		}
 
@@ -584,8 +585,9 @@ namespace SpriteWave
 
 		private void editColorTable(object sender, EventArgs e)
 		{
-			//var ctForm = new EditColorTable();
-			//ctForm.Show(this);
+			var pal = inputWnd.Collage.Format.ColorTable as IPalette;
+			if (pal != null)
+				new ColorPicker(256, pal, -1).Show(this);
 		}
 
 		private void openFileDialog1FileOk(object sender, CancelEventArgs e)
@@ -634,6 +636,7 @@ namespace SpriteWave
 		public void ClearColorPicker()
 		{
 			_picker = null;
+			(toolBox["Palette"] as PaletteTab).HandleEscapeKey();
 		}
 	}
 }

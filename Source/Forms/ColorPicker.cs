@@ -16,7 +16,7 @@ namespace SpriteWave
 		RGB, HSV, Invalid
 	};
 
-	public class ColorPicker : Form
+	public class ColorPicker : Form, IPalettePicker
 	{
 		public delegate void CursorHandler(int x, int y);
 		public delegate void ScrollHandler(int delta);
@@ -24,6 +24,7 @@ namespace SpriteWave
 		private const int nChans = 4;
 		private const float dimmed = 0.8f;
 		private const float scrollUnit = 40f;
+		private const int tableH = 100;
 
 		private float[] _chn; // ordered by BGRA
 		private int[] _order;
@@ -52,6 +53,8 @@ namespace SpriteWave
 
 		private Button _cycle;
 		//private Button _switchMode;
+		
+		private PalettePanel _paletteTable;
 
 		public Color Color
 		{
@@ -120,10 +123,22 @@ namespace SpriteWave
 			this.Name = "colorPicker";
 			this.Text = "Color Picker";
 
+			int width = boxSize + 200, height = boxSize + 50;
+
+			bool createPalPanel = refPalIdx < 0;
+			if (createPalPanel)
+			{
+				refPalIdx = 0;
+				_paletteTable = new PalettePanel(this, refPal);
+				_paletteTable.Location = new Point(0, height);
+				_paletteTable.Size = new Size(width, tableH);
+				height += tableH;
+			}
+
 			// When setting the size of the client area inside the window (.ClientSize),
 			//  the overall window size (.Size) is also set, to a larger area.
 			// .MinimumSize makes use of .Size, so we set it after .Size has been calculated.
-			this.ClientSize = new Size(boxSize + 200, boxSize + 50);
+			this.ClientSize = new Size(width, height);
 			this.MinimumSize = this.Size;
 
 			this.Location = new Point(0, 0);
@@ -222,8 +237,21 @@ namespace SpriteWave
 			this.Controls.Add(_cycle);
 			//this.Controls.Add(_switchMode);
 
+			if (createPalPanel)
+			{
+				this.Controls.Add(_paletteTable);
+				_paletteTable.AdjustContents(ToolBoxOrientation.None);
+			}
+
 			this.KeyPreview = true;
 			this.KeyUp += (s, e) => ResetIcon();
+			this.KeyDown += (s, e) => {
+				if (e.KeyCode == Keys.Escape && _paletteTable != null)
+				{
+					_paletteTable.CurrentCell = -1;
+					_paletteTable.Draw();
+				}
+			};
 
 			Utils.ControlFunc updateFormIcon = (ctrl, args) => {ctrl.MouseUp += (s, e) => ResetIcon(); return null;};
 			Utils.ApplyRecursiveControlFunc(this, updateFormIcon);
@@ -232,8 +260,17 @@ namespace SpriteWave
 			ResetIcon();
 		}
 
+		public void SelectFromTable(PalettePanel panel, int cellIdx)
+		{
+			_refPalIdx = cellIdx;
+			panel.CurrentCell = cellIdx;
+		}
+
 		public void ResetIcon()
 		{
+			if (_paletteTable != null)
+				_paletteTable.Draw();
+
 			Utils.ClearBitmap(_sample, Color, _sampleRect);
 			this.Icon = Icon.FromHandle(_sample.GetHicon());
 		}
@@ -256,15 +293,12 @@ namespace SpriteWave
 
 		private void UpdateColorSource()
 		{
-			_refPal[_refPalIdx] =
-				((uint)(_chn[0] * 255f) << 24) |
-				((uint)(_chn[1] * 255f) << 16) |
-				((uint)(_chn[2] * 255f) << 8) |
-				(uint)(_chn[3] * 255f)
-			;
+			_refPal[_refPalIdx] = Utils.ComposeBGRA(_chn[0], _chn[1], _chn[2], _chn[3]);
 
 			// Definitely not a hack /s
-			Utils.mainForm.spriteWnd.Collage.Render();
+			var cl = Utils.mainForm.spriteWnd.Collage;
+			if (cl != null)
+				cl.Render();
 			Utils.mainForm.PerformLayout();
 		}
 
@@ -357,6 +391,10 @@ namespace SpriteWave
 			RenderMainBox();
 			RenderRightBar();
 			RenderSampleBox();
+
+			if (_paletteTable != null)
+				_paletteTable.Draw();
+
 			this.Invalidate();
 		}
 
@@ -631,7 +669,8 @@ namespace SpriteWave
 			
 			_sample.Dispose();
 
-			Utils.mainForm.ClearColorPicker();
+			if (_paletteTable == null)
+				Utils.mainForm.ClearColorPicker();
 		}
 	}
 }

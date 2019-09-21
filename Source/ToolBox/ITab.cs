@@ -16,5 +16,6 @@ namespace SpriteWave
 
 		bool HandleEscapeKey();
 		void AdjustContents(Size size, ToolBoxOrientation layout);
+		void Destruct();
 	}
 }

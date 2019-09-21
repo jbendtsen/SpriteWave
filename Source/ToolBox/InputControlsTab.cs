@@ -136,6 +136,8 @@ namespace SpriteWave
 			_sendTile.Location = new Point(w - 150, 19);
 			_tileSample.Location = new Point(w - 50, 11);
 		}
+		
+		public void Destruct() {}
 
 		private void editOffsetBox(object sender, EventArgs e)
 		{
