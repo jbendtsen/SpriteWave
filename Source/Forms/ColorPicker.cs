@@ -262,8 +262,8 @@ namespace SpriteWave
 
 		public void SelectFromTable(PalettePanel panel, int cellIdx)
 		{
-			_refPalIdx = cellIdx;
 			panel.CurrentCell = cellIdx;
+			SelectColorFrom(_refPal, cellIdx);
 		}
 
 		public void ResetIcon()

@@ -94,6 +94,7 @@ namespace SpriteWave
 			for (int i = 0; i < _nativeClrs.Length; i++)
 			{
 				uint c = this[i];
+				System.Diagnostics.Debug.WriteLine("this[{0}] = {1}", i, c.ToString("X8"));
 				clrs[idx++] = (byte)(c >> 24);
 				clrs[idx++] = (byte)((c >> 16) & 0xff);
 				clrs[idx++] = (byte)((c >> 8) & 0xff);
