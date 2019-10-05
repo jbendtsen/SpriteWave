@@ -9,6 +9,9 @@ namespace SpriteWave
 		private readonly int scrollW = SystemInformation.VerticalScrollBarWidth;
 		private const int pixPerScroll = 20;
 
+		// TODO: Unify this with ColorPicker's alpha rendering
+		private readonly float[] _alphaShades = {153, 204};
+
 		private IPalettePicker _uiParent;
 
 		private ColorBox _box;
@@ -131,6 +134,13 @@ namespace SpriteWave
 			}
 		}
 
+		private static void BlendPixel(byte[] pixbuf, int idx, float b, float g, float r, float alpha)
+		{
+			pixbuf[idx] = (byte)((float)pixbuf[idx] * (1f - alpha) + b * alpha);
+			pixbuf[idx+1] = (byte)((float)pixbuf[idx+1] * (1f - alpha) + g * alpha);
+			pixbuf[idx+2] = (byte)((float)pixbuf[idx+2] * (1f - alpha) + r * alpha);
+		}
+
 		public void Draw()
 		{
 			if (_pal == null || this.Height <= 0)
@@ -144,20 +154,25 @@ namespace SpriteWave
 			for (int i = 0; i < _palLen; i++)
 			{
 				uint clr = colors[i];
+				double a = (double)(clr & 0xff) / 255f;
 				double r = (double)((clr >> 8) & 0xff) / 255f;
 				double g = (double)((clr >> 16) & 0xff) / 255f;
 				double b = (double)(clr >> 24) / 255f;
 
+				// If a cell is selected and it's not this cell, increase the brightness
 				if (CurrentCell >= 0 && i != CurrentCell)
 				{
 					r = 1 - ((1 - r) / 2);
 					g = 1 - ((1 - g) / 2);
 					b = 1 - ((1 - b) / 2);
-					colors[i] = Utils.ComposeBGRA(b, g, r, 1f);
 				}
 
 				double lum = 0.2126*r + 0.7152*g + 0.0722*b;
+				lum += (1f - lum) * (1f - a);
 				_palPolarLum[i] = lum >= 0.5f ? black : white;
+
+				// Reverse pixel channel order
+				colors[i] = Utils.ComposeBGRA(a, r, g, b);
 			}
 
 			_box.Lock();
@@ -190,13 +205,24 @@ namespace SpriteWave
 					float subX = (float)j % cellW;
 					int cell = cellY + x;
 
-					uint clr = colors[cell];
-					
-					buf[idx] = (byte)(clr >> 24);
-					buf[idx + 1] = (byte)((clr >> 16) & 0xff);
-					buf[idx + 2] = (byte)((clr >> 8) & 0xff);
-					buf[idx + 3] = (byte)(clr & 0xff);
+					// In most cases, no pixel blending occurs.
+					// Therefore, we just use the quickest method (I think) to copy a pixel to a pixel buffer in C#.
+					// Note that pixels are laid out as b.g.r.a in memory and x86 is little-endian,
+					//  meaning that we need to make sure colors[cell] (the input) is written as 0xaarrggbb before copying.
+					Buffer.BlockCopy(colors, cell * 4, buf, idx, 4);
 
+					// If the colour isn't fully opaque
+					if (buf[idx+3] != 0xff)
+					{
+						int tileX = ((j % 16) < 8) ? 1 : 0;
+						int tileY = ((i % 16) < 8) ? 1 : 0;
+						float shade = _alphaShades[tileX ^ tileY];
+						BlendPixel(buf, idx, shade, shade, shade, (float)(255 - buf[idx+3]) / 255f);
+						buf[idx+3] = 0xff;
+					}
+
+					// If this pixel is in the top-left corner, blend it with its corresponding pixel inside the appropriate digit bitmap.
+					// Plain English: this is the part where we draw the numbers.
 					if (subY < numH && subX < numW)
 					{
 						// XOR 1 because we want the text colour to oppose the brightness level of the cell
@@ -205,10 +231,23 @@ namespace SpriteWave
 						int numLine = (cell * 2 + clrVersion) * (int)numH;
 						int numPixIdx = ((numLine + (int)subY) * (int)numW + (int)subX) * Utils.cLen;
 
-						float alpha = (float)_palNumbers[numPixIdx + 3] / 255f;
-						buf[idx] = (byte)((float)buf[idx] * (1f - alpha) + _palNumbers[numPixIdx] * alpha);
-						buf[idx + 1] = (byte)((float)buf[idx + 1] * (1f - alpha) + _palNumbers[numPixIdx + 1] * alpha);
-						buf[idx + 2] = (byte)((float)buf[idx + 2] * (1f - alpha) + _palNumbers[numPixIdx + 2] * alpha);
+						// If the current pixel inside the digit bitmap isn't fully transparent
+						if (_palNumbers[numPixIdx + 3] != 0)
+						{
+							float b = (float)buf[idx];
+							float g = (float)buf[idx+1];
+							float r = (float)buf[idx+2];
+
+							float dgAlpha = (float)_palNumbers[numPixIdx + 3];
+
+							b = b * (255f - dgAlpha) + (float)_palNumbers[numPixIdx] * dgAlpha;
+							g = g * (255f - dgAlpha) + (float)_palNumbers[numPixIdx + 1] * dgAlpha;
+							r = r * (255f - dgAlpha) + (float)_palNumbers[numPixIdx + 2] * dgAlpha;
+
+							b /= 255f;
+							g /= 255f;
+							r /= 255f;
+						}
 					}
 
 					idx += 4;

@@ -30,11 +30,16 @@ namespace SpriteWave
 
 		private Label _scaleLabel;
 		private NumericUpDown _scaleBox;
+		private Label _scaleHint;
+
 		private Label _folderLabel;
 		private Button _folderBtn;
 		private Label _folderText;
+
 		private Label _nameLabel;
 		private TextBox _nameBox;
+		private Label _nameHint;
+
 		private RadioButton _overwriteBtn;
 		private RadioButton _appendBtn;
 		private TextBox _appendBox;
@@ -50,7 +55,7 @@ namespace SpriteWave
 		public Panel Panel { get { return _panel; } }
 		public TileWindow Window { get { return _wnd; } set {} }
 
-		public Size Minimum { get { return new Size(320, 185); } }
+		public Size Minimum { get { return new Size(320, 195); } }
 
 		public int X { set { _panel.Location = new Point(value, _panel.Location.Y); } }
 
@@ -137,7 +142,17 @@ namespace SpriteWave
 			_scaleBox.Increment = 1;
 			_scaleBox.Minimum = 1;
 			_scaleBox.Maximum = 256;
-			_scaleBox.Value = 16;
+			_scaleBox.Text = "";
+			_scaleBox.ValueChanged += (s, e) => UpdateUI();
+			_scaleBox.Leave += (s, e) => UpdateUI();
+
+			_scaleHint = new Label();
+			_scaleHint.Name = "scaleHint";
+			_scaleHint.Text = "No scale set";
+			_scaleHint.Font = new Font(Label.DefaultFont, FontStyle.Italic);
+			_scaleHint.ForeColor = infoColor;
+			_scaleHint.AutoSize = true;
+			_scaleHint.Location = new Point(234, 33);
 
 			_folderLabel = new Label();
 			_folderLabel.Name = "folderLabel";
@@ -170,16 +185,25 @@ namespace SpriteWave
 
 			_nameBox = new TextBox();
 			_nameBox.Name = "nameBox";
-			_nameBox.Text = "sprite";
+			_nameBox.Text = "";
 			_nameBox.AutoSize = true;
 			_nameBox.Location = new Point(190, 81);
+			_nameBox.TextChanged += (s, e) => UpdateUI();
 			_nameBox.Leave += (s, e) => UpdateUI();
+
+			_nameHint = new Label();
+			_nameHint.Name = "nameHint";
+			_nameHint.Text = "No name set";
+			_nameHint.Font = new Font(Label.DefaultFont, FontStyle.Italic);
+			_nameHint.ForeColor = infoColor;
+			_nameHint.AutoSize = true;
+			_nameHint.Location = new Point(190, 104);
 
 			_overwriteBtn = new RadioButton();
 			_overwriteBtn.Name = "overwriteBtn";
 			_overwriteBtn.Text = "Overwrite";
 			_overwriteBtn.AutoSize = true;
-			_overwriteBtn.Location = new Point(186, 114);
+			_overwriteBtn.Location = new Point(186, 124);
 			_overwriteBtn.Checked = true;
 			_overwriteBtn.CheckedChanged += this.writeModeCheck;
 
@@ -187,21 +211,22 @@ namespace SpriteWave
 			_appendBtn.Name = "appendBtn";
 			_appendBtn.Text = "Append:";
 			_appendBtn.AutoSize = true;
-			_appendBtn.Location = new Point(186, 134);
+			_appendBtn.Location = new Point(186, 144);
 			_appendBtn.CheckedChanged += this.writeModeCheck;
 
 			_appendBox = new TextBox();
 			_appendBox.Name = "appendBox";
 			_appendBox.Text = "_{d2}";
 			_appendBox.Size = new Size(50, 20);
-			_appendBox.Location = new Point(254, 133);
+			_appendBox.Location = new Point(254, 143);
 			_appendBox.Enabled = false;
+			// No TextChanged event here ;)
 			_appendBox.Leave += (s, e) => UpdateUI();
 
 			_saveButton = new Button();
 			_saveButton.Name = "saveButton";
 			_saveButton.Size = new Size(32, 32);
-			_saveButton.Location = new Point(140, 117);
+			_saveButton.Location = new Point(140, 127);
 			_saveButton.BackColor = Color.Transparent;
 			_saveButton.Image = (Image)(resources.GetObject("saveImg"));
 			_saveButton.Click += this.saveButtonHandler;
@@ -214,7 +239,7 @@ namespace SpriteWave
 			_saveMsg.ForeColor = infoColor;
 			_saveMsg.AutoEllipsis = true;
 			_saveMsg.Size = new Size(100, 13);
-			_saveMsg.Location = new Point(142, 162);
+			_saveMsg.Location = new Point(142, 172);
 
 			_panel.Controls.Add(_tileLabel);
 			_panel.Controls.Add(_outputLabel);
@@ -227,11 +252,16 @@ namespace SpriteWave
 
 			_panel.Controls.Add(_scaleLabel);
 			_panel.Controls.Add(_scaleBox);
+			_panel.Controls.Add(_scaleHint);
+
 			_panel.Controls.Add(_folderLabel);
 			_panel.Controls.Add(_folderBtn);
 			_panel.Controls.Add(_folderText);
+
 			_panel.Controls.Add(_nameLabel);
 			_panel.Controls.Add(_nameBox);
+			_panel.Controls.Add(_nameHint);
+
 			_panel.Controls.Add(_overwriteBtn);
 			_panel.Controls.Add(_appendBtn);
 			_panel.Controls.Add(_appendBox);
@@ -262,9 +292,12 @@ namespace SpriteWave
 
 		public void UpdateUI()
 		{
-			bool scaleOK = _scaleBox.Value >= _scaleBox.Minimum && _scaleBox.Value <= _scaleBox.Maximum;
+			bool scaleOK = _scaleBox.Text.Length >= 1 && _scaleBox.Value >= _scaleBox.Minimum && _scaleBox.Value <= _scaleBox.Maximum;
 			bool nameOK = _nameBox.Text.Length > 0;
 			bool writeModeOK = (_overwriteBtn.Checked || (_appendBtn.Checked && _appendBox.Text.Length > 0));
+
+			_scaleHint.Visible = !scaleOK;
+			_nameHint.Visible = !nameOK;
 
 			_saveButton.Enabled = scaleOK && _pathSelected && nameOK && writeModeOK;
 		}

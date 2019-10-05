@@ -24,7 +24,7 @@ namespace SpriteWave
 		private const int nChans = 4;
 		private const float dimmed = 0.8f;
 		private const float scrollUnit = 40f;
-		private const int tableH = 100;
+		private const int tableH = 80;
 
 		private float[] _chn; // ordered by BGRA
 		private int[] _order;
@@ -135,14 +135,8 @@ namespace SpriteWave
 				height += tableH;
 			}
 
-			// When setting the size of the client area inside the window (.ClientSize),
-			//  the overall window size (.Size) is also set, to a larger area.
-			// .MinimumSize makes use of .Size, so we set it after .Size has been calculated.
 			this.ClientSize = new Size(width, height);
-			this.MinimumSize = this.Size;
-
-			this.Location = new Point(0, 0);
-			//this.Size = new Size(200 + boxSize, 40 + boxSize);
+			this.FormBorderStyle = FormBorderStyle.FixedSingle;
 
 			var resources = new ComponentResourceManager(typeof(ColorPicker));
 			_slider = (Bitmap)(resources.GetObject("slider"));
