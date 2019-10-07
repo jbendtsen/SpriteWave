@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Windows.Forms;
 
 namespace SpriteWave
@@ -105,7 +106,7 @@ namespace SpriteWave
 			_cursorHl = new SolidBrush(Color.FromArgb(96, 0, 255, 64));
 			_selHl = _defHl;
 
-			InitialiseUI(main);
+			InitializeUI(main);
 		}
 
 		public virtual void Render()
@@ -164,7 +165,7 @@ namespace SpriteWave
 				return;
 
 			// Select the subset of the window's collage to render
-			using (Bitmap canvas = _cl.Bitmap.Clone(clBounds, _cl.Bitmap.PixelFormat))
+			using (Bitmap canvas = _cl.Bitmap.Clone(clBounds, PixelFormat.Format32bppArgb))
 			{
 				// Draw the visible section of the collage. This method automatically resizes our provided bitmap before drawing it.
 				g.DrawImage(canvas, 0, 0, _window.Width, _window.Height);
@@ -213,12 +214,12 @@ namespace SpriteWave
 
 			if (_window.Image == null)
 			{
-				_window.Image = new Bitmap(wndW, wndH);
+				_window.Image = new Bitmap(wndW, wndH, PixelFormat.Format32bppArgb);
 			}
 			else if (_window.Image.Width != wndW || _window.Image.Height != wndH)
 			{
 				DeleteFrame();
-				_window.Image = new Bitmap(wndW, wndH);
+				_window.Image = new Bitmap(wndW, wndH, PixelFormat.Format32bppArgb);
 			}
 			else
 				_window.Clear();

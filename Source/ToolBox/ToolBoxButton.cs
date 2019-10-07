@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
@@ -116,7 +117,7 @@ namespace SpriteWave
 					(int)(p.Y * (float)h)
 				);
 
-			Bitmap canvas = new Bitmap(area.Width, area.Height);
+			Bitmap canvas = new Bitmap(area.Width, area.Height, PixelFormat.Format32bppArgb);
 			using (var g = Graphics.FromImage(canvas))
 			{
 				g.SmoothingMode = SmoothingMode.AntiAlias;

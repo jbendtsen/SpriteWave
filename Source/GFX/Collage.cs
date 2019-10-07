@@ -206,8 +206,6 @@ namespace SpriteWave
 			{
 				int tCol = idx % _nCols;
 				int tRow = idx / _nCols;
-				// tRow is inverted because BMPs are backwards
-				tRow = rows - tRow - 1;
 
 				int imgCol = tCol * TileW;
 				int imgRow = tRow * TileH;

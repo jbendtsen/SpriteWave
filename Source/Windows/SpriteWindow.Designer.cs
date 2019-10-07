@@ -24,14 +24,14 @@ namespace SpriteWave
 			_window.MouseLeave += (s, e) => { _hlEdge = null; Draw(); };
 		}
 
-		protected override void InitialiseTabs()
+		protected override void InitializeTabs()
 		{
 			_tabs = new List<ITab>();
 			_tabs.Add(new PaletteTab(this));
 			_tabs.Add(new SpriteControlsTab(this));
 		}
 
-		protected override void InitialiseRightClickMenu(MainForm.TileAction copyTile, MainForm.TileAction pasteTile = null)
+		protected override void InitializeRightClickMenu(MainForm.TileAction copyTile, MainForm.TileAction pasteTile = null)
 		{
 			_menu.Items.Add(new ToolStripMenuItem("Copy Tile", null, (s, e) => copyTile(this), "copyTile"));
 			_menu.Items.Add(new ToolStripMenuItem("Paste Tile", null, (s, e) => pasteTile(this), "pasteTile"));

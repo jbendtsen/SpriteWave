@@ -1,6 +1,6 @@
 using System;
 using System.Reflection;
-using System.IO;
+using System.Runtime.InteropServices;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -160,7 +160,7 @@ namespace SpriteWave
 			int width = (int)((float)bmp.Width * scX);
 			int height = (int)((float)bmp.Height * scY);
 
-			Bitmap scaled = new Bitmap(width, height);
+			Bitmap scaled = new Bitmap(width, height, bmp.PixelFormat);
 			using (var g = Graphics.FromImage(scaled))
 			{
 				g.ToggleSmoothing(smooth);
@@ -186,7 +186,7 @@ namespace SpriteWave
 				new[] {0f, 0, 0, 0, 1}
 			};
 
-			Bitmap faded = new Bitmap(bmp.Width, bmp.Height);
+			Bitmap faded = new Bitmap(bmp.Width, bmp.Height, bmp.PixelFormat);
 			using (var imgAttrs = new ImageAttributes())
 			{
 				imgAttrs.SetColorMatrix(new ColorMatrix(ptsArray));
@@ -292,6 +292,7 @@ namespace SpriteWave
 			The reason the order is shuffled is so that the pixel
 			  can be easily understood by the Windows graphics API.
 		*/
+		/*
 		public static void EmbedPixel(byte[] output, uint input, int offset = 0)
 		{
 			output[offset] = (byte)((input >> 8) & 0xff); // blue
@@ -307,82 +308,22 @@ namespace SpriteWave
 				(((input >> 24) & 0xff) << 8)  |
 				(input & 0xff);
 		}
-		/*
-		public static uint FromBA(byte[] input, int offset)
-		{
-			uint output = (uint)input[offset] << 24;
-			output |= (uint)input[offset+1] << 16;
-			output |= (uint)input[offset+2] << 8;
-			return output | (uint)input[offset+3];
-		}
 		*/
-		// An extension method for int.
-		// Take an integer and stuff it into an array (using little-endian format)
-		public static void EmbedLE(this int i, byte[] array, int offset)
+
+		public unsafe static Bitmap BitmapFrom(byte[] pixbuf, int width, int height)
 		{
-			uint val = (uint)i;
-			// not sure how effective loop rolling is in .NET but let's give it a go
-			array[offset+3] = (byte)((val >> 24) & 0xff);
-			array[offset+2] = (byte)((val >> 16) & 0xff);
-			array[offset+1] = (byte)((val >> 8) & 0xff);
-			array[offset] = (byte)(val & 0xff);
-		}
+			// Allocate some memory that the GDI will have direct access to
+			IntPtr mem = Marshal.AllocHGlobal(pixbuf.Length);
+			// Copy our pixel buffer over
+			Marshal.Copy(pixbuf, 0, mem, pixbuf.Length);
 
-		/*
-			This method takes a byte array of 32-bit pixels and converts it into a Bitmap (which can be used in rendering).
-			It assumes that 'pixbuf' stores each pixel as 4 consecutive bytes, in the format B, G, R & A respectively.
-			Note: Bitmaps often require padding at the end of each row to the next multiple of 4 bytes,
-			  however since this method only deals with 4-byte pixels, no padding is ever necessary.
-		*/
-		public static Bitmap BitmapFrom(byte[] pixbuf, int width, int height)
-		{
-			// Create a BMP header, so that the API knows how to arrange our pixels
-			byte[] hdr = new byte[54];
+			// Create a bitmap to wrap around our new memory buffer, then create a copy of that bitmap.
+			Bitmap bmp = new Bitmap(
+				new Bitmap(width, height, width * 4, PixelFormat.Format32bppArgb, mem)
+			);
 
-			// BMP magic (file type identifier)
-			hdr[0] = (byte)'B';
-			hdr[1] = (byte)'M';
-
-			// File size
-			int fileSize = pixbuf.Length + 54;
-			fileSize.EmbedLE(hdr, 2);
-			// Header size
-			hdr[10] = 54;
-			// Pixel data offset
-			hdr[14] = 40;
-
-			// Width
-			width.EmbedLE(hdr, 18);
-			// Height
-			height.EmbedLE(hdr, 22);
-
-			// Number of drawing planes (zoooooom)
-			hdr[26] = 1;
-			// BGRA = 32BPP
-			hdr[28] = 32;
-			// Pixel data size
-			pixbuf.Length.EmbedLE(hdr, 34);
-
-			// Stitch the header and the pixel data together, as if it were a BMP file
-			byte[] bmpFile = new byte[hdr.Length + pixbuf.Length];
-			Buffer.BlockCopy(hdr, 0, bmpFile, 0, hdr.Length);
-			Buffer.BlockCopy(pixbuf, 0, bmpFile, hdr.Length, pixbuf.Length);
-
-			/*
-				Some explanation: the most efficient way to create a drawable graphic from RAM in WinForms
-				is to make a MemoryStream (like a file but references RAM instead) out of our buffer,
-				and then pass that to a Bitmap constructor. This creates a perfectly good Bitmap, but there's a catch.
-				When creating a Bitmap in this way, it references the MemoryStream instead of making a copy of the data.
-				This is fine, but we need our Bitmap to outlive the MemoryStream. So, we make a copy of the first Bitmap and return that instead.
-				Note that a 'using' block means that whichever object you specified to use gets "Dispose()d" of once the block ends.
-			*/
-			Bitmap bmp;
-			using (var ms = new MemoryStream(bmpFile))
-			{
-				using (var temp = new Bitmap(ms))
-					bmp = new Bitmap(temp);
-			}
-
+			// This means we can free that memory buffer now and not have to worry about it later. Inefficient but I don't care
+			Marshal.FreeHGlobal(mem);
 			return bmp;
 		}
 

@@ -13,9 +13,9 @@ namespace SpriteWave
 			base.Activate();
 		}
 
-		public override void Close()
+		public override void Clear()
 		{
-			base.Close();
+			base.Clear();
 			this.Prompt = "Open a file containing tiles to begin!";
 		}
 
@@ -30,13 +30,13 @@ namespace SpriteWave
 			_scrollX.Enabled = false;
 		}
 
-		protected override void InitialiseTabs()
+		protected override void InitializeTabs()
 		{
 			_tabs = new List<ITab>();
 			_tabs.Add(new InputControlsTab(this));
 		}
 
-		protected override void InitialiseRightClickMenu(MainForm.TileAction copyTile, MainForm.TileAction pasteTile = null)
+		protected override void InitializeRightClickMenu(MainForm.TileAction copyTile, MainForm.TileAction pasteTile = null)
 		{
 			_menu.Items.Add(new ToolStripMenuItem("Copy Tile", null, (s, e) => copyTile(this), "copyTile"));
 		}

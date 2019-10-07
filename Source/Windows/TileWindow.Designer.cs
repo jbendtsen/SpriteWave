@@ -60,8 +60,8 @@ namespace SpriteWave
 		public int ScrollXHeight { get { return _scrollX.Height; } }
 
 		protected abstract void SetupWindowUI();
-		protected abstract void InitialiseRightClickMenu(MainForm.TileAction copyTile, MainForm.TileAction pasteTile = null);
-		protected abstract void InitialiseTabs();
+		protected abstract void InitializeRightClickMenu(MainForm.TileAction copyTile, MainForm.TileAction pasteTile = null);
+		protected abstract void InitializeTabs();
 
 		protected virtual void DisposeTabs() {}
 
@@ -74,10 +74,8 @@ namespace SpriteWave
 			DisposeTabs();
 		}
 
-		protected void InitialiseUI(MainForm main)
+		protected void InitializeUI(MainForm main)
 		{
-			InitialiseTabs();
-
 			_window = new PictureBox();
 			_scrollX = new HScrollBar();
 			_scrollY = new VScrollBar();
@@ -96,7 +94,7 @@ namespace SpriteWave
 			_scrollY.Scroll += yScrollAction;
 
 			_menu.Size = new Size(61, 4);
-			InitialiseRightClickMenu(main.CopyTile, main.PasteTile);
+			InitializeRightClickMenu(main.CopyTile, main.PasteTile);
 			ToggleMenu(false);
 
 			_prompt.Parent = _window;
@@ -107,7 +105,7 @@ namespace SpriteWave
 
 			SetupWindowUI();
 
-			Close();
+			Clear();
 
 			main.Controls.Add(_window);
 			main.Controls.Add(_scrollX);
@@ -126,13 +124,16 @@ namespace SpriteWave
 			_scrollY.Visible = true;
 
 			ToggleMenu(true);
-			ToggleTabsContents(true);
+
+			InitializeTabs();
+			ProvideTabButtons(Utils.mainForm.toolBox);
 		}
 
-		public virtual void Close()
+		public virtual void Clear()
 		{
 			ToggleMenu(false);
-			ToggleTabsContents(false);
+			if (_tabs != null)
+				ToggleTabsContents(false);
 
 			_cl = null;
 			DeleteFrame();
@@ -141,6 +142,22 @@ namespace SpriteWave
 			_scrollY.Visible = false;
 
 			_window.BackColor = _emptyBackColor;
+		}
+		public virtual void Close()
+		{
+			Clear();
+
+			if (_tabs == null)
+				return;
+
+			for (int i = 0; i < _tabs.Count; i++)
+			{
+				if (_tabs[i] == null)
+					continue;
+
+				Utils.mainForm.toolBox.RemoveTabButton(_tabs[i].TabButton);
+				_tabs[i] = null;
+			}
 		}
 
 		public void UpdateLayout(int x, int w, int totalH, int menuH)
@@ -201,6 +218,9 @@ namespace SpriteWave
 		{
 			foreach (ITab t in _tabs)
 			{
+				if (t == null)
+					continue;
+
 				foreach (Control c in t.Panel.Controls)
 					c.Visible = state;
 			}

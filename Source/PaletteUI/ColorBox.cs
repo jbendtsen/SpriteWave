@@ -33,7 +33,7 @@ namespace SpriteWave
 		{
 			if (_oldSize != this.Size || this.Image == null)
 			{
-				this.Image = new Bitmap(this.Width, this.Height);
+				this.Image = new Bitmap(this.Width, this.Height, PixelFormat.Format32bppArgb);
 				Buffer = new byte[this.Width * this.Height * 4];
 			}
 

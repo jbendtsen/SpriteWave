@@ -51,16 +51,16 @@ namespace SpriteWave
 		{
 			_selPos = new Position(0, 0);
 			Selected = false;
-			TileSample = null;
 
 			_contents = file;
 			_cl = new Collage(fmt);
 			_cl.LoadTiles(_contents, offset);
 			Render();
 
-			ControlsTab.SizeText = file.Length;
-
 			Activate();
+			ControlsTab.SizeText = file.Length;
+			TileSample = null;
+
 			ResetScroll();
 		}
 

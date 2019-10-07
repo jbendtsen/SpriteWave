@@ -47,7 +47,7 @@ namespace SpriteWave
 					for (int j = 0; j < 10; j++) // 10 digits
 					{
 						// Render text to a bitmap image
-						var bmp = new Bitmap(digitW, digitH);
+						var bmp = new Bitmap(digitW, digitH, PixelFormat.Format32bppArgb);
 						using (var g = Graphics.FromImage(bmp))
 						{
 							g.TextRenderingHint = TextRenderingHint.AntiAlias;

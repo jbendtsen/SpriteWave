@@ -18,6 +18,8 @@ namespace SpriteWave
 		private DragObject _drag;
 		private bool _tempSpriteSel = false;
 
+		private EventPair[] _sendTileEvents;
+
 		public delegate void TileAction(TileWindow tw);
 
 		public MainForm()
@@ -53,16 +55,6 @@ namespace SpriteWave
 			spriteWnd = new SpriteWindow(this);
 			toolBox = new ToolBox(this, inputWnd);
 
-			EventPair[] sendTileEvents =
-			{
-				new EventPair("Click", (s, e) => { CopyTile(inputWnd); PasteTile(spriteWnd); _tempSpriteSel = true; }),
-				new EventPair("MouseEnter", (s, e) => { _tempSpriteSel = spriteWnd.Selected; spriteWnd.Selected = true; spriteWnd.Draw(); }),
-				new EventPair("MouseLeave", (s, e) => { spriteWnd.Selected = _tempSpriteSel; spriteWnd.Draw(); })
-			};
-
-			Control c = Utils.FindControl(inputWnd["Controls"].Panel, "inputSend");
-			Utils.ApplyEvents(c, sendTileEvents);
-
 			// Setup MainForm events
 			this.KeyPreview = true;
 			this.KeyUp += this.keyUpHandler;
@@ -70,6 +62,13 @@ namespace SpriteWave
 			this.Resize += this.catchWindowState;
 			this.Layout += this.layoutHandler;
 			Utils.ApplyRecursiveControlFunc(this, this.ConfigureControls);
+
+			_sendTileEvents = new[]
+			{
+				new EventPair("Click", (s, e) => { CopyTile(inputWnd); PasteTile(spriteWnd); _tempSpriteSel = true; }),
+				new EventPair("MouseEnter", (s, e) => { _tempSpriteSel = spriteWnd.Selected; spriteWnd.Selected = true; spriteWnd.Draw(); }),
+				new EventPair("MouseLeave", (s, e) => { spriteWnd.Selected = _tempSpriteSel; spriteWnd.Draw(); })
+			};
 
 			UpdateMinimumSize();
 			inputWnd.Focus(this);
@@ -574,7 +573,6 @@ namespace SpriteWave
 			inputWnd.Close();
 			spriteWnd.Close();
 			toolBox.IsActive = false;
-			toolBox.CloseGeneralTabs();
 			this.PerformLayout();
 		}
 
@@ -603,6 +601,8 @@ namespace SpriteWave
 			this.colorTableToolStripMenuItem.Enabled = fmt.ColorTable is ColorList;
 
 			inputWnd.Load(fmt, data);
+			Control c = Utils.FindControl(inputWnd["Controls"].Panel, "inputSend");
+			Utils.ApplyEvents(c, _sendTileEvents);
 
 			spriteWnd.FormatToLoad = fmt;
 			spriteWnd.Prompt = "Drag or send a tile to begin!";

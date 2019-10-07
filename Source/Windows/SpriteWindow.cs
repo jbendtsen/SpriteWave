@@ -104,9 +104,8 @@ namespace SpriteWave
 			if (fullPath.Substring(fullPath.Length - ext.Length) != ext)
 				fullPath += ext;
 
-			Bitmap output = new Bitmap(_cl.Bitmap);
-			output.MakeTransparent();
-			output.Scale(scale).Save(fullPath);
+			//Bitmap output = new Bitmap(_cl.Bitmap);
+			_cl.Bitmap.Scale(scale).Save(fullPath);
 		}
 
 		public override EdgeKind EdgeOf(Position loc)

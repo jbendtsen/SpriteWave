@@ -129,7 +129,7 @@ namespace SpriteWave
 			if (this.Width > scrollW && this.Height > 0)
 			{
 				Size s = new Size(this.Width - scrollW, this.Height);
-				_box.Image = new Bitmap(s.Width, s.Height);
+				//_box.Image = new Bitmap(s.Width, s.Height);
 				_box.Size = s;
 			}
 		}
@@ -159,6 +159,7 @@ namespace SpriteWave
 				double g = (double)((clr >> 16) & 0xff) / 255f;
 				double b = (double)(clr >> 24) / 255f;
 
+				/*
 				// If a cell is selected and it's not this cell, increase the brightness
 				if (CurrentCell >= 0 && i != CurrentCell)
 				{
@@ -166,6 +167,7 @@ namespace SpriteWave
 					g = 1 - ((1 - g) / 2);
 					b = 1 - ((1 - b) / 2);
 				}
+				*/
 
 				double lum = 0.2126*r + 0.7152*g + 0.0722*b;
 				lum += (1f - lum) * (1f - a);
@@ -234,19 +236,8 @@ namespace SpriteWave
 						// If the current pixel inside the digit bitmap isn't fully transparent
 						if (_palNumbers[numPixIdx + 3] != 0)
 						{
-							float b = (float)buf[idx];
-							float g = (float)buf[idx+1];
-							float r = (float)buf[idx+2];
-
-							float dgAlpha = (float)_palNumbers[numPixIdx + 3];
-
-							b = b * (255f - dgAlpha) + (float)_palNumbers[numPixIdx] * dgAlpha;
-							g = g * (255f - dgAlpha) + (float)_palNumbers[numPixIdx + 1] * dgAlpha;
-							r = r * (255f - dgAlpha) + (float)_palNumbers[numPixIdx + 2] * dgAlpha;
-
-							b /= 255f;
-							g /= 255f;
-							r /= 255f;
+							float dgAlpha = (float)_palNumbers[numPixIdx + 3] / 255f;
+							BlendPixel(buf, idx, (float)_palNumbers[numPixIdx], (float)_palNumbers[numPixIdx+1], (float)_palNumbers[numPixIdx+2], dgAlpha);
 						}
 					}
 

@@ -35,8 +35,7 @@ namespace SpriteWave
 
 		public void ApplyTo(byte[] canvas, int offset, int width, byte[] palBGRA)
 		{
-			// Iterates backwards as BMPs are backwards
-			for (int i = Height-1; i >= 0; i--)
+			for (int i = 0; i < Height; i++)
 			{
 				ExtractRow(canvas, offset, i, palBGRA);
 				offset += width * Utils.cLen;

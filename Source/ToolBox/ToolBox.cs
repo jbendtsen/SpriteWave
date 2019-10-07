@@ -24,7 +24,6 @@ namespace SpriteWave
 
 		private TileWindow _wnd;
 
-		private List<ITab> _generalTabs;
 		private ITab _curTab;
 
 		private Panel _ui;
@@ -70,19 +69,11 @@ namespace SpriteWave
 			set {
 				_wnd.RescindTabButtons(this);
 
-				if (!_generalTabs.Contains(_curTab))
-				{
-					int idx = _wnd.TabIndex(_curTab);
-					idx = idx >= 0 ? idx : 0;
+				int idx = _wnd.TabIndex(_curTab);
+				idx = idx >= 0 ? idx : 0;
 
-					_wnd = value;
-					Select(this[idx + _generalTabs.Count], reconfig: false);
-				}
-				else
-				{
-					_wnd = value;
-					Select(_curTab); // updates current tab
-				}
+				_wnd = value;
+				Select(this[idx], reconfig: false);
 
 				_wnd.ProvideTabButtons(this);
 
@@ -97,11 +88,6 @@ namespace SpriteWave
 				if (idx < 0)
 					return null;
 	
-				int gLen = _generalTabs.Count;
-				if (idx < gLen)
-					return _generalTabs[idx];
-	
-				idx -= gLen;
 				if (_wnd == null || idx >= _wnd.TabCount)
 					return null;
 
@@ -112,27 +98,11 @@ namespace SpriteWave
 		public ITab this[string name]
 		{
 			get {
-				int i;
-				for (i = 0; i < _generalTabs.Count; i++)
-				{
-					if (_generalTabs[i].Name == name)
-						return _generalTabs[i];
-				}
-	
-				return _wnd[name];
+				return _wnd != null ? _wnd[name] : null;
 			}
 		}
 
-		public int TabCount
-		{
-			get {
-				int n = _generalTabs.Count;
-				if (_wnd != null)
-					n += _wnd.TabCount;
-
-				return n;
-			}
-		}
+		public int TabCount { get { return _wnd.TabCount; } }
 
 		public Size Minimum
 		{
@@ -154,8 +124,6 @@ namespace SpriteWave
 			_refresh = main.PerformLayout;
 			_configure = main.ConfigureControls;
 
-			_generalTabs = new List<ITab>();
-
 			_switch = new ToolBoxButton(ToolBoxShapes.Switch, new Size(20, 140));
 			_switch.Name = "toolBoxSwitchWindow";
 			_switch.Click += (s, e) => main.SwitchToolBoxWindow();
@@ -171,10 +139,7 @@ namespace SpriteWave
 			_tabButtons = new Panel();
 			_tabButtons.Size = new Size(0, 0);
 
-			foreach (ITab t in _generalTabs)
-				AddTabButton(t.TabButton);
-
-			_wnd.ProvideTabButtons(this);
+			//_wnd.ProvideTabButtons(this);
 
 			_ui.Controls.Add(_tabButtons);
 			main.Controls.Add(_ui);
@@ -202,16 +167,6 @@ namespace SpriteWave
 			Refresh();
 		}
 
-		public void CloseGeneralTabs()
-		{
-			int i;
-			for (i = 0; i < _generalTabs.Count; i++)
-			{
-				_ui.Controls.Remove(_generalTabs[i].Panel);
-				_generalTabs[i] = null;
-			}
-		}
-
 		public void RefreshTab()
 		{
 			if (!_isOpen)
@@ -231,14 +186,7 @@ namespace SpriteWave
 		// Implements ITabCollection.TabIndex
 		public int TabIndex(ITab t)
 		{
-			int idx = _generalTabs.IndexOf(t);
-			if (idx < 0)
-			{
-				idx = _wnd.TabIndex(t);
-				idx = idx >= 0 ? idx + _generalTabs.Count : -1;
-			}
-
-			return idx;
+			return _wnd.TabIndex(t);
 		}
 
 		private void Select(ITab t, bool reconfig = true)
