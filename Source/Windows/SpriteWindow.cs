@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
@@ -12,6 +13,9 @@ namespace SpriteWave
 
 		private Edge[] _edges;
 		private Edge _hlEdge;
+
+		private Bitmap _checkerboard;
+		private const int checkSize = 8;
 
 		private readonly SolidBrush mouseOverBrush;
 		private readonly Color outlineColor = Utils.FromRGB(0x303030);
@@ -84,6 +88,12 @@ namespace SpriteWave
 
 		public string ExportExtension { get { return ".png"; } }
 
+		private static Color ShadeColor(float shade)
+		{
+			int lum = (int)(shade * 255f);
+			return Color.FromArgb(lum, lum, lum);
+		}
+
 		public SpriteWindow(MainForm main)
 			: base(main)
 		{
@@ -96,6 +106,14 @@ namespace SpriteWave
 				var kind = (EdgeKind)i;
 				_edges[i] = kind != EdgeKind.None ? new Edge(kind) : null;
 			}
+
+			_checkerboard = new Bitmap(256, 256, PixelFormat.Format32bppArgb);
+			Utils.ApplyCheckerboard(
+				_checkerboard,
+				checkSize,
+				ShadeColor(Utils.AlphaShades[0]),
+				ShadeColor(Utils.AlphaShades[1])
+			);
 		}
 
 		public void Export(string fullPath, int scale)
@@ -452,13 +470,38 @@ namespace SpriteWave
 					(float)clBounds.Height * _zoom
 				);
 
+				float chkW = _checkerboard.Width;
+				float chkH = _checkerboard.Height;
+				int chkCols = (int)Math.Ceiling(area.Width / chkW);
+				int chkRows = (int)Math.Ceiling(area.Height / chkH);
+
+				for (int i = 0; i < chkRows; i++)
+				{
+					for (int j = 0; j < chkCols; j++)
+					{
+						var src = new RectangleF(0, 0, chkW, chkH);
+
+						var dst = new RectangleF(
+							area.X + j*chkW,
+							area.Y + i*chkH,
+							chkW,
+							chkH
+						);
+
+						dst.Intersect(area);
+						src.Width = dst.Width;
+						src.Height = dst.Height;
+
+						g.DrawImage(_checkerboard, dst, src, GraphicsUnit.Pixel);
+					}
+				}
+
 				g.DrawImage(canvas, area);
 			}
 		}
 
 		public override void DrawEdges(Graphics g)
 		{
-			g.SmoothingMode = SmoothingMode.AntiAlias;
 			Pen outline = new Pen(outlineColor, _zoom / outlineFactor);
 
 			foreach (Edge e in _edges)
@@ -472,8 +515,6 @@ namespace SpriteWave
 					g.DrawPolygon(outline, tri);
 				}
 			}
-
-			g.SmoothingMode = SmoothingMode.None;
 		}
 
 		private static float PadOffset(float value, float unit)

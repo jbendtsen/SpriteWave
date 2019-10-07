@@ -229,6 +229,33 @@ namespace SpriteWave
 			box.Invalidate();
 		}
 
+		public unsafe static void ApplyCheckerboard(Bitmap img, int chkSize, Color clr1, Color clr2)
+		{
+			uint[] shades = {
+				0xff000000 | (uint)clr1.R << 16 | (uint)clr1.G << 8 | (uint)clr1.B,
+				0xff000000 | (uint)clr2.R << 16 | (uint)clr2.G << 8 | (uint)clr2.B
+			};
+
+			int width = img.Width;
+			int height = img.Height;
+
+			var data = img.LockBits(
+				new Rectangle(0, 0, width, height),
+				ImageLockMode.ReadWrite,
+				PixelFormat.Format32bppArgb
+			);
+			uint *fb = (uint*)data.Scan0.ToPointer();
+
+			for (int i = 0; i < width * height; i++)
+			{
+				int tileX = ((i % (chkSize * 2)) < chkSize) ? 1 : 0;
+				int tileY = (((i / width) % (chkSize * 2)) < chkSize) ? 1 : 0;
+				*fb++ = shades[tileX ^ tileY];
+			}
+
+			img.UnlockBits(data);
+		}
+
 		public static int Between(this int n, int min, int max)
 		{
 			return Math.Max(Math.Min(n, max), min);
@@ -326,6 +353,11 @@ namespace SpriteWave
 			Marshal.FreeHGlobal(mem);
 			return bmp;
 		}
+
+		public static readonly float[] AlphaShades =
+		{
+			0.6f, 0.8f
+		};
 
 		public static readonly string[] RGBANames =
 		{

@@ -31,7 +31,6 @@ namespace SpriteWave
 		//private ColorMode _mode;
 
 		private readonly string[] _labels;
-		private readonly float[] _alphaShades = {0.6f, 0.8f};
 
 		private IPalette _refPal;
 		private int _refPalIdx;
@@ -467,7 +466,7 @@ namespace SpriteWave
 
 			var info = new AlphaPixel(
 				w / 8,
-				_alphaShades,
+				Utils.AlphaShades,
 				_chn[0],
 				_chn[1],
 				_chn[2],
@@ -490,7 +489,7 @@ namespace SpriteWave
 
 			var info = new AlphaPixel(
 				(w + 1) / 2,
-				_alphaShades,
+				Utils.AlphaShades,
 				_chn[0],
 				_chn[1],
 				_chn[2],

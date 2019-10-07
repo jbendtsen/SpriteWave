@@ -9,9 +9,6 @@ namespace SpriteWave
 		private readonly int scrollW = SystemInformation.VerticalScrollBarWidth;
 		private const int pixPerScroll = 20;
 
-		// TODO: Unify this with ColorPicker's alpha rendering
-		private readonly float[] _alphaShades = {153, 204};
-
 		private IPalettePicker _uiParent;
 
 		private ColorBox _box;
@@ -146,6 +143,8 @@ namespace SpriteWave
 			if (_pal == null || this.Height <= 0)
 				return;
 
+			float[] shades = { Utils.AlphaShades[0] * 255f, Utils.AlphaShades[1] * 255f };
+
 			// Calculate the brightness of each color to determine its opposite luminance pole (black or white)
 			uint[] colors = _pal.GetList();
 			_palPolarLum = new int[_palLen];
@@ -218,8 +217,8 @@ namespace SpriteWave
 					{
 						int tileX = ((j % 16) < 8) ? 1 : 0;
 						int tileY = ((i % 16) < 8) ? 1 : 0;
-						float shade = _alphaShades[tileX ^ tileY];
-						BlendPixel(buf, idx, shade, shade, shade, (float)(255 - buf[idx+3]) / 255f);
+						float sh = shades[tileX ^ tileY];
+						BlendPixel(buf, idx, sh, sh, sh, (float)(255 - buf[idx+3]) / 255f);
 						buf[idx+3] = 0xff;
 					}
 
