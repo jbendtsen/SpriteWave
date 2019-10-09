@@ -1,0 +1,189 @@
+<html>
+	<head>
+		<style>
+
+#container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	margin: 0 auto;
+	width: 50%;
+	height: 100%;
+}
+
+#palette {
+	display: flex;
+	justify-content: center;
+	border-radius: 1vw;
+	width: 100%;
+	height: 20vh;
+}
+
+#spacer {
+	display: flex;
+	width: 100%;
+	height: 6vh;
+}
+
+#table {
+	display: table;
+	border-spacing: 0;
+	width: 100%;
+	height: 40vh;
+}
+
+.pal-cell {
+	height: 100%;
+	width: 25%;
+}
+
+.tbl-cell {
+	width: 6.25%;
+	height: 25%;
+}
+
+.pal-cell, .tbl-cell {
+	box-sizing: border-box;
+	border-radius: 0.8vw;
+	border: 0vw solid white;
+	transition: all 0.1s;
+}
+
+.selected {
+	border: 0.3vw solid white !important;
+}
+.unselected:hover {
+	border: 0.3vw solid white !important;
+}
+
+		</style>
+		<script>
+
+var NESPalette =
+[
+	0x525252FF, 0x001C72FF, 0x0C0B92FF, 0x2A008FFF,
+	0x470068FF, 0x57002EFF, 0x550400FF, 0x411200FF,
+	0x232400FF, 0x063400FF, 0x003D00FF, 0x003A04FF,
+	0x002E39FF, 0x000000FF, 0x000000FF, 0x00000000,
+	0xA0A0A0FF, 0x0E4DCEFF, 0x3230FFFF, 0x621BF9FF,
+	0x8E12BFFF, 0xA71468FF, 0xA42315FF, 0x863C00FF,
+	0x575900FF, 0x287300FF, 0x087F00FF, 0x007C24FF,
+	0x00697AFF, 0x000000FF, 0x000000FF, 0x000000FF,
+	0xFEFFFFFF, 0x53A1FFFF, 0x827FFFFF, 0xBA65FFFF,
+	0xEB59FFFF, 0xFF5DC0FF, 0xFF6F5EFF, 0xE18E18FF,
+	0xADB000FF, 0x76CC00FF, 0x4BDA23FF, 0x36D670FF,
+	0x39C1D5FF, 0x3C3C3CFF, 0x000000FF, 0x000000FF,
+	0xFEFFFFFF, 0xB4D7FFFF, 0xC9C8FFFF, 0xE2BCFFFF,
+	0xF6B7FFFF, 0xFFB8E5FF, 0xFFC1B9FF, 0xF2CF96FF,
+	0xDCDD83FF, 0xC4EA85FF, 0xB0F09CFF, 0xA6EEC1FF,
+	0xA7E5EDFF, 0xA9A9A9FF, 0x000000FF, 0x000000FF
+];
+
+var defSel = [12, 26, 55, 51];
+
+function rgb2css(clr) {
+	var red = ((clr >> 24) & 0xff);
+	var green = ((clr >> 16) & 0xff);
+	var blue = ((clr >> 8) & 0xff);
+
+	return "rgb(" + red + ", " + green + ", " + blue + ")";
+}
+
+class CellManager {
+	constructor() {
+		this.current = null;
+	}
+
+	currentCell() {
+		return this.current;
+	}
+
+	click(elem) {
+		if (this.current != null) {
+			this.current.classList.remove("selected");
+			this.current.classList.add("unselected");
+		}
+
+		if (elem != this.current) {
+			elem.classList.remove("unselected");
+			elem.classList.add("selected");
+			this.current = elem;
+		}
+		else
+			this.current = null;
+	}
+
+	selectColorFrom(elem) {
+		if (!this.current)
+			return;
+
+		this.current.style.backgroundColor = window.getComputedStyle(elem).getPropertyValue("background-color");
+	}
+
+	deselect() {
+		this.click(this.current);
+	}
+}
+
+var tblCells;
+var palCells;
+
+function init() {
+	tblCells = new CellManager();
+	palCells = new CellManager();
+
+	var cells = document.getElementById("palette").childNodes;
+	var idx = 0;
+	for (var i = 0; i < cells.length; i++) {
+		if (!cells[i].classList)
+			continue;
+
+		cells[i].classList.add("unselected");
+		cells[i].style.backgroundColor = rgb2css(NESPalette[defSel[idx]]);
+		idx++;
+	}
+
+	var table = document.getElementById("table");
+	var rowLen = NESPalette.length / 4;
+
+	for (var i = 0; i < 4; i++) {
+		var row = table.insertRow(i);
+		for (var j = 0; j < rowLen; j++) {
+			var cell = row.insertCell(j);
+
+			cell.classList.add("tbl-cell");
+			cell.classList.add("unselected");
+			cell.style.backgroundColor = rgb2css(NESPalette[i*rowLen+j]);
+
+			cell.onclick = function() {
+				tblCells.click(this);
+				palCells.selectColorFrom(tblCells.currentCell());
+			};
+		}
+	}
+}
+
+function handleEsc(event) {
+	var key = event.which || event.keyCode;
+	if (key == 27) { // escape
+		tblCells.deselect();
+		palCells.deselect();
+	}
+}
+
+		</script>
+	</head>
+	<body onload="init()" onkeydown="handleEsc(event)">
+		<div id="container">
+			<table id="table"></table>
+			<div id="spacer"></div>
+			<div id="palette">
+				<div class="pal-cell" onclick="palCells.click(this)"></div>
+				<div class="pal-cell" onclick="palCells.click(this)"></div>
+				<div class="pal-cell" onclick="palCells.click(this)"></div>
+				<div class="pal-cell" onclick="palCells.click(this)"></div>
+			</div>
+		</div>
+	</body>
+</html>
