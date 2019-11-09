@@ -25,14 +25,14 @@ namespace SpriteWave
 
 		public bool TestNativeToRGBA(uint expected, uint c)
 		{
-			uint actual = new ColorTable(OrderAndDepth, null).NativeToRGBA(c);
+			uint actual = new ColorPattern(OrderAndDepth, null).NativeToRGBA(c);
 			PrintResultsUInt(expected, actual);
 			return actual == expected;
 		}
 
 		public bool TestRGBAToNative(uint expected, uint rgba)
 		{
-			uint actual = new ColorTable(OrderAndDepth, null).RGBAToNative(rgba);
+			uint actual = new ColorPattern(OrderAndDepth, null).RGBAToNative(rgba);
 			PrintResultsUInt(expected, actual);
 			return actual == expected;
 		}

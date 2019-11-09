@@ -28,6 +28,8 @@ namespace SpriteWave
 
 		private const int initialTopGap = 4;
 
+		private MainForm _main;
+
 		// 'zoom' = number of screen pixels that fit into the width of a scaled collage pixel
 		private float _zoom;
 		public float InitialZoom
@@ -97,6 +99,8 @@ namespace SpriteWave
 		public SpriteWindow(MainForm main)
 			: base(main)
 		{
+			_main = main;
+
 			mouseOverBrush = new SolidBrush(SystemColors.ScrollBar);
 
 			// Initialise all edges, excluding the invalid (centre) one
@@ -228,7 +232,7 @@ namespace SpriteWave
 			{
 				_cl = new Collage(_fmt, 1, false);
 				_cl.AddBlankTiles(1);
-				Activate();
+				Activate(_main.toolBox);
 			}
 
 			EdgeKind kind = EdgeOf(loc);

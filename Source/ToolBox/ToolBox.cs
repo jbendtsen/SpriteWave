@@ -175,12 +175,12 @@ namespace SpriteWave
 				Refresh();
 		}
 
-		public bool HandleEscapeKey()
+		public bool HandleEscapeKey(MainForm main)
 		{
 			if (_curTab == null)
 				return false;
 
-			return _curTab.HandleEscapeKey();
+			return _curTab.HandleEscapeKey(main);
 		}
 
 		// Implements ITabCollection.TabIndex

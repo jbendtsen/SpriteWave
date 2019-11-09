@@ -14,7 +14,7 @@ namespace SpriteWave
 		Size Minimum { get; }
 		int X { set; }
 
-		bool HandleEscapeKey();
+		bool HandleEscapeKey(MainForm main);
 		void AdjustContents(Size size, ToolBoxOrientation layout);
 		void Destruct();
 	}

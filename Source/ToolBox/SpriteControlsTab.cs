@@ -269,11 +269,11 @@ namespace SpriteWave
 			_panel.Controls.Add(_saveMsg);
 		}
 
-		public bool HandleEscapeKey()
+		public bool HandleEscapeKey(MainForm main)
 		{
-			bool textFocus = Utils.mainForm.ActiveControl is TextBox;
+			bool textFocus = main.ActiveControl is TextBox;
 			if (textFocus)
-				_wnd.Focus(Utils.mainForm);
+				_wnd.Focus(main);
 
 			return textFocus;
 		}

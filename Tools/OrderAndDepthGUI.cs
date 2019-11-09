@@ -120,7 +120,7 @@ namespace SpriteWave
 
 	class OrderAndDepthGUI : Form
 	{
-		ColorTable _table;
+		ColorPattern _table;
 		InputModule _spec, _rgba, _native;
 
 		public OrderAndDepthGUI()
@@ -150,7 +150,7 @@ namespace SpriteWave
 		public void NewSpec(InputModule mod)
 		{
 			uint seed = mod.Input;
-			_table = new ColorTable(seed, null);
+			_table = new ColorPattern(seed, null);
 
 			mod.Value = seed;
 

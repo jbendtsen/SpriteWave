@@ -55,6 +55,8 @@ namespace SpriteWave
 		
 		private PalettePanel _paletteTable;
 
+		private MainForm _main;
+
 		public Color Color
 		{
 			get {
@@ -97,8 +99,10 @@ namespace SpriteWave
 		private Bitmap _sample;
 		private Rectangle _sampleRect = new Rectangle(0, 0, 8, 8);
 
-		public ColorPicker(int boxSize, IPalette refPal, int refPalIdx)
+		public ColorPicker(MainForm main, int boxSize, IPalette refPal, int refPalIdx)
 		{
+			_main = main;
+
 			_sample = new Bitmap(_sampleRect.Width, _sampleRect.Height);
 			//_mode = ColorMode.RGB;
 
@@ -145,23 +149,28 @@ namespace SpriteWave
 			_modeImg[(int)ColorMode.RGB] = (Bitmap)(resources.GetObject("rgb"));
 			_modeImg[(int)ColorMode.HSV] = (Bitmap)(resources.GetObject("hsv"));
 */
-			_boxA = new ColorBox(this.moveLeftSlider, this.UpdateColorSource, this.scrollLeftSlider);
+			_boxA = new ColorBox();
 			_boxA.Name = "alphaBox";
 			_boxA.Location = new Point(20, 20);
 			_boxA.Size = new Size(20, boxSize);
 			_boxA.Paint += this.paintLeftSlider;
+			_boxA.MouseWheel += (s, e) => this.scrollLeftSlider(e.Delta / 120);
+			SetColorBoxClick(_boxA, this.moveLeftSlider);
 
-			_boxXY = new ColorBox(this.moveDot, this.UpdateColorSource, null);
+			_boxXY = new ColorBox();
 			_boxXY.Name = "xyBox";
 			_boxXY.Location = new Point(60, 20);
 			_boxXY.Size = new Size(boxSize, boxSize);
 			_boxXY.Paint += this.paintDot;
+			SetColorBoxClick(_boxXY, this.moveDot);
 
-			_boxZ = new ColorBox(this.moveRightSlider, this.UpdateColorSource, this.scrollRightSlider);
+			_boxZ = new ColorBox();
 			_boxZ.Name = "zBox";
 			_boxZ.Location = new Point(80 + boxSize, 20);
 			_boxZ.Size = new Size(20, boxSize);
 			_boxZ.Paint += this.paintRightSlider;
+			_boxZ.MouseWheel += (s, e) => this.scrollRightSlider(e.Delta / 120);
+			SetColorBoxClick(_boxZ, this.moveRightSlider);
 
 			_boxSample = new ColorBox();
 			_boxSample.Name = "sampleBox";
@@ -252,6 +261,13 @@ namespace SpriteWave
 			SelectColorFrom(refPal, refPalIdx);
 			ResetIcon();
 		}
+		
+		private void SetColorBoxClick(ColorBox box, Action<int, int> moveSlider)
+		{
+			box.MouseDown += (s, e) => moveSlider(e.X, e.Y);
+			box.MouseMove += (s, e) => { if (e.Button != MouseButtons.None && s == box) moveSlider(e.X, e.Y); };
+			box.MouseUp   += (s, e) => { moveSlider(e.X, e.Y); UpdateColorSource(); };
+		}
 
 		public void SelectFromTable(PalettePanel panel, int cellIdx)
 		{
@@ -289,10 +305,11 @@ namespace SpriteWave
 			_refPal[_refPalIdx] = Utils.ComposeBGRA(_chn[0], _chn[1], _chn[2], _chn[3]);
 
 			// Definitely not a hack /s
-			var cl = Utils.mainForm.spriteWnd.Collage;
+			var cl = _main.spriteWnd.Collage;
 			if (cl != null)
 				cl.Render();
-			Utils.mainForm.PerformLayout();
+
+			_main.PerformLayout();
 		}
 
 		public void RefreshInputFields()
@@ -663,7 +680,7 @@ namespace SpriteWave
 			_sample.Dispose();
 
 			if (_paletteTable == null)
-				Utils.mainForm.ClearColorPicker();
+				_main.ClearColorPicker();
 		}
 	}
 }

@@ -14,20 +14,10 @@ namespace SpriteWave
 		private Size _oldSize;
 		private BitmapData _data;
 
-		public ColorBox(ColorPicker.CursorHandler moveCursor, Action setColor, ColorPicker.ScrollHandler scroll)
+		public ColorBox()
 		{
 			_oldSize = new Size(0, 0);
-
-			if (moveCursor != null)
-			{
-				this.MouseDown += (s, e) => moveCursor(e.X, e.Y);
-				this.MouseMove += (s, e) => { if (e.Button != MouseButtons.None && s == this) moveCursor(e.X, e.Y); };
-				this.MouseUp   += (s, e) => { moveCursor(e.X, e.Y); setColor(); };
-			}
-			if (scroll != null)
-				this.MouseWheel += (s, e) => scroll(e.Delta / 120);
 		}
-		public ColorBox() : this(null, null, null) {}
 
 		public void Lock()
 		{

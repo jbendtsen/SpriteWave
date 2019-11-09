@@ -24,8 +24,6 @@ namespace SpriteWave
 
 		public MainForm()
 		{
-			Utils.mainForm = this;
-
 			_formatList = new Dictionary<FormatKind, FileFormat>();
 
 			_formatList[FormatKind.NES] = new FileFormat(
@@ -40,6 +38,13 @@ namespace SpriteWave
 				Utils.TileType("SNESTile"),
 				new string[] { "smc", "sfc", "chr", "bin" },
 				new ColorPattern(Utils.SNESRGBAOrderAndDepth, Utils.SNESDefSel)
+			);
+
+			_formatList[FormatKind.MD] = new FileFormat(
+				"Genesis",
+				Utils.TileType("MDTile"),
+				new string[] { "smd", "md", "bin" },
+				new ColorPattern(Utils.MDRGBAOrderAndDepth, Utils.MDDefSel)
 			);
 
 			InitializeComponent();
@@ -322,7 +327,7 @@ namespace SpriteWave
 					}
 					else if (toolBox.IsOpen && e.KeyCode == Keys.Escape)
 					{
-						if (!toolBox.HandleEscapeKey())
+						if (!toolBox.HandleEscapeKey(this))
 						{
 							toolBox.Minimise();
 							this.PerformLayout();
@@ -552,26 +557,17 @@ namespace SpriteWave
 			return true;
 		}
 
-		private void openBinary(object sender, EventArgs e)
+		private void openRom(FormatKind format)
 		{
-			openFileDialog1.ShowDialog();
-		}
-		private void openNES(object sender, EventArgs e)
-		{
-			openFileDialog1.FilterIndex = (int)FormatKind.NES + 1;
-			openFileDialog1.ShowDialog();
-		}
-		private void openSNES(object sender, EventArgs e)
-		{
-			openFileDialog1.FilterIndex = (int)FormatKind.SNES + 1;
+			openFileDialog1.FilterIndex = (int)format + 1;
 			openFileDialog1.ShowDialog();
 		}
 
 		private void closeWorkspace(object sender, EventArgs e)
 		{
 			Transfer.Clear();
-			inputWnd.Close();
-			spriteWnd.Close();
+			inputWnd.Close(this);
+			spriteWnd.Close(this);
 			toolBox.IsActive = false;
 			this.PerformLayout();
 		}
@@ -585,7 +581,7 @@ namespace SpriteWave
 		{
 			var pal = inputWnd.Collage.Format.ColorTable as IPalette;
 			if (pal != null)
-				new ColorPicker(256, pal, -1).Show(this);
+				new ColorPicker(this, 256, pal, -1).Show(this);
 		}
 
 		private void openFileDialog1FileOk(object sender, CancelEventArgs e)
@@ -600,7 +596,7 @@ namespace SpriteWave
 
 			this.colorTableToolStripMenuItem.Enabled = fmt.ColorTable is ColorList;
 
-			inputWnd.Load(fmt, data);
+			inputWnd.Load(this, fmt, data);
 			Control c = Utils.FindControl(inputWnd["Controls"].Panel, "inputSend");
 			Utils.ApplyEvents(c, _sendTileEvents);
 
@@ -623,7 +619,7 @@ namespace SpriteWave
 
 			if (_picker == null)
 			{
-				_picker = new ColorPicker(256, pal, palIdx);
+				_picker = new ColorPicker(this, 256, pal, palIdx);
 				_picker.Show(this);
 			}
 			else
@@ -636,7 +632,7 @@ namespace SpriteWave
 		public void ClearColorPicker()
 		{
 			_picker = null;
-			(toolBox["Palette"] as PaletteTab).HandleEscapeKey();
+			(toolBox["Palette"] as PaletteTab).HandleEscapeKey(this);
 		}
 	}
 }

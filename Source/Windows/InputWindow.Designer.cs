@@ -6,11 +6,11 @@ namespace SpriteWave
 {
 	public partial class InputWindow
 	{
-		public override void Activate()
+		public override void Activate(ToolBox toolBox)
 		{
 			_vis.col = _cl.Columns;
 			AdjustWindow();
-			base.Activate();
+			base.Activate(toolBox);
 		}
 
 		public override void Clear()

@@ -37,7 +37,14 @@ namespace SpriteWave
 
 		public InputControlsTab ControlsTab { get { return this["Controls"] as InputControlsTab; } }
 
-		public Tile TileSample { set { ControlsTab.Sample = TileBitmap(value); } }
+		public Tile TileSample
+		{
+			set {
+				var input = ControlsTab;
+				if (input != null)
+					input.Sample = TileBitmap(value);
+			}
+		}
 
 		public InputWindow(MainForm main)
 			: base(main)
@@ -47,7 +54,7 @@ namespace SpriteWave
 			DeleteFrame();
 		}
 
-		public void Load(FileFormat fmt, byte[] file, int offset = 0)
+		public void Load(MainForm main, FileFormat fmt, byte[] file, int offset = 0)
 		{
 			_selPos = new Position(0, 0);
 			Selected = false;
@@ -57,7 +64,7 @@ namespace SpriteWave
 			_cl.LoadTiles(_contents, offset);
 			Render();
 
-			Activate();
+			Activate(main.toolBox);
 			ControlsTab.SizeText = file.Length;
 			TileSample = null;
 

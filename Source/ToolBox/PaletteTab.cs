@@ -14,6 +14,7 @@ namespace SpriteWave
 		private Button _tabButton;
 		private Panel _panel;
 		private TileWindow _wnd;
+		private MainForm _main;
 
 		private PalettePanel _primary;
 		private PalettePanel _second;
@@ -45,8 +46,9 @@ namespace SpriteWave
 
 		public int X { set { _panel.Location = new Point(value, _panel.Location.Y); } }
 
-		public PaletteTab(SpriteWindow wnd)
+		public PaletteTab(MainForm main, SpriteWindow wnd)
 		{
+			_main = main;
 			_wnd = wnd;
 			_id = "paletteTab";
 			_name = "Palette";
@@ -74,7 +76,7 @@ namespace SpriteWave
 			var table = _wnd.Collage.Format.ColorTable;
 			if (!(table is ColorList))
 			{
-				Utils.mainForm.OpenColorPicker(panel.Palette, cellIdx);
+				_main.OpenColorPicker(panel.Palette, cellIdx);
 				return;
 			}
 
@@ -84,7 +86,7 @@ namespace SpriteWave
 				cl.NativeColors[_pmIdx] = (uint)cellIdx;
 				cl.UpdateGridPen();
 				cl.Render();
-				Utils.mainForm.PerformLayout();
+				_main.PerformLayout();
 				return;
 			}
 
@@ -94,11 +96,11 @@ namespace SpriteWave
 				_second = new PalettePanel(this, table as ColorList, maxVisRows: 4);
 				_second.Name = "secondaryBox";
 				_panel.Controls.Add(_second);
-				Utils.mainForm.PerformLayout();
+				_main.PerformLayout();
 			}
 		}
 
-		public bool HandleEscapeKey()
+		public bool HandleEscapeKey(MainForm main)
 		{
 			_primary.CurrentCell = -1;
 
@@ -107,7 +109,7 @@ namespace SpriteWave
 			{
 				_panel.Controls.Remove(_second);
 				_second = null;
-				Utils.mainForm.PerformLayout();
+				main.PerformLayout();
 			}
 			else
 				_primary.Draw();

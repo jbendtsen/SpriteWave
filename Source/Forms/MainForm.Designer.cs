@@ -26,6 +26,7 @@ namespace SpriteWave
 		private ToolStripMenuItem openBinaryToolStripMenuItem;
 		private ToolStripMenuItem openNESFileStripMenuItem;
 		private ToolStripMenuItem openSNESFileStripMenuItem;
+		private ToolStripMenuItem openMDFileStripMenuItem;
 		private ToolStripSeparator toolStripSeparator1;
 		private ToolStripMenuItem closeToolStripMenuItem;
 		private ToolStripMenuItem quitToolStripMenuItem;
@@ -63,6 +64,7 @@ namespace SpriteWave
 			this.openBinaryToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.openNESFileStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.openSNESFileStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.openMDFileStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
 			this.closeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.quitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -88,6 +90,7 @@ namespace SpriteWave
 			this.openBinaryToolStripMenuItem,
 			this.openNESFileStripMenuItem,
 			this.openSNESFileStripMenuItem,
+			this.openMDFileStripMenuItem,
 			this.toolStripSeparator1,
 			this.closeToolStripMenuItem,
 			this.quitToolStripMenuItem});
@@ -102,21 +105,28 @@ namespace SpriteWave
 			this.openBinaryToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.O)));
 			this.openBinaryToolStripMenuItem.Size = new System.Drawing.Size(209, 22);
 			this.openBinaryToolStripMenuItem.Text = "Open Binary";
-			this.openBinaryToolStripMenuItem.Click += new System.EventHandler(this.openBinary);
+			this.openBinaryToolStripMenuItem.Click += (s, e) => openFileDialog1.ShowDialog();
 			// 
 			// openNESFileStripMenuItem
 			// 
 			this.openNESFileStripMenuItem.Name = "openNESFileStripMenuItem";
 			this.openNESFileStripMenuItem.Size = new System.Drawing.Size(209, 22);
-			this.openNESFileStripMenuItem.Text = "Open NES File";
-			this.openNESFileStripMenuItem.Click += new System.EventHandler(this.openNES);
+			this.openNESFileStripMenuItem.Text = "Open NES ROM";
+			this.openNESFileStripMenuItem.Click += (s, e) => openRom(FormatKind.NES);
 			// 
 			// openSNESFileStripMenuItem
 			// 
 			this.openSNESFileStripMenuItem.Name = "openSNESFileStripMenuItem";
 			this.openSNESFileStripMenuItem.Size = new System.Drawing.Size(209, 22);
-			this.openSNESFileStripMenuItem.Text = "Open SNES File";
-			this.openSNESFileStripMenuItem.Click += new System.EventHandler(this.openSNES);
+			this.openSNESFileStripMenuItem.Text = "Open SNES ROM";
+			this.openSNESFileStripMenuItem.Click += (s, e) => openRom(FormatKind.SNES);
+			// 
+			// openMDFileStripMenuItem
+			// 
+			this.openMDFileStripMenuItem.Name = "openMDFileStripMenuItem";
+			this.openMDFileStripMenuItem.Size = new System.Drawing.Size(209, 22);
+			this.openMDFileStripMenuItem.Text = "Open Genesis ROM";
+			this.openMDFileStripMenuItem.Click += (s, e) => openRom(FormatKind.MD);
 			// 
 			// toolStripSeparator1
 			// 

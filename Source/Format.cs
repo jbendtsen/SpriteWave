@@ -4,7 +4,7 @@ namespace SpriteWave
 {
 	public enum FormatKind
 	{
-		NES, SNES
+		NES, SNES, MD
 	}
 
 	public class FileFormat

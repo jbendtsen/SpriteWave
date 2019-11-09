@@ -19,6 +19,7 @@ namespace SpriteWave
 		private int _maxVisRows;
 
 		public int CurrentCell = -1;
+		private int _hoveredCell = -1;
 
 		private int _palLen = 0;
 		private int[] _palPolarLum = null;
@@ -69,6 +70,8 @@ namespace SpriteWave
 			_box = new ColorBox();
 			_box.MouseDown += this.boxClickHandler;
 			_box.MouseWheel += this.boxScrollHandler;
+			_box.MouseMove += this.cursorHandler;
+			_box.MouseLeave += (s, e) => { _hoveredCell = -1; Draw(); };
 
 			_scroll = new VScrollBar();
 			_scroll.Scroll += (s, e) => Draw();
@@ -188,9 +191,10 @@ namespace SpriteWave
 
 			// Minus one because maximum value is the last index, not the size
 			int nDigits = Utils.DigitCount(_palLen - 1);
-
 			float numW = (float)(DigitImages.digitW * nDigits);
 			float numH = (float)DigitImages.digitH;
+
+			const float border = 1;
 
 			int firstCellIdx = FirstVisibleCell;
 			int idx = 0;
@@ -205,6 +209,22 @@ namespace SpriteWave
 					int x = (int)((float)j / cellW);
 					float subX = (float)j % cellW;
 					int cell = cellY + x;
+
+					if ((cell == CurrentCell || cell == _hoveredCell) &&
+						(subX < border || subX >= cellW - border ||
+					     subY < border || subY >= cellH - border))
+					{
+						if (_palPolarLum[cell] == white)
+						{
+							buf[idx++] = 0xff; buf[idx++] = 0xff; buf[idx++] = 0xff;
+						}
+						else {
+							buf[idx++] = 0; buf[idx++] = 0; buf[idx++] = 0;
+						}
+
+						buf[idx++] = 0xff;
+						continue;
+					}
 
 					// In most cases, no pixel blending occurs.
 					// Therefore, we just use the quickest method (I think) to copy a pixel to a pixel buffer in C#.
@@ -277,6 +297,23 @@ namespace SpriteWave
 
 			if (newValue != oldValue)
 				Draw();
+		}
+
+		private void cursorHandler(object sender, MouseEventArgs e)
+		{
+			float x = (float)e.X / (float)_box.Width;
+			float y = (float)e.Y / (float)_box.Height;
+
+			int col = (int)(x * (float)_nCols);
+			int row = (int)(y * (float)VisibleRows);
+
+			int idx = FirstVisibleCell + (row * _nCols) + col;
+
+			if (idx != _hoveredCell)
+			{
+				_hoveredCell = idx;
+				Draw();
+			}
 		}
 	}
 }

@@ -34,7 +34,7 @@ namespace SpriteWave
 		public ITab this[int idx]
 		{
 			get {
-				if (idx < 0 || idx >= _tabs.Count)
+				if (_tabs == null || idx < 0 || idx >= _tabs.Count)
 					return null;
 
 				return _tabs[idx];
@@ -43,6 +43,9 @@ namespace SpriteWave
 		public ITab this[string name]
 		{
 			get {
+				if (_tabs == null)
+					return null;
+
 				foreach (ITab t in _tabs)
 				{
 					if (t.Name == name)
@@ -114,7 +117,7 @@ namespace SpriteWave
 			((System.ComponentModel.ISupportInitialize)(_window)).EndInit();
 		}
 
-		public virtual void Activate()
+		public virtual void Activate(ToolBox toolBox)
 		{
 			this.Prompt = "";
 
@@ -126,7 +129,7 @@ namespace SpriteWave
 			ToggleMenu(true);
 
 			InitializeTabs();
-			ProvideTabButtons(Utils.mainForm.toolBox);
+			ProvideTabButtons(toolBox);
 		}
 
 		public virtual void Clear()
@@ -143,7 +146,7 @@ namespace SpriteWave
 
 			_window.BackColor = _emptyBackColor;
 		}
-		public virtual void Close()
+		public virtual void Close(MainForm main)
 		{
 			Clear();
 
@@ -155,7 +158,7 @@ namespace SpriteWave
 				if (_tabs[i] == null)
 					continue;
 
-				Utils.mainForm.toolBox.RemoveTabButton(_tabs[i].TabButton);
+				main.toolBox.RemoveTabButton(_tabs[i].TabButton);
 				_tabs[i] = null;
 			}
 		}

@@ -35,7 +35,7 @@ namespace SpriteWave
 	{
 		public const int cLen = 4;
 
-		public static MainForm mainForm;
+		//public static MainForm mainForm;
 
 		public static Type TileType(string name)
 		{
@@ -402,6 +402,16 @@ namespace SpriteWave
 			0x818C, 0x9188, 0x9208, 0x9284, // dark blue green -> green
 			0xB284, 0xD2C4, 0xEB48, 0xFF48, // green -> bright yellow
 			0xFFA8, 0xFFD0, 0xFFF8, 0xFFFF	// bright yellow -> white
+		};
+		
+		public const uint MDRGBAOrderAndDepth = 0x12303331;
+
+		public static readonly uint[] MDDefSel =
+		{
+			0x0200, 0x0280, 0x02C0, 0x02C8, // black -> dark red
+			0x02D8, 0x0299, 0x02A1, 0x0269, // dark orange -> green
+			0x026B, 0x026D, 0x02B6, 0x02B7, // green -> bright cyan
+			0x02BF, 0x033F, 0x03BF, 0x03FF  // bright cyan -> white 
 		};
 	}
 }

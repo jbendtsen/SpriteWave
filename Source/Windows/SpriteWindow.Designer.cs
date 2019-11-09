@@ -6,12 +6,12 @@ namespace SpriteWave
 {
 	public partial class SpriteWindow
 	{
-		public override void Activate()
+		public override void Activate(ToolBox toolBox)
 		{
 			_zoom = InitialZoom;
 			UpdateBars();
 			Centre();
-			base.Activate();
+			base.Activate(toolBox);
 		}
 
 		protected override void SetupWindowUI()
@@ -27,7 +27,7 @@ namespace SpriteWave
 		protected override void InitializeTabs()
 		{
 			_tabs = new List<ITab>();
-			_tabs.Add(new PaletteTab(this));
+			_tabs.Add(new PaletteTab(_main, this));
 			_tabs.Add(new SpriteControlsTab(this));
 		}
 
