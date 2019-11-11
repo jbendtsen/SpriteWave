@@ -14,63 +14,72 @@ namespace SpriteWave
 
 		// List of pixel maps of numbers 0-9 (black then white)
 		private static byte[][] _numbersPix;
+		private const int numBufSize = digitW * digitH * Utils.cLen;
+	
+		private static void CreateDigitMaps()
+		{
+			Font font;
+			try {
+				font = new Font(FontFamily.GenericMonospace, fontSize, FontStyle.Bold, GraphicsUnit.Pixel);
+			}
+			catch (ArgumentException) {
+				font = SystemFonts.DefaultFont;
+			}
+
+			Brush[] clrs = {new SolidBrush(Color.Black), new SolidBrush(Color.White)};
+
+			// For positioning digit characters inside each image
+			const float numKernX = -2;
+			const float numKernY = 1;
+			var bounds = new RectangleF(
+				numKernX,
+				numKernY,
+				digitW - numKernX,
+				digitH - numKernY
+			);
+			var sizeRect = new Rectangle(
+				0, 0, digitW, digitH
+			);
+
+			_numbersPix = new byte[10 * 2][];
+			int idx = 0;
+			for (int i = 0; i < 2; i++) // 2 colours
+			{
+				for (int j = 0; j < 10; j++) // 10 digits
+				{
+					// Render text to a bitmap image
+					var bmp = new Bitmap(digitW, digitH, PixelFormat.Format32bppArgb);
+					using (var g = Graphics.FromImage(bmp))
+					{
+						g.TextRenderingHint = TextRenderingHint.AntiAlias;
+						g.DrawString(j.ToString(), font, clrs[i], bounds);
+					}
+
+					// Extract the pixel data out of the bitmap image
+					_numbersPix[idx] = new byte[numBufSize];
+					var data = bmp.LockBits(
+						sizeRect,
+						ImageLockMode.ReadWrite,
+						PixelFormat.Format32bppArgb
+					);
+
+					// Copy the bitmap data directly to our pixel array.
+					// Each pixel is stored as four bytes - B, G, R, then A.
+					Marshal.Copy(data.Scan0, _numbersPix[idx], 0, numBufSize);
+					bmp.UnlockBits(data);
+
+					idx++;
+				}
+			}
+		}
 
 		public static byte[] Generate(int count)
 		{
 			if (count < 2)
 				return null;
 
-			const int numBufSize = digitW * digitH * Utils.cLen;
-
 			if (_numbersPix == null)
-			{
-				Font font = new Font(FontFamily.GenericMonospace, fontSize, FontStyle.Bold, GraphicsUnit.Pixel);
-				Brush[] clrs = {new SolidBrush(Color.Black), new SolidBrush(Color.White)};
-
-				// For positioning digit characters inside each image
-				const float numKernX = -2;
-				const float numKernY = 1;
-				var bounds = new RectangleF(
-					numKernX,
-					numKernY,
-					digitW - numKernX,
-					digitH - numKernY
-				);
-				var sizeRect = new Rectangle(
-					0, 0, digitW, digitH
-				);
-
-				_numbersPix = new byte[10 * 2][];
-				int idx = 0;
-				for (int i = 0; i < 2; i++) // 2 colours
-				{
-					for (int j = 0; j < 10; j++) // 10 digits
-					{
-						// Render text to a bitmap image
-						var bmp = new Bitmap(digitW, digitH, PixelFormat.Format32bppArgb);
-						using (var g = Graphics.FromImage(bmp))
-						{
-							g.TextRenderingHint = TextRenderingHint.AntiAlias;
-							g.DrawString(j.ToString(), font, clrs[i], bounds);
-						}
-
-						// Extract the pixel data out of the bitmap image
-						_numbersPix[idx] = new byte[numBufSize];
-						var data = bmp.LockBits(
-							sizeRect,
-							ImageLockMode.ReadWrite,
-							PixelFormat.Format32bppArgb
-						);
-
-						// Copy the bitmap data directly to our pixel array.
-						// Each pixel is stored as four bytes - B, G, R, then A.
-						Marshal.Copy(data.Scan0, _numbersPix[idx], 0, numBufSize);
-						bmp.UnlockBits(data);
-
-						idx++;
-					}
-				}
-			}
+				CreateDigitMaps();
 
 			// Minus one because maximum value is the last index, not the size
 			int nDigits = Utils.DigitCount(count - 1);
